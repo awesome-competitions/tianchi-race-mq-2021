@@ -3,13 +3,10 @@ package io.openmessaging;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * 这是一个简单的基于内存的实现，以方便选手理解题意；
- * 实际提交时，请维持包名和类名不变，把方法实现修改为自己的内容；
- */
 public class MessageQueueImpl extends MessageQueue {
 
     public MessageQueueImpl() {
@@ -29,7 +26,7 @@ public class MessageQueueImpl extends MessageQueue {
     @Override
     public Map<Integer, ByteBuffer> getRange(String topic, int queueId, long offset, int fetchNum) {
         Storage.Queue queue = Storage.getInstance(topic + "-" + queueId);
-        Map<Integer, ByteBuffer> results = new HashMap<>();
+        Map<Integer, ByteBuffer> results = new LinkedHashMap<>();
         try {
             byte[][] data = queue.read(offset, fetchNum);
             for(int i = 0; i < data.length; i ++){

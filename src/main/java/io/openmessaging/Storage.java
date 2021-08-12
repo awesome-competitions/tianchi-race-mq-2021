@@ -4,6 +4,7 @@ import io.openmessaging.utils.FileUtil;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -64,6 +65,7 @@ public class Storage {
 
         public byte[][] read(long offset, int num) throws IOException {
             byte[][] data = new byte[num][];
+            Map<Integer, ByteBuffer> results = new LinkedHashMap<>();
             FileInputStream reader = getOffsetAndDelete(offset);
             if (reader == null){
                 reader = new FileInputStream(file);
