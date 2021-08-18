@@ -4,10 +4,11 @@ import io.openmessaging.utils.FileUtil;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Storage {
+public class FileChannelStorage {
 
 //    private static final String DATA_PATH = "/data";
     private static final String DATA_PATH = "D:\\test";
@@ -23,39 +24,34 @@ public class Storage {
     }
 
     public static class Queue{
-        private final FileOutputStream writer;
+        private final FileChannel writer;
         private int offset;
         private final File file;
-        private final Map<Long, FileInputStream> offsets;
+        private final Map<Long, BufferedInputStream> offsets;
 
         public Queue(String key)  {
             try {
-                File file = FileUtil.createIfAbsent(DATA_PATH + File.separator + key, false);
-                if (file == null){
-                    throw new RuntimeException("queue init fail");
-                }
-                this.writer = new FileOutputStream(file, true);
-                this.file = file;
+                String filePath = DATA_PATH + File.separator + key;
+                this.file = FileUtil.createIfAbsent(filePath, false);
+                this.writer = new RandomAccessFile(filePath, "rw").getChannel();
                 this.offsets = new ConcurrentHashMap<>();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-
         }
 
-        public int write(byte[] data) {
+        public int write(ByteBuffer byteBuffer) {
             try {
-                this.writer.write(data);
-                this.writer.write('\n');
-//                this.writer.getFD().sync();
+                this.writer.write(byteBuffer);
+//                this.writer.force(true);
             } catch (IOException e) {
                 e.printStackTrace();
             }
             return this.offset ++;
         }
 
-        public synchronized FileInputStream getOffsetAndDelete(long offset){
-            FileInputStream reader = offsets.get(offset);
+        public synchronized BufferedInputStream getOffsetAndDelete(long offset){
+            BufferedInputStream reader = offsets.get(offset);
             if (reader != null){
                 offsets.remove(offset);
             }
@@ -64,9 +60,9 @@ public class Storage {
 
         public byte[][] read(long offset, int num) throws IOException {
             byte[][] data = new byte[num][];
-            FileInputStream reader = getOffsetAndDelete(offset);
+            BufferedInputStream reader = getOffsetAndDelete(offset);
             if (reader == null){
-                reader = new FileInputStream(file);
+                reader = new BufferedInputStream(new FileInputStream(file));
                 skipN(reader, offset - 1);
             }
             for (int i = 0; i < num; i ++){
