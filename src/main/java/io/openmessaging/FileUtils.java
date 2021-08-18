@@ -1,9 +1,9 @@
-package io.openmessaging.utils;
+package io.openmessaging;
 
 import java.io.File;
 import java.io.IOException;
 
-public class FileUtil {
+public class FileUtils {
 
     public static File createIfAbsent(String path, boolean isDir) throws IOException {
         File file = new File(path);
