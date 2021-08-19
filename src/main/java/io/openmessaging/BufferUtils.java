@@ -1,5 +1,7 @@
 package io.openmessaging;
 
+import sun.misc.Cleaner;
+import sun.nio.ch.DirectBuffer;
 import sun.nio.ch.FileChannelImpl;
 
 import java.lang.reflect.InvocationTargetException;
@@ -8,10 +10,11 @@ import java.nio.MappedByteBuffer;
 
 public class BufferUtils {
 
-    public static void unmap(MappedByteBuffer mappedByteBuffer) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Method m = FileChannelImpl.class.getDeclaredMethod("unmap", MappedByteBuffer.class);
-        m.setAccessible(true);
-        m.invoke(FileChannelImpl.class, mappedByteBuffer);
+    public static void clean(MappedByteBuffer mappedByteBuffer) {
+        Cleaner var1 = ((DirectBuffer)mappedByteBuffer).cleaner();
+        if (var1 != null) {
+            var1.clean();
+        }
     }
 
 }

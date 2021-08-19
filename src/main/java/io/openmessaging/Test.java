@@ -8,27 +8,28 @@ import java.util.Random;
 
 public class Test {
 
-    private final static int BATCH = 100;
+    private final static int BATCH = 10000 * 100;
 
     public static void main(String[] args) {
         test();
     }
 
     public static void test(){
-        long start = System.currentTimeMillis();
-        MessageQueue mq = new SSDMessageQueueImpl();
 
+        MessageQueue mq = new SSDMessageQueueImpl();
         String[] inputs = new String[BATCH];
         for (int i = 0; i < BATCH; i ++){
-            inputs[i] = randomString((int) (Math.random() * 10000));
+            inputs[i] = randomString((int) (Math.random() * 100));
         }
+        System.out.println("start...");
+        long start = System.currentTimeMillis();
         for (int i = 0; i < BATCH; i ++){
             mq.append("test", 1, ByteBuffer.wrap(inputs[i].getBytes()));
         }
         for (int i = 0; i < BATCH; i ++){
             Map<Integer, ByteBuffer> data = mq.getRange("test", 1, i, 1);
             if (!Arrays.equals(data.get(0).array(), inputs[i].getBytes())){
-                throw new RuntimeException("Correctness error.");
+                throw new RuntimeException("Correctness error " + i);
             }
         }
         long end = System.currentTimeMillis();
