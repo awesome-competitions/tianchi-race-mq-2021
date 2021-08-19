@@ -1,8 +1,12 @@
 package io.openmessaging;
 
+import sun.nio.ch.FileChannelImpl;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -41,11 +45,18 @@ public class SSDMessageQueueImpl extends MessageQueue{
         return topics.getOrDefault(topic, new Topic(topic));
     }
 
+    public static class Reader{
+        private Tuple<Long, MappedByteBuffer> tuple;
+    }
+
     public static class Topic{
         private final String topic;
         private RandomAccessFile data;
         private final RandomAccessFile idx;
-        private final Map<Integer, List<Tuple<Long, MappedByteBuffer>>> indexes;
+
+        private final Map<Integer, List<Allocate>> indexes;
+        private final Map<Integer, MappedByteBuffer> writeMappedByteBuffers;
+
         private final FileChannel dataChannel;
         private final FileChannel idxChannel;
         private final Map<Integer, AtomicLong> offsets;
@@ -59,38 +70,52 @@ public class SSDMessageQueueImpl extends MessageQueue{
             this.idxChannel = idx.getChannel();
             this.offsets = new ConcurrentHashMap<>();
             this.indexes= new HashMap<>();
+            this.writeMappedByteBuffers = new HashMap<>();
         }
 
-        public long read(int queueId, long offset){
-            
+        public ByteBuffer[] read(int queueId, long offset, int num) throws IOException {
+            List<Allocate> allocates = indexes.get(queueId);
+            if (CollectionUtils.isEmpty(allocates)){
+                return null;
+            }
+            Allocate allocate = CollectionUtils.lastOf(allocates);
+            for (int i = 0; i < allocates.size(); i ++){
+                if (allocates.get(i).getOffset() > offset){
+                    // i is always greater than 0
+                    allocate = allocates.get(i - 1);
+                    break;
+                }
+            }
+            MappedByteBuffer mappedByteBuffer = dataChannel.map(FileChannel.MapMode.READ_ONLY, allocate.getPosition(), allocate.getCapacity());
+            //read
+            return null;
         }
 
-        public long write(int queueId, ByteBuffer data) throws IOException {
+        public long write(int queueId, ByteBuffer data) throws IOException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
             long offset = offsets.computeIfAbsent(queueId, q -> new AtomicLong()).getAndAdd(1);
-            List<Tuple<Long, MappedByteBuffer>> tuples = indexes.computeIfAbsent(queueId, ArrayList::new);
-            Tuple<Long, MappedByteBuffer> tuple = tuples.isEmpty() ? null : tuples.get(tuples.size() - 1);
-
             ByteBuffer wrapper = ByteBuffer.allocate(2 + data.capacity());
             wrapper.putShort((short) data.capacity());
             wrapper.put(data);
             wrapper.flip();
-            boolean expanded = false;
-            if (tuple == null || tuple.getV().position() + wrapper.capacity() > tuple.getV().capacity()){
-                tuple = new Tuple<>(offset, dataChannel.map(FileChannel.MapMode.READ_WRITE, pageOffset * pageSize, pageSize));
-                tuples.add(tuple);
-                expanded = true;
-            }
-            if (expanded){
-                ByteBuffer idxBuffer = ByteBuffer.allocate(14);
-                idxBuffer.putShort((short) queueId)
-                        .putLong(offset)
-                        .putInt(pageOffset ++)
-                        .flip();
+
+            MappedByteBuffer mappedByteBuffer = writeMappedByteBuffers.get(queueId);
+            if (mappedByteBuffer == null || mappedByteBuffer.position() + wrapper.capacity() > mappedByteBuffer.capacity()){
+                List<Allocate> allocates = indexes.computeIfAbsent(queueId, ArrayList::new);
+                Allocate allocate = new Allocate(offset, pageOffset * pageSize, pageSize);
+                allocates.add(new Allocate(offset, pageOffset * pageSize, pageSize));
+
+                BufferUtils.unmap(mappedByteBuffer);
+                mappedByteBuffer = dataChannel.map(FileChannel.MapMode.READ_WRITE, allocate.getPosition(), allocate.getCapacity());
+
+                ByteBuffer idxBuffer = ByteBuffer.allocate(14)
+                                        .putShort((short) queueId)
+                                        .putLong(allocate.getOffset())
+                                        .putLong(allocate.getPosition())
+                                        .putLong(allocate.getCapacity());
+                idxBuffer.flip();
                 idxChannel.write(idxBuffer);
             }
-            MappedByteBuffer mappedByteBuffer = tuple.getV();
             mappedByteBuffer.put(wrapper);
-            System.out.println(mappedByteBuffer.toString());
             return offset;
         }
     }
