@@ -10,10 +10,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class SSDMessageQueueImpl extends MessageQueue{
+public class MMapMessageQueueImpl extends MessageQueue{
 
     static final Map<String, Topic> topics = new ConcurrentHashMap<>();
-    static final int poolsMaxSize = 10;
     static final long pageSize = 1024 * 1024 * 64;    // 4M
     static final String root = "D://test/";
 

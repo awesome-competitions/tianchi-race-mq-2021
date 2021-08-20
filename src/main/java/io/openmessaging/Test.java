@@ -3,7 +3,6 @@ package io.openmessaging;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Random;
 
 public class Test {
@@ -15,7 +14,7 @@ public class Test {
     }
 
     public static void test(){
-        MessageQueue mq = new SSDMessageQueueImpl();
+        MessageQueue mq = new MMapMessageQueueImpl();
         String[] inputs = new String[BATCH / 100];
         for (int i = 0; i < inputs.length; i ++){
             inputs[i] = randomString((int) (Math.random() * 100));
