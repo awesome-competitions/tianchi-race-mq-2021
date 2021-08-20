@@ -15,20 +15,19 @@ public class Test {
     }
 
     public static void test(){
-
         MessageQueue mq = new SSDMessageQueueImpl();
-        String[] inputs = new String[BATCH];
-        for (int i = 0; i < BATCH; i ++){
+        String[] inputs = new String[BATCH / 100];
+        for (int i = 0; i < inputs.length; i ++){
             inputs[i] = randomString((int) (Math.random() * 100));
         }
         System.out.println("start...");
         long start = System.currentTimeMillis();
         for (int i = 0; i < BATCH; i ++){
-            mq.append("test", 1, ByteBuffer.wrap(inputs[i].getBytes()));
+            mq.append("test", 1, ByteBuffer.wrap(inputs[i%inputs.length].getBytes()));
         }
         for (int i = 0; i < BATCH; i ++){
             Map<Integer, ByteBuffer> data = mq.getRange("test", 1, i, 1);
-            if (!Arrays.equals(data.get(0).array(), inputs[i].getBytes())){
+            if (!Arrays.equals(data.get(0).array(), inputs[i%inputs.length].getBytes())){
                 throw new RuntimeException("Correctness error " + i);
             }
         }

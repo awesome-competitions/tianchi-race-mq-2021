@@ -2,24 +2,35 @@ package io.openmessaging;
 
 public class Allocate {
 
-    private long offset;
+    private long start;
+
+    private long end;
 
     private long position;
 
     private long capacity;
 
-    public Allocate(long offset, long position, long capacity) {
-        this.offset = offset;
+    public Allocate(long start, long end, long position, long capacity) {
+        this.start = start;
+        this.end = end;
         this.position = position;
         this.capacity = capacity;
     }
 
-    public long getOffset() {
-        return offset;
+    public long getStart() {
+        return start;
     }
 
-    public void setOffset(long offset) {
-        this.offset = offset;
+    public void setStart(long start) {
+        this.start = start;
+    }
+
+    public long getEnd() {
+        return end;
+    }
+
+    public void setEnd(long end) {
+        this.end = end;
     }
 
     public long getPosition() {

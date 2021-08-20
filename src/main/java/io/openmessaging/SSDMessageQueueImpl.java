@@ -14,7 +14,7 @@ public class SSDMessageQueueImpl extends MessageQueue{
 
     static final Map<String, Topic> topics = new ConcurrentHashMap<>();
     static final int poolsMaxSize = 10;
-    static final long pageSize = 1024 * 1024 * 4;    // 4M
+    static final long pageSize = 1024 * 1024 * 64;    // 4M
     static final String root = "D://test/";
 
     @Override
@@ -92,22 +92,24 @@ public class SSDMessageQueueImpl extends MessageQueue{
             int index = tuple.getK();
             MappedByteBuffer mappedByteBuffer = tuple.getV();
             List<Allocate> allocates = indexes.get(queueId);
+            Allocate allocate = allocates.get(index);
+            long startOffset = offset;
             List<ByteBuffer> results = new ArrayList<>(num);
             while(num > 0){
-                short size;
-                if (mappedByteBuffer.capacity() - mappedByteBuffer.position() < 2 || (size = mappedByteBuffer.getShort()) == 0){
+                if (allocate.getEnd() > 0 && allocate.getEnd() < startOffset){
                     if (index >= allocates.size() - 1){
                         break;
                     }
                     BufferUtils.clean(mappedByteBuffer);
-                    Allocate allocate = allocates.get(index ++);
+                    allocate = allocates.get(++index);
                     mappedByteBuffer = dataChannel.map(FileChannel.MapMode.READ_ONLY, allocate.getPosition(), allocate.getCapacity());
                     continue;
                 }
-                num --;
-                byte[] data = new byte[size];
+                byte[] data = new byte[mappedByteBuffer.getShort()];
                 mappedByteBuffer.get(data);
                 results.add(ByteBuffer.wrap(data));
+                num --;
+                startOffset ++;
             }
             tuple.setK(index);
             tuple.setV(mappedByteBuffer);
@@ -128,15 +130,16 @@ public class SSDMessageQueueImpl extends MessageQueue{
             Allocate allocate = CollectionUtils.lastOf(allocates);
             int index = allocates.size() - 1;
             for (int i = 0; i < allocates.size(); i ++){
-                if (allocates.get(i).getOffset() > offset){
+                if (allocates.get(i).getStart() > offset){
                     // i is always greater than 0
                     allocate = allocates.get(i - 1);
+                    allocate.setEnd(allocates.get(i).getStart() - 1);
                     index = i - 1;
                     break;
                 }
             }
             MappedByteBuffer mappedByteBuffer = dataChannel.map(FileChannel.MapMode.READ_ONLY, allocate.getPosition(), allocate.getCapacity());
-            long nextOffset = allocate.getOffset();
+            long nextOffset = allocate.getStart();
             while(true){
                 if (nextOffset < offset){
                     nextOffset ++;
@@ -160,7 +163,10 @@ public class SSDMessageQueueImpl extends MessageQueue{
             boolean missingMappedByteBuffer = mappedByteBuffer == null;
             if (missingMappedByteBuffer || mappedByteBuffer.position() + wrapper.capacity() > mappedByteBuffer.capacity()){
                 List<Allocate> allocates = indexes.computeIfAbsent(queueId, ArrayList::new);
-                Allocate allocate = new Allocate(offset, pageOffset * pageSize, pageSize);
+                Allocate allocate = new Allocate(offset, 0, pageOffset * pageSize, pageSize);
+                if (allocates.size() > 0){
+                    CollectionUtils.lastOf(allocates).setEnd(offset - 1);
+                }
                 allocates.add(allocate);
                 pageOffset ++;
 
@@ -170,11 +176,12 @@ public class SSDMessageQueueImpl extends MessageQueue{
 
                 ByteBuffer idxBuffer = ByteBuffer.allocate(26)
                                         .putShort((short) queueId)
-                                        .putLong(allocate.getOffset())
+                                        .putLong(allocate.getEnd())
                                         .putLong(allocate.getPosition())
                                         .putLong(allocate.getCapacity());
                 idxBuffer.flip();
                 idxChannel.write(idxBuffer);
+                idxChannel.force(true);
             }
             mappedByteBuffer.put(wrapper);
             return offset;
