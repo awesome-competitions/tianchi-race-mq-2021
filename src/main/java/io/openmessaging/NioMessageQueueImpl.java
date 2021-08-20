@@ -6,15 +6,18 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class MMapMessageQueueImpl extends MessageQueue{
+public class NioMessageQueueImpl extends MessageQueue{
 
     static final Map<String, Topic> topics = new ConcurrentHashMap<>();
     static final long pageSize = 1024 * 1024 * 64;    // 4M
-    static final String root = "D://test/mmap/";
+    static final String root = "D://test/nio/";
 
     @Override
     public long append(String topic, int queueId, ByteBuffer data) {
@@ -63,9 +66,9 @@ public class MMapMessageQueueImpl extends MessageQueue{
         private final RandomAccessFile idx;
 
         private final Map<Integer, List<Allocate>> indexes;
-        private final Map<Integer, MappedByteBuffer> writeMappedByteBuffers;
         private final Map<Integer, Map<Long, Tuple<Integer, MappedByteBuffer>>> readMappedByteBuffer;
 
+        private final Map<Integer, Allocate> cachedWriteAllocates;
         private final FileChannel dataChannel;
         private final FileChannel idxChannel;
         private final Map<Integer, AtomicLong> offsets;
@@ -79,7 +82,7 @@ public class MMapMessageQueueImpl extends MessageQueue{
             this.idxChannel = idx.getChannel();
             this.offsets = new ConcurrentHashMap<>();
             this.indexes= new ConcurrentHashMap<>();
-            this.writeMappedByteBuffers = new ConcurrentHashMap<>();
+            this.cachedWriteAllocates = new ConcurrentHashMap<>();
             this.readMappedByteBuffer = new ConcurrentHashMap<>();
         }
 
@@ -153,26 +156,22 @@ public class MMapMessageQueueImpl extends MessageQueue{
         public long write(int queueId, ByteBuffer data) throws IOException{
             AtomicLong atomicLong = offsets.computeIfAbsent(queueId, q -> new AtomicLong());
             long offset = atomicLong.getAndAdd(1);
+
             ByteBuffer wrapper = ByteBuffer.allocate(2 + data.capacity());
             wrapper.putShort((short) data.capacity());
             wrapper.put(data);
             wrapper.flip();
 
-            MappedByteBuffer mappedByteBuffer = writeMappedByteBuffers.get(queueId);
-            boolean missingMappedByteBuffer = mappedByteBuffer == null;
-            if (missingMappedByteBuffer || mappedByteBuffer.position() + wrapper.capacity() > mappedByteBuffer.capacity()){
+            Allocate allocate = cachedWriteAllocates.get(queueId);
+            if (allocate == null || allocate.getPosition() + wrapper.capacity() > allocate.getCapacity()){
                 List<Allocate> allocates = indexes.computeIfAbsent(queueId, ArrayList::new);
-                Allocate allocate = new Allocate(offset, 0, pageOffset * pageSize, pageSize);
+                allocate = new Allocate(offset, 0, pageOffset * pageSize, pageSize);
                 if (allocates.size() > 0){
                     CollectionUtils.lastOf(allocates).setEnd(offset - 1);
                 }
+                cachedWriteAllocates.put(queueId, allocate);
                 allocates.add(allocate);
                 pageOffset ++;
-
-                if (! missingMappedByteBuffer) BufferUtils.clean(mappedByteBuffer);
-                mappedByteBuffer = dataChannel.map(FileChannel.MapMode.READ_WRITE, allocate.getPosition(), allocate.getCapacity());
-                writeMappedByteBuffers.put(queueId, mappedByteBuffer);
-
                 ByteBuffer idxBuffer = ByteBuffer.allocate(26)
                                         .putShort((short) queueId)
                                         .putLong(allocate.getEnd())
@@ -182,8 +181,11 @@ public class MMapMessageQueueImpl extends MessageQueue{
                 idxChannel.write(idxBuffer);
                 idxChannel.force(true);
             }
-            mappedByteBuffer.put(wrapper);
-            mappedByteBuffer.force();
+
+            dataChannel.position(allocate.getPosition());
+            dataChannel.write(wrapper);
+            dataChannel.force(true);
+            allocate.setPosition(allocate.getPosition() + wrapper.capacity());
             return offset;
         }
     }

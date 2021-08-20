@@ -7,14 +7,14 @@ import java.util.Random;
 
 public class Test {
 
-    private final static int BATCH = 10000 * 100;
+    private final static int BATCH = 10000 * 1;
 
     public static void main(String[] args) {
-        test();
+        testWrite(new MMapMessageQueueImpl());
+//        testWrite(new NioMessageQueueImpl());
     }
 
-    public static void test(){
-        MessageQueue mq = new MMapMessageQueueImpl();
+    public static void test(MessageQueue mq){
         String[] inputs = new String[BATCH / 100];
         for (int i = 0; i < inputs.length; i ++){
             inputs[i] = randomString((int) (Math.random() * 100));
@@ -29,6 +29,20 @@ public class Test {
             if (!Arrays.equals(data.get(0).array(), inputs[i%inputs.length].getBytes())){
                 throw new RuntimeException("Correctness error " + i);
             }
+        }
+        long end = System.currentTimeMillis();
+        System.out.println("io spend time" + (end - start) + "ms");
+    }
+
+    public static void testWrite(MessageQueue mq){
+        String[] inputs = new String[BATCH / 100];
+        for (int i = 0; i < inputs.length; i ++){
+            inputs[i] = randomString((int) (Math.random() * 100));
+        }
+        System.out.println("start...");
+        long start = System.currentTimeMillis();
+        for (int i = 0; i < BATCH; i ++){
+            mq.append("test", 1, ByteBuffer.wrap(inputs[i%inputs.length].getBytes()));
         }
         long end = System.currentTimeMillis();
         System.out.println("io spend time" + (end - start) + "ms");
