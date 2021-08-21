@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 
 public class Test {
 
-    private final static int BATCH = 10000 * 100;
+    private final static int BATCH = 10000 * 1000;
     private final static int QUEUE_SIZE = 5;
 
     public static void main(String[] args) throws InterruptedException {
@@ -18,7 +18,10 @@ public class Test {
         List<Supplier<?>> suppliers = new ArrayList<>();
 
         for (int i = 1; i <= QUEUE_SIZE; i ++){
-            suppliers.add(test(mMapMessageQueue, "test", i));
+            suppliers.add(test(mMapMessageQueue, "test1", i));
+        }
+        for (int i = 1; i <= QUEUE_SIZE; i ++){
+            suppliers.add(test(mMapMessageQueue, "test2", i));
         }
 
         final CountDownLatch cdl = new CountDownLatch(suppliers.size());
