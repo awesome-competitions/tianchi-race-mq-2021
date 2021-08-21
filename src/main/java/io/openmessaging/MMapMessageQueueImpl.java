@@ -8,12 +8,14 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class MMapMessageQueueImpl extends MessageQueue{
 
     static final Map<String, Topic> topics = new ConcurrentHashMap<>();
-    static final long pageSize = 1024 * 1024 * 64;    // 4M
+    static final long pageSize = 1024 * 1024 * 16;    // 4M
     static final String root = "D://test/mmap/";
 
     @Override
@@ -69,7 +71,8 @@ public class MMapMessageQueueImpl extends MessageQueue{
         private final FileChannel dataChannel;
         private final FileChannel idxChannel;
         private final Map<Integer, AtomicLong> offsets;
-        private int pageOffset;
+        private final AtomicInteger pageOffset;
+        private final Map<Integer, ReentrantLock> locks;
 
         public Topic(String topic) throws FileNotFoundException {
             this.topic = topic;
@@ -79,8 +82,10 @@ public class MMapMessageQueueImpl extends MessageQueue{
             this.idxChannel = idx.getChannel();
             this.offsets = new ConcurrentHashMap<>();
             this.indexes= new ConcurrentHashMap<>();
+            this.pageOffset = new AtomicInteger(0);
             this.writeMappedByteBuffers = new ConcurrentHashMap<>();
             this.readMappedByteBuffer = new ConcurrentHashMap<>();
+            this.locks = new ConcurrentHashMap<>();
         }
 
         public List<ByteBuffer> read(int queueId, long offset, int num) throws IOException {
@@ -118,9 +123,9 @@ public class MMapMessageQueueImpl extends MessageQueue{
 
         public Tuple<Integer, MappedByteBuffer> getReadMappedByteBuffer(int queueId, long offset) throws IOException {
             Map<Long, Tuple<Integer, MappedByteBuffer>> mappedByteBuffers = readMappedByteBuffer.computeIfAbsent(queueId, ConcurrentHashMap::new);
-            Tuple<Integer, MappedByteBuffer> tuple = mappedByteBuffers.get(offset);
+            Tuple<Integer, MappedByteBuffer> tuple = mappedByteBuffers.remove(offset);
             if (tuple != null){
-                return mappedByteBuffers.remove(offset);
+                return tuple;
             }
             List<Allocate> allocates = indexes.get(queueId);
             if (CollectionUtils.isEmpty(allocates)){
@@ -159,31 +164,34 @@ public class MMapMessageQueueImpl extends MessageQueue{
             wrapper.flip();
 
             MappedByteBuffer mappedByteBuffer = writeMappedByteBuffers.get(queueId);
-            boolean missingMappedByteBuffer = mappedByteBuffer == null;
-            if (missingMappedByteBuffer || mappedByteBuffer.position() + wrapper.capacity() > mappedByteBuffer.capacity()){
-                List<Allocate> allocates = indexes.computeIfAbsent(queueId, ArrayList::new);
-                Allocate allocate = new Allocate(offset, 0, pageOffset * pageSize, pageSize);
-                if (allocates.size() > 0){
-                    CollectionUtils.lastOf(allocates).setEnd(offset - 1);
+            if (mappedByteBuffer == null || mappedByteBuffer.position() + wrapper.capacity() > mappedByteBuffer.capacity()){
+                ReentrantLock queueLock = locks.computeIfAbsent(queueId, k -> new ReentrantLock());
+                queueLock.lock();
+                try{
+                    List<Allocate> allocates = indexes.computeIfAbsent(queueId, ArrayList::new);
+                    Allocate allocate = new Allocate(offset, 0, pageOffset.getAndAdd(1) * pageSize, pageSize);
+                    if (allocates.size() > 0){
+                        CollectionUtils.lastOf(allocates).setEnd(offset - 1);
+                    }
+                    allocates.add(allocate);
+                    if (mappedByteBuffer != null) BufferUtils.clean(mappedByteBuffer);
+                    mappedByteBuffer = dataChannel.map(FileChannel.MapMode.READ_WRITE, allocate.getPosition(), allocate.getCapacity());
+                    writeMappedByteBuffers.put(queueId, mappedByteBuffer);
+
+                    ByteBuffer idxBuffer = ByteBuffer.allocate(26)
+                            .putShort((short) queueId)
+                            .putLong(allocate.getEnd())
+                            .putLong(allocate.getPosition())
+                            .putLong(allocate.getCapacity());
+                    idxBuffer.flip();
+                    idxChannel.write(idxBuffer);
+                    idxChannel.force(true);
+                }finally {
+                    queueLock.unlock();
                 }
-                allocates.add(allocate);
-                pageOffset ++;
-
-                if (! missingMappedByteBuffer) BufferUtils.clean(mappedByteBuffer);
-                mappedByteBuffer = dataChannel.map(FileChannel.MapMode.READ_WRITE, allocate.getPosition(), allocate.getCapacity());
-                writeMappedByteBuffers.put(queueId, mappedByteBuffer);
-
-                ByteBuffer idxBuffer = ByteBuffer.allocate(26)
-                                        .putShort((short) queueId)
-                                        .putLong(allocate.getEnd())
-                                        .putLong(allocate.getPosition())
-                                        .putLong(allocate.getCapacity());
-                idxBuffer.flip();
-                idxChannel.write(idxBuffer);
-                idxChannel.force(true);
             }
             mappedByteBuffer.put(wrapper);
-            mappedByteBuffer.force();
+//            mappedByteBuffer.force();
             return offset;
         }
     }
