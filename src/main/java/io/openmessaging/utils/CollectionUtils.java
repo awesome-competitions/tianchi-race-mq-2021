@@ -1,4 +1,4 @@
-package io.openmessaging;
+package io.openmessaging.utils;
 
 import java.util.Collection;
 import java.util.List;

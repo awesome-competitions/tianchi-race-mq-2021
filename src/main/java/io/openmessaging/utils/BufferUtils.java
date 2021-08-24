@@ -1,11 +1,8 @@
-package io.openmessaging;
+package io.openmessaging.utils;
 
 import sun.misc.Cleaner;
 import sun.nio.ch.DirectBuffer;
-import sun.nio.ch.FileChannelImpl;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.MappedByteBuffer;
 
 public class BufferUtils {

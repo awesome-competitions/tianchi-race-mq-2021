@@ -1,4 +1,4 @@
-package io.openmessaging;
+package io.openmessaging.model;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -7,7 +7,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class LRU<K,V>{
+public class Lru<K,V>{
 
     private HashMap<K, V> map;
 
@@ -15,7 +15,7 @@ public class LRU<K,V>{
 
     private ReentrantLock lock;
 
-    public LRU(int core){
+    public Lru(int core){
         this.limit = core;
         this.lock = new ReentrantLock();
         map = new LinkedHashMap<K, V>(){

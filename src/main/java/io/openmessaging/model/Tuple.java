@@ -1,4 +1,4 @@
-package io.openmessaging;
+package io.openmessaging.model;
 
 public class Tuple<K, V> {
 
