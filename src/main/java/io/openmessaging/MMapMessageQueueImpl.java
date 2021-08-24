@@ -156,18 +156,18 @@ public class MMapMessageQueueImpl extends MessageQueue{
         }
 
         public long write(int queueId, ByteBuffer data) throws IOException{
-            AtomicLong atomicLong = offsets.computeIfAbsent(queueId, q -> new AtomicLong());
-            long offset = atomicLong.getAndAdd(1);
-            ByteBuffer wrapper = ByteBuffer.allocate(2 + data.capacity());
-            wrapper.putShort((short) data.capacity());
-            wrapper.put(data);
-            wrapper.flip();
-
-            MappedByteBuffer mappedByteBuffer = writeMappedByteBuffers.get(queueId);
-            if (mappedByteBuffer == null || mappedByteBuffer.position() + wrapper.capacity() > mappedByteBuffer.capacity()){
-                ReentrantLock queueLock = locks.computeIfAbsent(queueId, k -> new ReentrantLock());
+            ReentrantLock queueLock = locks.computeIfAbsent(queueId, k -> new ReentrantLock());
+            try{
                 queueLock.lock();
-                try{
+                AtomicLong atomicLong = offsets.computeIfAbsent(queueId, q -> new AtomicLong(0));
+                long offset = atomicLong.getAndIncrement();
+                ByteBuffer wrapper = ByteBuffer.allocate(2 + data.capacity());
+                wrapper.putShort((short) data.capacity());
+                wrapper.put(data);
+                wrapper.flip();
+
+                MappedByteBuffer mappedByteBuffer = writeMappedByteBuffers.get(queueId);
+                if (mappedByteBuffer == null || mappedByteBuffer.position() + wrapper.capacity() > mappedByteBuffer.capacity()){
                     List<Allocate> allocates = indexes.computeIfAbsent(queueId, ArrayList::new);
                     Allocate allocate = new Allocate(offset, 0, pageOffset.getAndAdd(1) * pageSize, pageSize);
                     if (allocates.size() > 0){
@@ -186,13 +186,12 @@ public class MMapMessageQueueImpl extends MessageQueue{
                     idxBuffer.flip();
                     idxChannel.write(idxBuffer);
                     idxChannel.force(true);
-                }finally {
-                    queueLock.unlock();
                 }
+                mappedByteBuffer.put(wrapper);
+                return offset;
+            }finally {
+                queueLock.unlock();
             }
-            mappedByteBuffer.put(wrapper);
-//            mappedByteBuffer.force();
-            return offset;
         }
     }
 }
