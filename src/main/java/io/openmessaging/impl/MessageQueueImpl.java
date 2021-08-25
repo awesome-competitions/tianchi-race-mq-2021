@@ -3,9 +3,11 @@ package io.openmessaging.impl;
 import io.openmessaging.MessageQueue;
 import io.openmessaging.model.*;
 import io.openmessaging.model.Queue;
+import io.openmessaging.utils.ArrayUtils;
 import io.openmessaging.utils.BufferUtils;
 import io.openmessaging.utils.CollectionUtils;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -21,14 +23,42 @@ public class MessageQueueImpl extends MessageQueue {
     public static String DATA_ROOT = "D://test/mmap/";              // data root dir.
     public static long DATA_MAPPED_PAGE_SIZE = 1024 * 1024 * 16;    // mmap mapping size of file, unit is KB.
     public static int DATA_CACHED_READER_SIZE = 300;                // reader cached size.
-
     final static Map<String, Topic> TOPICS = new ConcurrentHashMap<>();
+
+    public MessageQueueImpl(){
+        File root = new File(DATA_ROOT);
+        if (! root.isDirectory()){
+            throw new RuntimeException("root is not dir");
+        }
+        Map<String, File> dbs = new HashMap<>();
+        Map<String, File> ids = new HashMap<>();
+        if (ArrayUtils.isNotEmpty(root.listFiles())){
+            for (File file: Objects.requireNonNull(root.listFiles())){
+                if (! file.isDirectory()) {
+                    if (file.getName().endsWith(".db")){
+                        dbs.put(file.getName().substring(0, file.getName().lastIndexOf(".")), file);
+                    }else if (file.getName().endsWith(".idx")){
+                        ids.put(file.getName().substring(0, file.getName().lastIndexOf(".")), file);
+                    }
+                }
+            }
+        }
+        for (Map.Entry<String, File> db: dbs.entrySet()){
+            File idx = ids.get(db.getKey());
+            if (idx != null){
+                try {
+                    TOPICS.put(db.getKey(), Topic.parse(db.getKey(), idx));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 
     @Override
     public long append(String topic, int queueId, ByteBuffer data) {
         try {
-            Topic t = getTopic(topic);
-            return t.write(queueId, data);
+            return getTopic(topic).write(queueId, data);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -38,8 +68,7 @@ public class MessageQueueImpl extends MessageQueue {
     @Override
     public Map<Integer, ByteBuffer> getRange(String topic, int queueId, long offset, int fetchNum) {
         try {
-            Topic t = getTopic(topic);
-            List<ByteBuffer> results = t.read(queueId, offset, fetchNum);
+            List<ByteBuffer> results = getTopic(topic).read(queueId, offset, fetchNum);
             if (CollectionUtils.isEmpty(results)){
                 return null;
             }
@@ -82,8 +111,12 @@ public class MessageQueueImpl extends MessageQueue {
             this.pageOffset = new AtomicInteger();
         }
 
+        public Queue getQueue(int queueId){
+            return queues.computeIfAbsent(queueId, Queue::new);
+        }
+
         public List<ByteBuffer> read(int queueId, long offset, int num) throws IOException {
-            Queue queue = queues.computeIfAbsent(queueId, Queue::new);
+            Queue queue = getQueue(queueId);
             CachedReader cachedReader = getCachedReader(queue, offset);
             if (cachedReader == null){
                 return null;
@@ -116,7 +149,7 @@ public class MessageQueueImpl extends MessageQueue {
         }
 
         public CachedReader getCachedReader(Queue queue, long offset) throws IOException {
-            CachedReader cachedReader = cachedReaders.remove(new Tuple<>(queue.id(), offset));
+            CachedReader cachedReader = cachedReaders.get(new Tuple<>(queue.id(), offset));
             if (cachedReader != null){
                 return cachedReader;
             }
@@ -134,7 +167,7 @@ public class MessageQueueImpl extends MessageQueue {
         }
 
         public long write(int queueId, ByteBuffer data) throws IOException{
-            Queue queue = queues.computeIfAbsent(queueId, Queue::new);
+            Queue queue = getQueue(queueId);
             try{
                 queue.lock();
                 long offset = queue.nextOffset();
@@ -167,6 +200,19 @@ public class MessageQueueImpl extends MessageQueue {
             }finally {
                 queue.unlock();
             }
+        }
+
+        public static Topic parse(String name, File idx) throws IOException {
+            RandomAccessFile raf = new RandomAccessFile(idx, "r");
+            FileChannel channel = raf.getChannel();
+            ByteBuffer index = ByteBuffer.allocate(26);
+            Topic topic = new Topic(name);
+            while (channel.read(index) > 0){
+                index.flip();
+                topic.getQueue(index.getShort()).allocate(new Allocate(index.getLong(), 0, index.getLong(), index.getLong()));
+                index.clear();
+            }
+            return topic;
         }
     }
 }

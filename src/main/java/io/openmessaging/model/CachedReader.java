@@ -1,5 +1,8 @@
 package io.openmessaging.model;
 
+import io.openmessaging.utils.BufferUtils;
+
+import java.io.FileDescriptor;
 import java.nio.MappedByteBuffer;
 
 public class CachedReader {
@@ -27,5 +30,11 @@ public class CachedReader {
 
     public void setMappedByteBuffer(MappedByteBuffer mappedByteBuffer) {
         this.mappedByteBuffer = mappedByteBuffer;
+    }
+
+    public CachedReader clone(){
+
+
+        MappedByteBuffer buffer = new MappedByteBuffer(mappedByteBuffer.mark(), mappedByteBuffer.position(), mappedByteBuffer.limit(), mappedByteBuffer.capacity(), BufferUtils.getFd(mappedByteBuffer));
     }
 }

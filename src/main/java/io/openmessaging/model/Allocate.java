@@ -14,6 +14,8 @@ public class Allocate {
 
     private long capacity;
 
+    private Allocate(){ }
+
     public Allocate(long start, long end, long position, long capacity) {
         this.start = start;
         this.end = end;
@@ -59,5 +61,15 @@ public class Allocate {
 
     public void setIndex(int index) {
         this.index = index;
+    }
+
+    public Allocate clone(){
+        Allocate allocate = new Allocate();
+        allocate.start = this.start;
+        allocate.end = this.end;
+        allocate.index = this.index;
+        allocate.position = this.position;
+        allocate.capacity = this.capacity;
+        return allocate;
     }
 }

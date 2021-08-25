@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 public class Test {
 
     private final static int BATCH = 10000 * 100;
-    private final static int QUEUE_SIZE = 5;
+    private final static int QUEUE_SIZE = 2;
 
     public static void main(String[] args) throws InterruptedException {
         MessageQueueImpl mMapMessageQueue = new MessageQueueImpl();
