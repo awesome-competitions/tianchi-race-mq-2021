@@ -29,6 +29,10 @@ public class Queue {
         return offset.getAndIncrement();
     }
 
+    public void resetOffset(long offset){
+        this.offset.set(offset);
+    }
+
     public void mappedByteBuffer(MappedByteBuffer mappedByteBuffer){
         this.mappedByteBuffer = mappedByteBuffer;
     }

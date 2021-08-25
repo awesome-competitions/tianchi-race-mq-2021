@@ -228,14 +228,16 @@ public class MessageQueueImpl extends MessageQueue {
             for (Queue queue: topic.queues.values()){
                 Allocate last = queue.lastOfAllocates();
                 if (last != null){
-                    MappedByteBuffer mappedByteBuffer = dataChannel.map(FileChannel.MapMode.READ_ONLY, last.getPosition(), last.getCapacity());
+                    MappedByteBuffer mappedByteBuffer = dataChannel.map(FileChannel.MapMode.READ_WRITE, last.getPosition(), last.getCapacity());
                     short size;
                     long endOffset = last.getEnd() - 1;
                     while ((size = mappedByteBuffer.getShort()) > 0){
                         mappedByteBuffer.position(mappedByteBuffer.position() + size);
                         endOffset ++;
                     }
+                    mappedByteBuffer.position(mappedByteBuffer.position() - 2);
                     last.setEnd(endOffset);
+                    queue.resetOffset(endOffset + 1);
                     queue.mappedByteBuffer(mappedByteBuffer);
                 }
             }
