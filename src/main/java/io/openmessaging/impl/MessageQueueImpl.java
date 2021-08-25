@@ -204,6 +204,7 @@ public class MessageQueueImpl extends MessageQueue {
                 }
                 queue.lastOfAllocates().setEnd(offset);
                 mappedByteBuffer.put(wrapper);
+                mappedByteBuffer.force();
                 return offset;
             }finally {
                 queue.unlock();
