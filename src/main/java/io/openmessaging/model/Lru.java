@@ -35,10 +35,10 @@ public class Lru<K,V>{
         }
     }
 
-    public void remove(K k){
+    public V remove(K k){
         try{
             lock.lock();
-            map.remove(k);
+            return map.remove(k);
         }finally {
             lock.unlock();
         }

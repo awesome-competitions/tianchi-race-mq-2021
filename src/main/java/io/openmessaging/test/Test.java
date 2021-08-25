@@ -1,7 +1,7 @@
 package io.openmessaging.test;
 
-import io.openmessaging.MMapMessageQueueImpl;
 import io.openmessaging.MessageQueue;
+import io.openmessaging.impl.MessageQueueImpl;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -10,11 +10,11 @@ import java.util.function.Supplier;
 
 public class Test {
 
-    private final static int BATCH = 10000 * 100;
+    private final static int BATCH = 10000 * 10;
     private final static int QUEUE_SIZE = 5;
 
     public static void main(String[] args) throws InterruptedException {
-        MMapMessageQueueImpl mMapMessageQueue = new MMapMessageQueueImpl();
+        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl();
         List<Supplier<?>> suppliers = new ArrayList<>();
 
         for (int i = 1; i <= QUEUE_SIZE; i ++){

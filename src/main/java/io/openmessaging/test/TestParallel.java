@@ -1,9 +1,8 @@
 package io.openmessaging.test;
 
-import io.openmessaging.MMapMessageQueueImpl;
 import io.openmessaging.MessageQueue;
+import io.openmessaging.impl.MessageQueueImpl;
 
-import java.awt.font.FontRenderContext;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
@@ -15,7 +14,7 @@ public class TestParallel {
     private final static int PARALLEL_SIZE = 1000;
 
     public static void main(String[] args) throws InterruptedException {
-        MMapMessageQueueImpl mMapMessageQueue = new MMapMessageQueueImpl();
+        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl();
         List<Supplier<?>> suppliers = new ArrayList<>();
         Map<Long, Integer> results = new ConcurrentHashMap<>();
 

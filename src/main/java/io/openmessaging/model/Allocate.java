@@ -1,10 +1,14 @@
 package io.openmessaging.model;
 
+import java.nio.MappedByteBuffer;
+
 public class Allocate {
 
     private long start;
 
     private long end;
+
+    private int index;
 
     private long position;
 
@@ -47,5 +51,13 @@ public class Allocate {
 
     public void setCapacity(long capacity) {
         this.capacity = capacity;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
     }
 }
