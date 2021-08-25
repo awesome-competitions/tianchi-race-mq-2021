@@ -1,5 +1,6 @@
 package io.openmessaging.utils;
 
+import io.openmessaging.model.CachedReader;
 import sun.misc.Cleaner;
 import sun.nio.ch.DirectBuffer;
 
@@ -13,5 +14,4 @@ public class BufferUtils {
             var1.clean();
         }
     }
-
 }

@@ -15,15 +15,14 @@ import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class MessageQueueImpl extends MessageQueue {
 
-    static final Map<String, Topic> topics = new ConcurrentHashMap<>();
-    static final long pageSize = 1024 * 1024 * 16;    // 4M
-    static final int cachedReaderSize = 600;
-    static final String root = "D://test/mmap/";
+    public static String DATA_ROOT = "D://test/mmap/";              // data root dir.
+    public static long DATA_MAPPED_PAGE_SIZE = 1024 * 1024 * 16;    // mmap mapping size of file, unit is KB.
+    public static int DATA_CACHED_READER_SIZE = 300;                // reader cached size.
+
+    final static Map<String, Topic> TOPICS = new ConcurrentHashMap<>();
 
     @Override
     public long append(String topic, int queueId, ByteBuffer data) {
@@ -56,7 +55,7 @@ public class MessageQueueImpl extends MessageQueue {
     }
 
     public static Topic getTopic(String topic){
-        return topics.computeIfAbsent(topic, t -> {
+        return TOPICS.computeIfAbsent(topic, t -> {
             try {
                 return new Topic(t);
             } catch (FileNotFoundException e) {
@@ -75,10 +74,12 @@ public class MessageQueueImpl extends MessageQueue {
 
         public Topic(String topic) throws FileNotFoundException {
             this.queues = new ConcurrentHashMap<>();
-            this.cachedReaders = new Lru<>(cachedReaderSize);
-            this.dataChannel = new RandomAccessFile(root + topic + ".db", "rw").getChannel();
-            this.idxChannel = new RandomAccessFile(root + topic + ".idx", "rw").getChannel();
-            this.pageOffset = new AtomicInteger(0);
+            this.cachedReaders = new Lru<>(DATA_CACHED_READER_SIZE, cachedReader -> {
+                BufferUtils.clean(cachedReader.getMappedByteBuffer());
+            });
+            this.dataChannel = new RandomAccessFile(DATA_ROOT + topic + ".db", "rw").getChannel();
+            this.idxChannel = new RandomAccessFile(DATA_ROOT + topic + ".idx", "rw").getChannel();
+            this.pageOffset = new AtomicInteger();
         }
 
         public List<ByteBuffer> read(int queueId, long offset, int num) throws IOException {
@@ -87,13 +88,12 @@ public class MessageQueueImpl extends MessageQueue {
             if (cachedReader == null){
                 return null;
             }
-
             long startOffset = offset;
             long endOffset = offset + num;
             MappedByteBuffer mappedByteBuffer = cachedReader.getMappedByteBuffer();
             Allocate allocate = cachedReader.getAllocate();
             List<ByteBuffer> results = new ArrayList<>(num);
-            byte[] data = null;
+            byte[] data;
             while(startOffset < endOffset){
                 if (allocate.getEnd() < startOffset){
                     allocate = queue.next(allocate);
@@ -147,7 +147,7 @@ public class MessageQueueImpl extends MessageQueue {
                 MappedByteBuffer mappedByteBuffer = queue.mappedByteBuffer();
                 if (mappedByteBuffer == null || mappedByteBuffer.remaining() < wrapper.capacity()){
                     if (mappedByteBuffer != null) BufferUtils.clean(mappedByteBuffer);
-                    Allocate allocate = new Allocate(offset, 0, pageOffset.getAndAdd(1) * pageSize, pageSize);
+                    Allocate allocate = new Allocate(offset, 0, pageOffset.getAndAdd(1) * DATA_MAPPED_PAGE_SIZE, DATA_MAPPED_PAGE_SIZE);
                     queue.allocate(allocate);
                     mappedByteBuffer = dataChannel.map(FileChannel.MapMode.READ_WRITE, allocate.getPosition(), allocate.getCapacity());
                     queue.mappedByteBuffer(mappedByteBuffer);

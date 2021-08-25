@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
 
 public class Lru<K,V>{
 
@@ -15,14 +16,19 @@ public class Lru<K,V>{
 
     private ReentrantLock lock;
 
-    public Lru(int core){
+    public Lru(int core, Consumer<V> consumer){
         this.limit = core;
         this.lock = new ReentrantLock();
         map = new LinkedHashMap<K, V>(){
             @Override
             protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
-                return this.size() > limit && super.removeEldestEntry(eldest);
+                boolean removed = size() > limit;
+                if (removed){
+                    consumer.accept(eldest.getValue());
+                }
+                return removed;
             }
+
         };
     }
 
@@ -46,6 +52,10 @@ public class Lru<K,V>{
 
     public V get(K k){
         return map.get(k);
+    }
+
+    public int size(){
+        return map.size();
     }
 
 }
