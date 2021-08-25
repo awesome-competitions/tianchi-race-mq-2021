@@ -27,6 +27,12 @@ public class MessageQueueImpl extends MessageQueue {
 
     public MessageQueueImpl(){
         File root = new File(DATA_ROOT);
+        if (! root.exists()){
+            boolean suc = root.mkdirs();
+            if (! suc){
+                throw new RuntimeException("create root fail");
+            }
+        }
         if (! root.isDirectory()){
             throw new RuntimeException("root is not dir");
         }
@@ -47,7 +53,7 @@ public class MessageQueueImpl extends MessageQueue {
             File idx = ids.get(db.getKey());
             if (idx != null){
                 try {
-                    TOPICS.put(db.getKey(), Topic.parse(db.getKey(), idx));
+                    TOPICS.put(db.getKey(), Topic.parse(db.getKey()));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -142,14 +148,16 @@ public class MessageQueueImpl extends MessageQueue {
                 results.add(ByteBuffer.wrap(data));
                 startOffset ++;
             }
-            cachedReader.setAllocate(allocate);
-            cachedReader.setMappedByteBuffer(mappedByteBuffer);
-            cachedReaders.put(new Tuple<>(queueId, startOffset), cachedReader);
+            if (allocate != null){
+                cachedReader.setAllocate(allocate);
+                cachedReader.setMappedByteBuffer(mappedByteBuffer);
+                cachedReaders.put(new Tuple<>(queueId, startOffset), cachedReader);
+            }
             return results;
         }
 
         public CachedReader getCachedReader(Queue queue, long offset) throws IOException {
-            CachedReader cachedReader = cachedReaders.get(new Tuple<>(queue.id(), offset));
+            CachedReader cachedReader = cachedReaders.remove(new Tuple<>(queue.id(), offset));
             if (cachedReader != null){
                 return cachedReader;
             }
@@ -180,7 +188,7 @@ public class MessageQueueImpl extends MessageQueue {
                 MappedByteBuffer mappedByteBuffer = queue.mappedByteBuffer();
                 if (mappedByteBuffer == null || mappedByteBuffer.remaining() < wrapper.capacity()){
                     if (mappedByteBuffer != null) BufferUtils.clean(mappedByteBuffer);
-                    Allocate allocate = new Allocate(offset, 0, pageOffset.getAndAdd(1) * DATA_MAPPED_PAGE_SIZE, DATA_MAPPED_PAGE_SIZE);
+                    Allocate allocate = new Allocate(offset, offset, pageOffset.getAndAdd(1) * DATA_MAPPED_PAGE_SIZE, DATA_MAPPED_PAGE_SIZE);
                     queue.allocate(allocate);
                     mappedByteBuffer = dataChannel.map(FileChannel.MapMode.READ_WRITE, allocate.getPosition(), allocate.getCapacity());
                     queue.mappedByteBuffer(mappedByteBuffer);
@@ -202,15 +210,33 @@ public class MessageQueueImpl extends MessageQueue {
             }
         }
 
-        public static Topic parse(String name, File idx) throws IOException {
-            RandomAccessFile raf = new RandomAccessFile(idx, "r");
-            FileChannel channel = raf.getChannel();
-            ByteBuffer index = ByteBuffer.allocate(26);
+        public static Topic parse(String name) throws IOException {
             Topic topic = new Topic(name);
-            while (channel.read(index) > 0){
+            FileChannel idxChannel = topic.idxChannel;
+            ByteBuffer index = ByteBuffer.allocate(26);
+            while (idxChannel.read(index) > 0){
                 index.flip();
-                topic.getQueue(index.getShort()).allocate(new Allocate(index.getLong(), 0, index.getLong(), index.getLong()));
+                short queueId = index.getShort();
+                long offset = index.getLong();
+                long pos = index.getLong();
+                long cap = index.getLong();
+                topic.getQueue(queueId).allocate(new Allocate(offset, offset, pos, cap));
                 index.clear();
+            }
+            FileChannel dataChannel = topic.dataChannel;
+            for (Queue queue: topic.queues.values()){
+                Allocate last = queue.lastOfAllocates();
+                if (last != null){
+                    MappedByteBuffer mappedByteBuffer = dataChannel.map(FileChannel.MapMode.READ_ONLY, last.getPosition(), last.getCapacity());
+                    short size;
+                    long endOffset = last.getEnd() - 1;
+                    while ((size = mappedByteBuffer.getShort()) > 0){
+                        mappedByteBuffer.position(mappedByteBuffer.position() + size);
+                        endOffset ++;
+                    }
+                    last.setEnd(endOffset);
+                    queue.mappedByteBuffer(mappedByteBuffer);
+                }
             }
             return topic;
         }

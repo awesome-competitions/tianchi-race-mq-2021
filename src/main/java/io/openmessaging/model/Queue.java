@@ -39,6 +39,9 @@ public class Queue {
 
     public synchronized void allocate(Allocate allocate){
         allocate.setIndex(allocates.size());
+        if (! allocates.isEmpty()){
+            lastOfAllocates().setEnd(allocate.getStart() - 1);
+        }
         allocates.add(allocate);
     }
 

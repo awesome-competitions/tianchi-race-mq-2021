@@ -33,8 +33,7 @@ public class CachedReader {
     }
 
     public CachedReader clone(){
-
-
-        MappedByteBuffer buffer = new MappedByteBuffer(mappedByteBuffer.mark(), mappedByteBuffer.position(), mappedByteBuffer.limit(), mappedByteBuffer.capacity(), BufferUtils.getFd(mappedByteBuffer));
+//        MappedByteBuffer buffer = BufferUtils.newInstance(-1, mappedByteBuffer.position(), mappedByteBuffer.limit(), mappedByteBuffer.capacity(), BufferUtils.getFd(mappedByteBuffer));
+        return new CachedReader(allocate.clone(), mappedByteBuffer);
     }
 }
