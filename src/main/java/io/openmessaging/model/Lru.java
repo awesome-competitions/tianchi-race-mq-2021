@@ -7,6 +7,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class Lru<K,V>{
 
@@ -52,6 +53,10 @@ public class Lru<K,V>{
 
     public V get(K k){
         return map.get(k);
+    }
+
+    public V computeIfAbsent(K k, V v){
+        return map.computeIfAbsent(k, k1 -> v);
     }
 
     public int size(){

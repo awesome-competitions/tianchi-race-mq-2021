@@ -1,6 +1,13 @@
 package io.openmessaging.model;
 
+import io.openmessaging.utils.BufferUtils;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Allocate {
 
@@ -63,13 +70,22 @@ public class Allocate {
         this.index = index;
     }
 
-    public Allocate clone(){
-        Allocate allocate = new Allocate();
-        allocate.start = this.start;
-        allocate.end = this.end;
-        allocate.index = this.index;
-        allocate.position = this.position;
-        allocate.capacity = this.capacity;
-        return allocate;
+    public List<ByteBuffer> load(FileChannel channel) {
+        MappedByteBuffer mappedByteBuffer;
+        try {
+            mappedByteBuffer = channel.map(FileChannel.MapMode.READ_ONLY, position, capacity);
+            short size;
+            List<ByteBuffer> records = new ArrayList<>();
+            while ((size = mappedByteBuffer.getShort()) > 0){
+                byte[] bytes = new byte[size];
+                mappedByteBuffer.get(bytes);
+                records.add(ByteBuffer.wrap(bytes));
+            }
+            BufferUtils.clean(mappedByteBuffer);
+            return records;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

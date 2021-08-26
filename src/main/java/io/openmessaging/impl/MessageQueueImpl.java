@@ -21,11 +21,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MessageQueueImpl extends MessageQueue {
 
     public static String DATA_ROOT = "D://test/mmap/";              // data root dir.
-    public static long DATA_MAPPED_PAGE_SIZE = 1024 * 1024 * 16;    // mmap mapping size of file, unit is KB.
+    public static int DATA_MAPPED_PAGE_SIZE = 1024 * 1024 * 16;    // mmap mapping size of file, unit is KB.
     public static int DATA_CACHED_READER_SIZE = 300;                // reader cached size.
+    public static int DATA_CACHED_PAGE_SIZE = 1024 * 1024 * 1024 / DATA_MAPPED_PAGE_SIZE;       // reader cached size.
     final static Map<String, Topic> TOPICS = new ConcurrentHashMap<>();
 
     public MessageQueueImpl(){
+//        loadDB();
+    }
+
+    private void loadDB(){
         File root = new File(DATA_ROOT);
         if (! root.exists()){
             boolean suc = root.mkdirs();
@@ -104,14 +109,12 @@ public class MessageQueueImpl extends MessageQueue {
         private final FileChannel dataChannel;
         private final FileChannel idxChannel;
         private final Map<Integer, Queue> queues;
-        private final Lru<Tuple<Integer, Long>, CachedReader> cachedReaders;
+        private final Lru<Tuple<Integer, Integer>, List<ByteBuffer>> cachedPages;
         private final AtomicInteger pageOffset;
 
         public Topic(String topic) throws FileNotFoundException {
             this.queues = new ConcurrentHashMap<>();
-            this.cachedReaders = new Lru<>(DATA_CACHED_READER_SIZE, cachedReader -> {
-                BufferUtils.clean(cachedReader.getMappedByteBuffer());
-            });
+            this.cachedPages = new Lru<>(DATA_CACHED_PAGE_SIZE, cachedReaders -> {});
             this.dataChannel = new RandomAccessFile(DATA_ROOT + topic + ".db", "rw").getChannel();
             this.idxChannel = new RandomAccessFile(DATA_ROOT + topic + ".idx", "rw").getChannel();
             this.pageOffset = new AtomicInteger();
@@ -123,55 +126,31 @@ public class MessageQueueImpl extends MessageQueue {
 
         public List<ByteBuffer> read(int queueId, long offset, int num) throws IOException {
             Queue queue = getQueue(queueId);
-            CachedReader cachedReader = getCachedReader(queue, offset);
-            if (cachedReader == null){
-                return null;
-            }
-            long startOffset = offset;
-            long endOffset = offset + num;
-            MappedByteBuffer mappedByteBuffer = cachedReader.getMappedByteBuffer();
-            Allocate allocate = cachedReader.getAllocate();
-            List<ByteBuffer> results = new ArrayList<>(num);
-            byte[] data;
-            while(startOffset < endOffset){
-                if (allocate.getEnd() < startOffset){
-                    allocate = queue.next(allocate);
-                    if (allocate == null){
-                        break;
-                    }
-                    BufferUtils.clean(mappedByteBuffer);
-                    mappedByteBuffer = dataChannel.map(FileChannel.MapMode.READ_ONLY, allocate.getPosition(), allocate.getCapacity());
-                    continue;
-                }
-                data = new byte[mappedByteBuffer.getShort()];
-                mappedByteBuffer.get(data);
-                results.add(ByteBuffer.wrap(data));
-                startOffset ++;
-            }
-            if (allocate != null){
-                cachedReader.setAllocate(allocate);
-                cachedReader.setMappedByteBuffer(mappedByteBuffer);
-                cachedReaders.put(new Tuple<>(queueId, startOffset), cachedReader);
-            }
-            return results;
-        }
-
-        public CachedReader getCachedReader(Queue queue, long offset) throws IOException {
-            CachedReader cachedReader = cachedReaders.remove(new Tuple<>(queue.id(), offset));
-            if (cachedReader != null){
-                return cachedReader;
-            }
             Allocate allocate = queue.search(offset);
             if (allocate == null){
                 return null;
             }
-            MappedByteBuffer mappedByteBuffer = dataChannel.map(FileChannel.MapMode.READ_ONLY, allocate.getPosition(), allocate.getCapacity());
-            long nextOffset = allocate.getStart();
-            while(nextOffset < offset){
-                nextOffset ++;
-                mappedByteBuffer.position(mappedByteBuffer.getShort() + mappedByteBuffer.position());
+            List<ByteBuffer> records = cachedPages.computeIfAbsent(new Tuple<>(queueId, allocate.getIndex()), allocate.load(dataChannel));
+            if (records == null){
+                return null;
             }
-            return new CachedReader(allocate, mappedByteBuffer);
+            long startOffset = offset;
+            long endOffset = offset + num - 1;
+            int startIndex = (int) (startOffset - allocate.getStart());
+            List<ByteBuffer> results = new ArrayList<>(num);
+            while (startOffset <= endOffset){
+                if (startIndex >= records.size()){
+                    allocate = queue.next(allocate);
+                    if (allocate == null){
+                        break;
+                    }
+                    records = cachedPages.computeIfAbsent(new Tuple<>(queueId, allocate.getIndex()), allocate.load(dataChannel));
+                    startIndex = 0;
+                }
+                results.add(records.get(startIndex ++));
+                startOffset ++;
+            }
+            return results;
         }
 
         public long write(int queueId, ByteBuffer data) throws IOException{
@@ -188,7 +167,7 @@ public class MessageQueueImpl extends MessageQueue {
                 MappedByteBuffer mappedByteBuffer = queue.mappedByteBuffer();
                 if (mappedByteBuffer == null || mappedByteBuffer.remaining() < wrapper.capacity()){
                     if (mappedByteBuffer != null) BufferUtils.clean(mappedByteBuffer);
-                    Allocate allocate = new Allocate(offset, offset, pageOffset.getAndAdd(1) * DATA_MAPPED_PAGE_SIZE, DATA_MAPPED_PAGE_SIZE);
+                    Allocate allocate = new Allocate(offset, offset, (long) pageOffset.getAndAdd(1) * DATA_MAPPED_PAGE_SIZE, DATA_MAPPED_PAGE_SIZE);
                     queue.allocate(allocate);
                     mappedByteBuffer = dataChannel.map(FileChannel.MapMode.READ_WRITE, allocate.getPosition(), allocate.getCapacity());
                     queue.mappedByteBuffer(mappedByteBuffer);
@@ -202,9 +181,14 @@ public class MessageQueueImpl extends MessageQueue {
                     idxChannel.write(idxBuffer);
                     idxChannel.force(true);
                 }
+                Allocate last = queue.lastOfAllocates();
+                List<ByteBuffer> records = cachedPages.get(new Tuple<>(queueId, last.getIndex()));
+                if (records != null){
+                    records.add(data);
+                }
                 queue.lastOfAllocates().setEnd(offset);
                 mappedByteBuffer.put(wrapper);
-                mappedByteBuffer.force();
+//                mappedByteBuffer.force();
                 return offset;
             }finally {
                 queue.unlock();
