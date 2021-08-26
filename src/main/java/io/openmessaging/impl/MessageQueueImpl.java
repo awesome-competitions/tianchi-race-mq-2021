@@ -79,8 +79,10 @@ public class MessageQueueImpl extends MessageQueue {
     @Override
     public Map<Integer, ByteBuffer> getRange(String topic, int queueId, long offset, int fetchNum) {
         try {
-            List<ByteBuffer> results = getTopic(topic).read(queueId, offset, fetchNum);
+            Topic topic1 = getTopic(topic);
+            List<ByteBuffer> results = topic1.read(queueId, offset, fetchNum);
             if (CollectionUtils.isEmpty(results)){
+                System.out.println("results is empty");
                 return null;
             }
             Map<Integer, ByteBuffer> byteBuffers = new HashMap<>();
@@ -128,10 +130,12 @@ public class MessageQueueImpl extends MessageQueue {
             Queue queue = getQueue(queueId);
             Allocate allocate = queue.search(offset);
             if (allocate == null){
+                System.out.println("allocate is null");
                 return null;
             }
             List<ByteBuffer> records = cachedPages.computeIfAbsent(new Tuple<>(queueId, allocate.getIndex()), allocate.load(dataChannel));
             if (records == null){
+                System.out.println("records is null");
                 return null;
             }
             long startOffset = offset;
@@ -188,7 +192,7 @@ public class MessageQueueImpl extends MessageQueue {
                 }
                 queue.lastOfAllocates().setEnd(offset);
                 mappedByteBuffer.put(wrapper);
-//                mappedByteBuffer.force();
+                mappedByteBuffer.force();
                 return offset;
             }finally {
                 queue.unlock();
