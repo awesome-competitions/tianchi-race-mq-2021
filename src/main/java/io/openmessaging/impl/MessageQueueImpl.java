@@ -82,7 +82,6 @@ public class MessageQueueImpl extends MessageQueue {
             Topic topic1 = getTopic(topic);
             List<ByteBuffer> results = topic1.read(queueId, offset, fetchNum);
             if (CollectionUtils.isEmpty(results)){
-                System.out.println("results is empty");
                 return null;
             }
             Map<Integer, ByteBuffer> byteBuffers = new HashMap<>();
@@ -126,16 +125,18 @@ public class MessageQueueImpl extends MessageQueue {
             return queues.computeIfAbsent(queueId, Queue::new);
         }
 
+        public List<ByteBuffer> getRecords(int queueId, final Allocate allocate){
+            return cachedPages.computeIfAbsent(new Tuple<>(queueId, allocate.getIndex()), k -> allocate.load(dataChannel));
+        }
+
         public List<ByteBuffer> read(int queueId, long offset, int num) throws IOException {
             Queue queue = getQueue(queueId);
             Allocate allocate = queue.search(offset);
             if (allocate == null){
-                System.out.println("allocate is null");
                 return null;
             }
-            List<ByteBuffer> records = cachedPages.computeIfAbsent(new Tuple<>(queueId, allocate.getIndex()), allocate.load(dataChannel));
+            List<ByteBuffer> records = getRecords(queueId, allocate);
             if (records == null){
-                System.out.println("records is null");
                 return null;
             }
             long startOffset = offset;
@@ -145,10 +146,8 @@ public class MessageQueueImpl extends MessageQueue {
             while (startOffset <= endOffset){
                 if (startIndex >= records.size()){
                     allocate = queue.next(allocate);
-                    if (allocate == null){
-                        break;
-                    }
-                    records = cachedPages.computeIfAbsent(new Tuple<>(queueId, allocate.getIndex()), allocate.load(dataChannel));
+                    if (allocate == null) break;
+                    records = getRecords(queueId, allocate);
                     startIndex = 0;
                 }
                 results.add(records.get(startIndex ++));
@@ -192,7 +191,7 @@ public class MessageQueueImpl extends MessageQueue {
                 }
                 queue.lastOfAllocates().setEnd(offset);
                 mappedByteBuffer.put(wrapper);
-                mappedByteBuffer.force();
+//                mappedByteBuffer.force();
                 return offset;
             }finally {
                 queue.unlock();

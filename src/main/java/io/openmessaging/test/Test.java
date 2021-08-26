@@ -10,8 +10,8 @@ import java.util.function.Supplier;
 
 public class Test {
 
-    private final static int BATCH = 6000;
-    private final static int QUEUE_SIZE = 1;
+    private final static int BATCH = 10000 * 100;
+    private final static int QUEUE_SIZE = 2;
 
     public static void main(String[] args) throws InterruptedException {
         MessageQueueImpl mMapMessageQueue = new MessageQueueImpl();
@@ -20,9 +20,9 @@ public class Test {
         for (int i = 1; i <= QUEUE_SIZE; i ++){
             suppliers.add(test(mMapMessageQueue, "test1", i));
         }
-//        for (int i = 1; i <= QUEUE_SIZE; i ++){
-//            suppliers.add(test(mMapMessageQueue, "test2", i));
-//        }
+        for (int i = 1; i <= QUEUE_SIZE; i ++){
+            suppliers.add(test(mMapMessageQueue, "test2", i));
+        }
 
         final CountDownLatch cdl = new CountDownLatch(suppliers.size());
         ExecutorService POOLS = Executors.newFixedThreadPool(suppliers.size());
@@ -37,7 +37,7 @@ public class Test {
         return ()->{
             String[] inputs = new String[BATCH / 100];
             for (int i = 0; i < inputs.length; i ++){
-                inputs[i] = randomString((int) (Math.random() * 100));
+                inputs[i] = randomString((int) (Math.random() * 100) + 1);
             }
             long start = System.currentTimeMillis();
             for (int i = 0; i < BATCH; i ++){

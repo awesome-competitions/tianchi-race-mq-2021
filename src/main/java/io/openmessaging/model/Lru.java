@@ -55,8 +55,8 @@ public class Lru<K,V>{
         return map.get(k);
     }
 
-    public V computeIfAbsent(K k, V v){
-        return map.computeIfAbsent(k, k1 -> v);
+    public V computeIfAbsent(K k, Function<? super K, ? extends V> mappingFunction){
+        return map.computeIfAbsent(k, mappingFunction);
     }
 
     public int size(){
