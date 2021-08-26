@@ -44,14 +44,14 @@ public class Test {
                 mq.append(topic, queueId, ByteBuffer.wrap(inputs[i%inputs.length].getBytes()));
             }
             for (int i = 0; i < BATCH; i ++){
-                Map<Integer, ByteBuffer> data = mq.getRange(topic, queueId, i, 1);
                 try{
+                    Map<Integer, ByteBuffer> data = mq.getRange(topic, queueId, i, 1);
                     if (!Arrays.equals(data.get(0).array(), inputs[i%inputs.length].getBytes())){
                         System.out.println("topic " + topic + ", queue " + queueId + " read fail at " + i);
                         break;
                     }
-                }catch (NullPointerException e){
-                    System.out.println(data);
+                }catch (Exception e){
+                    System.out.println(i);
                     throw e;
                 }
             }

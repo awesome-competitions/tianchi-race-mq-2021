@@ -21,13 +21,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MessageQueueImpl extends MessageQueue {
 
     public static String DATA_ROOT = "D://test/mmap/";              // data root dir.
-    public static int DATA_MAPPED_PAGE_SIZE = 1024 * 1024 * 16;    // mmap mapping size of file, unit is KB.
+    public static int DATA_MAPPED_PAGE_SIZE = 1024 * 1024 * 4;    // mmap mapping size of file, unit is KB.
     public static int DATA_CACHED_READER_SIZE = 300;                // reader cached size.
     public static int DATA_CACHED_PAGE_SIZE = 1024 * 1024 * 1024 / DATA_MAPPED_PAGE_SIZE;       // reader cached size.
     final static Map<String, Topic> TOPICS = new ConcurrentHashMap<>();
 
     public MessageQueueImpl(){
 //        loadDB();
+    }
+
+    private void cleanDB(){
+
     }
 
     private void loadDB(){

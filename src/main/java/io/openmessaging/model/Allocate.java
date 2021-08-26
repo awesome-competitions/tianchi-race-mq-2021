@@ -76,7 +76,7 @@ public class Allocate {
             mappedByteBuffer = channel.map(FileChannel.MapMode.READ_ONLY, position, capacity);
             short size;
             List<ByteBuffer> records = new ArrayList<>();
-            while ((size = mappedByteBuffer.getShort()) > 0){
+            while (mappedByteBuffer.remaining() > 2 && (size = mappedByteBuffer.getShort()) > 0){
                 byte[] bytes = new byte[size];
                 mappedByteBuffer.get(bytes);
                 records.add(ByteBuffer.wrap(bytes));
