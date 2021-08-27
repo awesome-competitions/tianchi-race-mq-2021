@@ -15,6 +15,7 @@ public class Test {
 
     public static void main(String[] args) throws InterruptedException {
         MessageQueueImpl mMapMessageQueue = new MessageQueueImpl();
+        mMapMessageQueue.cleanDB();
         List<Supplier<?>> suppliers = new ArrayList<>();
 
         for (int i = 1; i <= QUEUE_SIZE; i ++){

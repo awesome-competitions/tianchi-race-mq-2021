@@ -26,15 +26,22 @@ public class MessageQueueImpl extends MessageQueue {
     public static int DATA_CACHED_PAGE_SIZE = 1024 * 1024 * 1024 / DATA_MAPPED_PAGE_SIZE;       // reader cached size.
     final static Map<String, Topic> TOPICS = new ConcurrentHashMap<>();
 
-    public MessageQueueImpl(){
-//        loadDB();
+    public MessageQueueImpl(){}
+
+    public void cleanDB(){
+        File root = new File(DATA_ROOT);
+        if (root.exists() && root.isDirectory()){
+            if (ArrayUtils.isNotEmpty(root.listFiles())){
+                for (File file: Objects.requireNonNull(root.listFiles())){
+                    if (file.exists() && ! file.isDirectory()){
+                        boolean deleted = file.delete();
+                    }
+                }
+            }
+        }
     }
 
-    private void cleanDB(){
-
-    }
-
-    private void loadDB(){
+    public void loadDB(){
         File root = new File(DATA_ROOT);
         if (! root.exists()){
             boolean suc = root.mkdirs();

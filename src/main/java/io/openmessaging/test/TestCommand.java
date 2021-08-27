@@ -10,7 +10,8 @@ import java.util.Scanner;
 public class TestCommand {
 
     public static void main(String[] args) {
-        MessageQueue messageQueue = new MessageQueueImpl();
+        MessageQueueImpl messageQueue = new MessageQueueImpl();
+        messageQueue.loadDB();
         Scanner in = new Scanner(System.in);
         String topic = "test_command";
         while(true){
