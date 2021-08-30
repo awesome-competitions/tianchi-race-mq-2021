@@ -14,6 +14,9 @@ public class CollectionUtils {
     }
 
     public static <T> T lastOf(List<T> list){
+        if (isEmpty(list)){
+            return null;
+        }
         return list.get(list.size() - 1);
     }
 }

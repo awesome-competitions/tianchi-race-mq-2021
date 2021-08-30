@@ -11,7 +11,7 @@ public class TestCommand {
 
     public static void main(String[] args) {
         MessageQueueImpl messageQueue = new MessageQueueImpl();
-        messageQueue.loadDB();
+        messageQueue.cleanDB();
         Scanner in = new Scanner(System.in);
         String topic = "test_command";
         while(true){
@@ -19,10 +19,10 @@ public class TestCommand {
             String[] commands = line.split(" ");
             long start = System.currentTimeMillis();
             if (commands[0].equals("set")){
-                long offset = messageQueue.append(topic, Integer.parseInt(commands[1]), ByteBuffer.wrap(commands[2].getBytes()));
+                long offset = messageQueue.append(topic, 1, ByteBuffer.wrap(commands[1].getBytes()));
                 System.out.print("new offset " + offset);
             }else{
-                Map<Integer, ByteBuffer> result = messageQueue.getRange(topic, Integer.parseInt(commands[1]), Integer.parseInt(commands[2]), 1);
+                Map<Integer, ByteBuffer> result = messageQueue.getRange(topic, 1, Integer.parseInt(commands[1]), 1);
                 System.out.print("result " + (result == null ? "null" : new String(result.get(0).array())));
             }
             long end = System.currentTimeMillis();

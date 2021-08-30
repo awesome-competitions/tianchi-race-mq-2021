@@ -146,7 +146,9 @@ public class MessageQueueImpl extends MessageQueue {
             if (allocate == null){
                 return null;
             }
-            List<ByteBuffer> records = getRecords(queueId, allocate);
+            int lastAllocateIndex = queue.lastOfAllocates().getIndex();
+
+            List<ByteBuffer> records = Objects.equals(allocate.getIndex(), lastAllocateIndex) ? queue.lastRecords() : getRecords(queueId, allocate);
             if (records == null){
                 return null;
             }
@@ -182,6 +184,7 @@ public class MessageQueueImpl extends MessageQueue {
                 if (mappedByteBuffer == null || mappedByteBuffer.remaining() < wrapper.capacity()){
                     if (mappedByteBuffer != null) BufferUtils.clean(mappedByteBuffer);
                     Allocate allocate = new Allocate(offset, offset, (long) pageOffset.getAndAdd(1) * DATA_MAPPED_PAGE_SIZE, DATA_MAPPED_PAGE_SIZE);
+                    queue.lastRecords().clear();
                     queue.allocate(allocate);
                     mappedByteBuffer = dataChannel.map(FileChannel.MapMode.READ_WRITE, allocate.getPosition(), allocate.getCapacity());
                     queue.mappedByteBuffer(mappedByteBuffer);
@@ -195,11 +198,7 @@ public class MessageQueueImpl extends MessageQueue {
                     idxChannel.write(idxBuffer);
                     idxChannel.force(true);
                 }
-                Allocate last = queue.lastOfAllocates();
-                List<ByteBuffer> records = cachedPages.get(new Tuple<>(queueId, last.getIndex()));
-                if (records != null){
-                    records.add(data);
-                }
+                queue.lastRecords().add(data);
                 queue.lastOfAllocates().setEnd(offset);
                 mappedByteBuffer.put(wrapper);
 //                mappedByteBuffer.force();

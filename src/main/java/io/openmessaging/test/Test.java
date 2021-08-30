@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 public class Test {
 
     private final static int BATCH = 10000 * 100;
-    private final static int QUEUE_SIZE = 2;
+    private final static int QUEUE_SIZE = 5;
 
     public static void main(String[] args) throws InterruptedException {
         MessageQueueImpl mMapMessageQueue = new MessageQueueImpl();
@@ -44,6 +44,10 @@ public class Test {
             for (int i = 0; i < BATCH; i ++){
                 mq.append(topic, queueId, ByteBuffer.wrap(inputs[i%inputs.length].getBytes()));
             }
+            long end = System.currentTimeMillis();
+            System.out.println("【write】 topic " + topic + ", queue " + queueId + " spend " + (end - start) + "ms");
+
+            start = System.currentTimeMillis();
             for (int i = 0; i < BATCH; i ++){
                 try{
                     Map<Integer, ByteBuffer> data = mq.getRange(topic, queueId, i, 1);
@@ -56,8 +60,9 @@ public class Test {
                     throw e;
                 }
             }
-            long end = System.currentTimeMillis();
-            System.out.println("topic " + topic + ", queue " + queueId + " spend " + (end - start) + "ms");
+            end = System.currentTimeMillis();
+            System.out.println("【read】 topic " + topic + ", queue " + queueId + " spend " + (end - start) + "ms");
+
             return null;
         };
     }

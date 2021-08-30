@@ -3,6 +3,7 @@ package io.openmessaging.model;
 import io.openmessaging.utils.CollectionUtils;
 import sun.java2d.pipe.AAShapePipe;
 
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +21,8 @@ public class Queue {
     private final ReentrantLock lock = new ReentrantLock();
 
     private MappedByteBuffer mappedByteBuffer;
+
+    private final List<ByteBuffer> lastRecords = new ArrayList<>();
 
     public Queue(int id){
         this.id = id;
@@ -39,6 +42,10 @@ public class Queue {
 
     public MappedByteBuffer mappedByteBuffer(){
         return mappedByteBuffer;
+    }
+
+    public List<ByteBuffer> lastRecords() {
+        return lastRecords;
     }
 
     public synchronized void allocate(Allocate allocate){
