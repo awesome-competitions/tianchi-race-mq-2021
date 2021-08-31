@@ -15,16 +15,17 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MessageQueueImpl extends MessageQueue {
 
     public static String DATA_ROOT = "D://test/mmap/";              // data root dir.
-    public static int DATA_MAPPED_PAGE_SIZE = 1024 * 1024 * 4;    // mmap mapping size of file, unit is KB.
+    public static int DATA_MAPPED_PAGE_SIZE = 1024 * 1024 * 16;    // mmap mapping size of file, unit is KB.
     public static int DATA_CACHED_READER_SIZE = 300;                // reader cached size.
     public static int DATA_CACHED_PAGE_SIZE = 1024 * 1024 * 1024 / DATA_MAPPED_PAGE_SIZE;       // reader cached size.
     final static Map<String, Topic> TOPICS = new ConcurrentHashMap<>();
+    public static final ExecutorService TPE = Executors.newFixedThreadPool(50);
 
     public MessageQueueImpl(){}
 
@@ -121,7 +122,7 @@ public class MessageQueueImpl extends MessageQueue {
         private final FileChannel dataChannel;
         private final FileChannel idxChannel;
         private final Map<Integer, Queue> queues;
-        private final Lru<Tuple<Integer, Integer>, List<ByteBuffer>> cachedPages;
+        private final Lru<Tuple<Integer, Integer>, FutureTask<List<ByteBuffer>>> cachedPages;
         private final AtomicInteger pageOffset;
 
         public Topic(String topic) throws FileNotFoundException {
@@ -136,8 +137,39 @@ public class MessageQueueImpl extends MessageQueue {
             return queues.computeIfAbsent(queueId, Queue::new);
         }
 
-        public List<ByteBuffer> getRecords(int queueId, final Allocate allocate){
-            return cachedPages.computeIfAbsent(new Tuple<>(queueId, allocate.getIndex()), k -> allocate.load(dataChannel));
+        public List<ByteBuffer> getRecords(Queue queue, final Allocate allocate){
+            return getRecords(queue, allocate, true);
+        }
+
+        public List<ByteBuffer> getRecords(Queue queue, final Allocate allocate, boolean load){
+            try {
+                FutureTask<List<ByteBuffer>> futureTask = getFutureRecords(queue.id(), allocate, load);
+                if (futureTask == null){
+                    return null;
+                }
+                return futureTask.get();
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            } finally {
+                if (load){
+                    Allocate nextAllocate = queue.next(allocate);
+                    if (nextAllocate != null){
+                        getFutureRecords(queue.id(), nextAllocate, true);
+                    }
+                }
+            }
+            return null;
+        }
+
+        public FutureTask<List<ByteBuffer>> getFutureRecords(int queueId, final Allocate allocate, boolean load){
+            if (! load){
+                return cachedPages.get(new Tuple<>(queueId, allocate.getIndex()));
+            }
+            return cachedPages.computeIfAbsent(new Tuple<>(queueId, allocate.getIndex()), k -> {
+                FutureTask<List<ByteBuffer>> futureTask = new FutureTask<>(()-> allocate.load(dataChannel));
+                TPE.execute(futureTask);
+                return futureTask;
+            });
         }
 
         public List<ByteBuffer> read(int queueId, long offset, int num) throws IOException {
@@ -146,9 +178,7 @@ public class MessageQueueImpl extends MessageQueue {
             if (allocate == null){
                 return null;
             }
-            int lastAllocateIndex = queue.lastOfAllocates().getIndex();
-
-            List<ByteBuffer> records = Objects.equals(allocate.getIndex(), lastAllocateIndex) ? queue.lastRecords() : getRecords(queueId, allocate);
+            List<ByteBuffer> records = getRecords(queue, allocate);
             if (records == null){
                 return null;
             }
@@ -160,7 +190,7 @@ public class MessageQueueImpl extends MessageQueue {
                 if (startIndex >= records.size()){
                     allocate = queue.next(allocate);
                     if (allocate == null) break;
-                    records = getRecords(queueId, allocate);
+                    records = getRecords(queue, allocate);
                     startIndex = 0;
                 }
                 results.add(records.get(startIndex ++));
@@ -180,10 +210,11 @@ public class MessageQueueImpl extends MessageQueue {
                 wrapper.put(data);
                 wrapper.flip();
 
+                Allocate allocate = queue.lastOfAllocates();
                 MappedByteBuffer mappedByteBuffer = queue.mappedByteBuffer();
                 if (mappedByteBuffer == null || mappedByteBuffer.remaining() < wrapper.capacity()){
                     if (mappedByteBuffer != null) BufferUtils.clean(mappedByteBuffer);
-                    Allocate allocate = new Allocate(offset, offset, (long) pageOffset.getAndAdd(1) * DATA_MAPPED_PAGE_SIZE, DATA_MAPPED_PAGE_SIZE);
+                    allocate = new Allocate(offset, offset, (long) pageOffset.getAndAdd(1) * DATA_MAPPED_PAGE_SIZE, DATA_MAPPED_PAGE_SIZE);
                     queue.lastRecords().clear();
                     queue.allocate(allocate);
                     mappedByteBuffer = dataChannel.map(FileChannel.MapMode.READ_WRITE, allocate.getPosition(), allocate.getCapacity());
@@ -198,8 +229,11 @@ public class MessageQueueImpl extends MessageQueue {
                     idxChannel.write(idxBuffer);
                     idxChannel.force(true);
                 }
-                queue.lastRecords().add(data);
-                queue.lastOfAllocates().setEnd(offset);
+                List<ByteBuffer> records = getRecords(queue, allocate, false);
+                if (records != null){
+                    records.add(data);
+                }
+                allocate.setEnd(offset);
                 mappedByteBuffer.put(wrapper);
 //                mappedByteBuffer.force();
                 return offset;

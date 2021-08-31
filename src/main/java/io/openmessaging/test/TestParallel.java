@@ -11,10 +11,11 @@ import java.util.function.Supplier;
 public class TestParallel {
 
     private final static int BATCH = 10000 * 100;
-    private final static int PARALLEL_SIZE = 1000;
+    private final static int PARALLEL_SIZE = 10;
 
     public static void main(String[] args) throws InterruptedException {
         MessageQueueImpl mMapMessageQueue = new MessageQueueImpl();
+        mMapMessageQueue.cleanDB();
         List<Supplier<?>> suppliers = new ArrayList<>();
         Map<Long, Integer> results = new ConcurrentHashMap<>();
 
@@ -44,6 +45,7 @@ public class TestParallel {
         System.out.println("spend time " + (end - start) + "ms");
 
         POOLS.shutdown();
+        MessageQueueImpl.TPE.shutdown();
     }
 
     public static Supplier<?> test(LinkedBlockingQueue<Integer> msgQueue, MessageQueue mq, Map<Long, Integer> results, String topic, Integer queueId){

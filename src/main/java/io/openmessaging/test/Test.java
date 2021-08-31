@@ -32,6 +32,7 @@ public class Test {
         }
         cdl.await();
         POOLS.shutdown();
+        MessageQueueImpl.TPE.shutdown();
     }
 
     public static Supplier<?> test(MessageQueue mq, String topic, Integer queueId){
