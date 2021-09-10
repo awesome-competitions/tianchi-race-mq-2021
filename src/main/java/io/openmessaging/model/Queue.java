@@ -14,74 +14,45 @@ public class Queue {
 
     private int id;
 
-    private final List<Allocate> allocates = new ArrayList<>();
+    private Segment last;
 
-    private final AtomicLong offset = new AtomicLong();
+    private List<Segment> segments;
 
-    private final ReentrantLock lock = new ReentrantLock();
+    private int offset;
 
-    private MappedByteBuffer mappedByteBuffer;
-
-    private final List<ByteBuffer> lastRecords = new ArrayList<>();
-
-    public Queue(int id){
+    public Queue(int id) {
         this.id = id;
+        this.segments = new ArrayList<>();
     }
 
-    public long nextOffset(){
-        return offset.getAndIncrement();
+    public int getAndIncrementOffset(){
+        return offset++;
     }
 
-    public void resetOffset(long offset){
-        this.offset.set(offset);
+    public void addSegment(Segment seg){
+        seg.setIdx(this.segments.size());
+        this.segments.add(seg);
+        this.last = seg;
     }
 
-    public void mappedByteBuffer(MappedByteBuffer mappedByteBuffer){
-        this.mappedByteBuffer = mappedByteBuffer;
-    }
-
-    public MappedByteBuffer mappedByteBuffer(){
-        return mappedByteBuffer;
-    }
-
-    public List<ByteBuffer> lastRecords() {
-        return lastRecords;
-    }
-
-    public synchronized void allocate(Allocate allocate){
-        allocate.setIndex(allocates.size());
-        if (! allocates.isEmpty()){
-            lastOfAllocates().setEnd(allocate.getStart() - 1);
-        }
-        allocates.add(allocate);
-    }
-
-    public Allocate lastOfAllocates(){
-        return CollectionUtils.lastOf(allocates);
-    }
-
-    public void lock(){
-        lock.lock();
-    }
-
-    public void unlock(){
-        lock.unlock();
-    }
-
-    public int id() {
+    public int getId(){
         return id;
     }
 
-    public Allocate search(long offset){
-        if (allocates.isEmpty()){
+    public Segment getLast() {
+        return last;
+    }
+
+    public Segment search(long offset){
+        if (segments.isEmpty()){
             return null;
         }
         int left = 0;
-        int right = allocates.size() - 1;
+        int right = segments.size() - 1;
         while(true){
             int index = (left + right) / 2;
-            Allocate mid = allocates.get(index);
-            if (offset < mid.getStart()){
+            Segment mid = segments.get(index);
+            if (offset < mid.getBeg()){
                 right = index - 1;
                 if (right < left) break;
             }else if (offset > mid.getEnd()){
@@ -94,11 +65,10 @@ public class Queue {
         return null;
     }
 
-    public Allocate next(Allocate allocate){
-        if (allocate.getIndex() > allocates.size() - 2){
-            return null;
+    public Segment nextSegment(Segment curr){
+        if (curr.getIdx() < segments.size() - 1){
+            return segments.get(curr.getIdx() + 1);
         }
-        return allocates.get(allocate.getIndex() + 1);
+        return null;
     }
-
 }

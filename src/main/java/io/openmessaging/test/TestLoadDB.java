@@ -62,7 +62,6 @@ public class TestLoadDB {
         System.out.println(offset + ":" + new String(values.get(0).array()));
 
         POOLS.shutdown();
-        MessageQueueImpl.TPE.shutdown();
     }
 
     public static Supplier<?> test(LinkedBlockingQueue<Integer> msgQueue, MessageQueue mq, Map<Long, Integer> results, String topic, Integer queueId){

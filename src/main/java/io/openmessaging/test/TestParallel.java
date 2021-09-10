@@ -45,7 +45,6 @@ public class TestParallel {
         System.out.println("spend time " + (end - start) + "ms");
 
         POOLS.shutdown();
-        MessageQueueImpl.TPE.shutdown();
     }
 
     public static Supplier<?> test(LinkedBlockingQueue<Integer> msgQueue, MessageQueue mq, Map<Long, Integer> results, String topic, Integer queueId){

@@ -10,8 +10,8 @@ import java.util.function.Supplier;
 
 public class Test {
 
-    private final static int BATCH = 10000 * 100;
-    private final static int QUEUE_SIZE = 5;
+    private final static int BATCH = 100;
+    private final static int QUEUE_SIZE = 2;
 
     public static void main(String[] args) throws InterruptedException {
         MessageQueueImpl mMapMessageQueue = new MessageQueueImpl();
@@ -21,9 +21,9 @@ public class Test {
         for (int i = 1; i <= QUEUE_SIZE; i ++){
             suppliers.add(test(mMapMessageQueue, "test1", i));
         }
-        for (int i = 1; i <= QUEUE_SIZE; i ++){
-            suppliers.add(test(mMapMessageQueue, "test2", i));
-        }
+//        for (int i = 1; i <= QUEUE_SIZE; i ++){
+//            suppliers.add(test(mMapMessageQueue, "test2", i));
+//        }
 
         final CountDownLatch cdl = new CountDownLatch(suppliers.size());
         ExecutorService POOLS = Executors.newFixedThreadPool(suppliers.size());
@@ -32,14 +32,14 @@ public class Test {
         }
         cdl.await();
         POOLS.shutdown();
-        MessageQueueImpl.TPE.shutdown();
     }
 
     public static Supplier<?> test(MessageQueue mq, String topic, Integer queueId){
         return ()->{
-            String[] inputs = new String[BATCH / 100];
+            String[] inputs = new String[BATCH / 1];
             for (int i = 0; i < inputs.length; i ++){
                 inputs[i] = randomString((int) (Math.random() * 100) + 1);
+//                inputs[i] = randomString(1);
             }
             long start = System.currentTimeMillis();
             for (int i = 0; i < BATCH; i ++){
@@ -48,21 +48,21 @@ public class Test {
             long end = System.currentTimeMillis();
             System.out.println("【write】 topic " + topic + ", queue " + queueId + " spend " + (end - start) + "ms");
 
-            start = System.currentTimeMillis();
-            for (int i = 0; i < BATCH; i ++){
-                try{
-                    Map<Integer, ByteBuffer> data = mq.getRange(topic, queueId, i, 1);
-                    if (!Arrays.equals(data.get(0).array(), inputs[i%inputs.length].getBytes())){
-                        System.out.println("topic " + topic + ", queue " + queueId + " read fail at " + i);
-                        break;
-                    }
-                }catch (Exception e){
-                    System.out.println(i);
-                    throw e;
-                }
-            }
-            end = System.currentTimeMillis();
-            System.out.println("【read】 topic " + topic + ", queue " + queueId + " spend " + (end - start) + "ms");
+//            start = System.currentTimeMillis();
+//            for (int i = 0; i < BATCH; i ++){
+//                try{
+//                    Map<Integer, ByteBuffer> data = mq.getRange(topic, queueId, i, 1);
+//                    if (!Arrays.equals(data.get(0).array(), inputs[i%inputs.length].getBytes())){
+//                        System.out.println("topic " + topic + ", queue " + queueId + " read fail at " + i);
+//                        break;
+//                    }
+//                }catch (Exception e){
+//                    System.out.println(i);
+//                    throw e;
+//                }
+//            }
+//            end = System.currentTimeMillis();
+//            System.out.println("【read】 topic " + topic + ", queue " + queueId + " spend " + (end - start) + "ms");
 
             return null;
         };

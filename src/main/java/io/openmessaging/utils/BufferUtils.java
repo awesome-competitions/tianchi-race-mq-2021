@@ -1,16 +1,13 @@
 package io.openmessaging.utils;
 
-import io.openmessaging.model.CachedReader;
 import sun.misc.Cleaner;
 import sun.nio.ch.DirectBuffer;
 
-import java.io.File;
 import java.io.FileDescriptor;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.MappedByteBuffer;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class BufferUtils {
 
