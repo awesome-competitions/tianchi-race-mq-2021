@@ -24,8 +24,8 @@ public class MessageQueueImpl extends MessageQueue {
 
 //    public static String DATA_ROOT = "D://test/mmap/";              // data root dir.
     public static String DATA_ROOT = "/essd/";              // data root dir.
-    public static int DATA_MAPPED_PAGE_SIZE = 1024 * 1024 * 4;    // mmap mapping size of file, unit is KB.
-    public static int DATA_CACHED_PAGE_SIZE = 40;       // reader cached size.
+    public static int DATA_MAPPED_PAGE_SIZE = 1024 * 1024 * 2;    // mmap mapping size of file, unit is KB.
+    public static int DATA_CACHED_PAGE_SIZE = 10;       // reader cached size.
     public static final ExecutorService TPE = Executors.newFixedThreadPool(50);
     private static final Logger log = LoggerFactory.getLogger(MessageQueueImpl.class);
 
