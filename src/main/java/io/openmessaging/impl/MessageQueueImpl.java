@@ -85,7 +85,7 @@ public class MessageQueueImpl extends MessageQueue {
     @Override
     public long append(String topic, int queueId, ByteBuffer data) {
         try {
-            log.info("topic {}, queueId {}, data {}", topic, queueId, new String(data.array()));
+            log.info("topic {}, queueId {}", topic, queueId);
             return getTopic(topic).write(queueId, data);
         } catch (IOException e) {
             e.printStackTrace();
