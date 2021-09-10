@@ -6,6 +6,8 @@ import io.openmessaging.model.Queue;
 import io.openmessaging.utils.ArrayUtils;
 import io.openmessaging.utils.BufferUtils;
 import io.openmessaging.utils.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -22,9 +24,10 @@ public class MessageQueueImpl extends MessageQueue {
 
 //    public static String DATA_ROOT = "D://test/mmap/";              // data root dir.
     public static String DATA_ROOT = "/essd/";              // data root dir.
-    public static int DATA_MAPPED_PAGE_SIZE = 1024 * 1024 * 16;    // mmap mapping size of file, unit is KB.
-    public static int DATA_CACHED_PAGE_SIZE = 1024 * 1024 * 1024 / DATA_MAPPED_PAGE_SIZE;       // reader cached size.
+    public static int DATA_MAPPED_PAGE_SIZE = 1024 * 1024 * 4;    // mmap mapping size of file, unit is KB.
+    public static int DATA_CACHED_PAGE_SIZE = 40;       // reader cached size.
     public static final ExecutorService TPE = Executors.newFixedThreadPool(50);
+    private static final Logger log = LoggerFactory.getLogger(MessageQueueImpl.class);
 
     private Map<String, Topic> topics = new ConcurrentHashMap<>();
 
@@ -82,6 +85,7 @@ public class MessageQueueImpl extends MessageQueue {
     @Override
     public long append(String topic, int queueId, ByteBuffer data) {
         try {
+            log.info("topic {}, queueId {}, data {}", topic, queueId, new String(data.array()));
             return getTopic(topic).write(queueId, data);
         } catch (IOException e) {
             e.printStackTrace();
