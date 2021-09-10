@@ -20,12 +20,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MessageQueueImpl extends MessageQueue {
 
-    public static String DATA_ROOT = "D://test/mmap/";              // data root dir.
+//    public static String DATA_ROOT = "D://test/mmap/";              // data root dir.
+    public static String DATA_ROOT = "/essd/";              // data root dir.
     public static int DATA_MAPPED_PAGE_SIZE = 1024 * 1024 * 16;    // mmap mapping size of file, unit is KB.
-    public static int DATA_CACHED_READER_SIZE = 300;                // reader cached size.
     public static int DATA_CACHED_PAGE_SIZE = 1024 * 1024 * 1024 / DATA_MAPPED_PAGE_SIZE;       // reader cached size.
-    final static Map<String, Topic> TOPICS = new ConcurrentHashMap<>();
     public static final ExecutorService TPE = Executors.newFixedThreadPool(50);
+
+    private Map<String, Topic> topics = new ConcurrentHashMap<>();
 
     public MessageQueueImpl(){}
 
@@ -70,7 +71,7 @@ public class MessageQueueImpl extends MessageQueue {
             File idx = ids.get(db.getKey());
             if (idx != null){
                 try {
-                    TOPICS.put(db.getKey(), Topic.parse(db.getKey()));
+                    topics.put(db.getKey(), Topic.parse(db.getKey()));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -107,8 +108,8 @@ public class MessageQueueImpl extends MessageQueue {
         return null;
     }
 
-    public static Topic getTopic(String topic){
-        return TOPICS.computeIfAbsent(topic, t -> {
+    public Topic getTopic(String topic){
+        return topics.computeIfAbsent(topic, t -> {
             try {
                 return new Topic(t);
             } catch (FileNotFoundException e) {
@@ -235,7 +236,7 @@ public class MessageQueueImpl extends MessageQueue {
                 }
                 allocate.setEnd(offset);
                 mappedByteBuffer.put(wrapper);
-//                mappedByteBuffer.force();
+                mappedByteBuffer.force();
                 return offset;
             }finally {
                 queue.unlock();

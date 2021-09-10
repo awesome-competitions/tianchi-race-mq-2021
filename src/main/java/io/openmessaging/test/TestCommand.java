@@ -11,7 +11,7 @@ public class TestCommand {
 
     public static void main(String[] args) {
         MessageQueueImpl messageQueue = new MessageQueueImpl();
-        messageQueue.cleanDB();
+        messageQueue.loadDB();
         Scanner in = new Scanner(System.in);
         String topic = "test_command";
         while(true){
