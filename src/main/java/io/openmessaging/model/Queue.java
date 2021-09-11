@@ -12,21 +12,32 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Queue {
 
-    private int id;
+    private final int id;
 
     private Segment last;
 
-    private List<Segment> segments;
+    private final List<Segment> segments;
 
     private int offset;
+
+    private final ReentrantLock lock;
 
     public Queue(int id) {
         this.id = id;
         this.segments = new ArrayList<>();
+        this.lock = new ReentrantLock();
     }
 
     public int getAndIncrementOffset(){
         return offset++;
+    }
+
+    public void lock(){
+        lock.lock();
+    }
+
+    public void unlock(){
+        lock.unlock();
     }
 
     public void addSegment(Segment seg){
@@ -52,6 +63,9 @@ public class Queue {
         while(true){
             int index = (left + right) / 2;
             Segment mid = segments.get(index);
+            if (mid == null){
+                System.out.println("bingo");
+            }
             if (offset < mid.getBeg()){
                 right = index - 1;
                 if (right < left) break;

@@ -16,8 +16,14 @@ public class FileWrapper {
         this.channel = file.getChannel();
     }
 
+    private void position(long pos) throws IOException {
+        if (channel.position() != pos){
+            channel.position(pos);
+        }
+    }
+
     public synchronized int write(long position, ByteBuffer src) throws IOException {
-        channel.position(position);
+        position(position);
         return write(src);
     }
 
@@ -28,7 +34,7 @@ public class FileWrapper {
     }
 
     public synchronized int read(long position, ByteBuffer dst) throws IOException {
-        channel.position(position);
+        position(position);
         return channel.read(dst);
     }
 

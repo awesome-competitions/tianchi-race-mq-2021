@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class DefaultMessageQueueImpl extends MessageQueue{
 
-    private MessageQueue queue = new MessageQueueImpl();
+    private final MessageQueue queue = new MessageQueueImpl();
 
     @Override
     public long append(String topic, int queueId, ByteBuffer data) {

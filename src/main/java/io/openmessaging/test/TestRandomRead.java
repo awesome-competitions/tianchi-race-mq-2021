@@ -2,6 +2,7 @@ package io.openmessaging.test;
 
 import io.openmessaging.MessageQueue;
 import io.openmessaging.impl.MessageQueueImpl;
+import io.openmessaging.model.Config;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ public class TestRandomRead {
     private final static int PARALLEL_SIZE = 2;
 
     public static void main(String[] args) throws InterruptedException {
-        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl();
+        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config("D:\\test\\nio\\", 1024 * 1024 * 16, 10, 1, 1));
         List<Supplier<?>> suppliers = new ArrayList<>();
         Map<Long, Integer> results = new ConcurrentHashMap<>();
 

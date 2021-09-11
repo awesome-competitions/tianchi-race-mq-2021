@@ -8,7 +8,7 @@ import java.nio.channels.FileChannel;
 public class IdxTest {
 
     public static void main(String[] args) throws IOException {
-        RandomAccessFile idx = new RandomAccessFile("D:\\test\\mmap\\test.idx", "r");
+        RandomAccessFile idx = new RandomAccessFile("D:\\test\\nio\\test3_0.idx", "r");
         FileChannel channel = idx.getChannel();
 
         ByteBuffer index = ByteBuffer.allocate(26);

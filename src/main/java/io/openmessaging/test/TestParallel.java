@@ -2,6 +2,7 @@ package io.openmessaging.test;
 
 import io.openmessaging.MessageQueue;
 import io.openmessaging.impl.MessageQueueImpl;
+import io.openmessaging.model.Config;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -10,11 +11,11 @@ import java.util.function.Supplier;
 
 public class TestParallel {
 
-    private final static int BATCH = 10000 * 100;
+    private final static int BATCH = 10000 * 10;
     private final static int PARALLEL_SIZE = 10;
 
     public static void main(String[] args) throws InterruptedException {
-        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl();
+        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config("D:\\test\\nio\\", 1024 * 1024 * 16, 10, 1, 1));
         mMapMessageQueue.cleanDB();
         List<Supplier<?>> suppliers = new ArrayList<>();
         Map<Long, Integer> results = new ConcurrentHashMap<>();

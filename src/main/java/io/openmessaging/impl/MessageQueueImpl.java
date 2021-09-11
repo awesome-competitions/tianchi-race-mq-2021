@@ -22,32 +22,27 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MessageQueueImpl extends MessageQueue {
 
-    private String dataDir;
+    private static final String DB_NAMED_FORMAT = "%s%s_%d.db";
+    private static final String IDX_NAMED_FORMAT = "%s%s_%d.idx";
+    private static final Logger LOGGER = LoggerFactory.getLogger(MessageQueueImpl.class);
 
-    private int pageSize;
-
-    private int cacheSize;
-
-    private Map<String, Topic> topics;
-
-    private static final Logger log = LoggerFactory.getLogger(MessageQueueImpl.class);
+    private final Config config;
+    private final Map<String, Topic> topics;
 
     public MessageQueueImpl() {
 //        this("/essd/", 1024 * 1024 * 16, 10);
-        this("D:\\test\\nio\\", 1024 * 1024 * 16, 10);
+        this(new Config("/essd/", 1024 * 1024 * 16, 1, 10, 10000));
     }
 
-    public MessageQueueImpl(String dataDir, int pageSize, int cacheSize) {
-        this.dataDir = dataDir;
-        this.pageSize = pageSize;
-        this.cacheSize = cacheSize;
+    public MessageQueueImpl(Config config) {
+        this.config = config;
         this.topics = new ConcurrentHashMap<>();
     }
 
     public void loadDB(){}
 
     public void cleanDB(){
-        File root = new File(dataDir);
+        File root = new File(config.getDataDir());
         if (root.exists() && root.isDirectory()){
             if (ArrayUtils.isEmpty(root.listFiles())) return;
             for (File file: Objects.requireNonNull(root.listFiles())){
@@ -67,10 +62,10 @@ public class MessageQueueImpl extends MessageQueue {
     }
 
     @Override
-    public Map<Integer, ByteBuffer> getRange(String topic, int queueId, long offset, int fetchNum) {
+    public Map<Integer, ByteBuffer> getRange(String name, int queueId, long offset, int fetchNum) {
         try {
-            Topic topic1 = getTopic(topic);
-            List<ByteBuffer> results = topic1.read(queueId, offset, fetchNum);
+            Topic topic = getTopic(name);
+            List<ByteBuffer> results = topic.read(queueId, offset, fetchNum);
             if (CollectionUtils.isEmpty(results)){
                 return null;
             }
@@ -88,7 +83,7 @@ public class MessageQueueImpl extends MessageQueue {
     public synchronized Topic getTopic(String name) throws FileNotFoundException {
         Topic topic = topics.get(name);
         if (topic == null){
-            topic = new Topic(name, dataDir, pageSize, cacheSize);
+            topic = new Topic(name, config);
             topics.put(name, topic);
         }
         return topic;
@@ -96,21 +91,30 @@ public class MessageQueueImpl extends MessageQueue {
 
     public static class Topic{
         private final String name;
-        private final FileWrapper db;
-        private final FileWrapper idx;
+        private final Config config;
+        private final List<Group> groups;
         private final Map<Integer, Queue> queues;
         private final Lru<Tuple<Integer, Integer>, List<ByteBuffer>> caches;
-        private final AtomicInteger pageOffset;
-        private final int pageSize;
 
-        public Topic(String name, String dataDir, int pageSize, int cacheSize) throws FileNotFoundException {
-            this.queues = new ConcurrentHashMap<>();
-            this.db = new FileWrapper(new RandomAccessFile(dataDir + name + ".db", "rw"));
-            this.idx = new FileWrapper(new RandomAccessFile(dataDir + name + ".idx", "rw"));
-            this.pageSize = pageSize;
-            this.pageOffset = new AtomicInteger();
-            this.caches = new Lru<>(cacheSize, List::clear);
+        public Topic(String name, Config config) throws FileNotFoundException {
             this.name = name;
+            this.config = config;
+            this.queues = new ConcurrentHashMap<>();
+            this.caches = new Lru<>(config.getCacheSize(), x->{});
+            this.groups = new ArrayList<>(config.getGroupSize());
+            initGroups();
+        }
+
+        private void initGroups() throws FileNotFoundException {
+            for (int i = 0; i < config.getGroupSize(); i ++){
+                FileWrapper db = new FileWrapper(new RandomAccessFile(String.format(DB_NAMED_FORMAT, config.getDataDir(), name, i), "rwd"));
+                FileWrapper idx = new FileWrapper(new RandomAccessFile(String.format(IDX_NAMED_FORMAT, config.getDataDir(), name, i), "rwd"));
+                groups.add(new Group(db, idx));
+            }
+        }
+
+        private Group getQueueGroup(Queue queue){
+            return groups.get(queue.getId() % config.getGroupSize());
         }
 
         public Queue getQueue(int queueId){
@@ -145,11 +149,13 @@ public class MessageQueueImpl extends MessageQueue {
         }
 
         public List<ByteBuffer> readData(Queue queue, final Segment seg){
-            return caches.computeIfAbsent(new Tuple<>(queue.getId(), seg.getIdx()), k -> seg.getData(db));
+            Group group = getQueueGroup(queue);
+            return caches.computeIfAbsent(new Tuple<>(queue.getId(), seg.getIdx()), k -> seg.getData(group.getDb()));
         }
 
         public long write(int queueId, ByteBuffer data) throws IOException{
             Queue queue = getQueue(queueId);
+            Group group = getQueueGroup(queue);
             int offset = queue.getAndIncrementOffset();
 
             ByteBuffer wrapper = ByteBuffer.allocate(2 + data.capacity());
@@ -159,7 +165,7 @@ public class MessageQueueImpl extends MessageQueue {
 
             Segment last = queue.getLast();
             if (last == null || ! last.writable(wrapper.capacity())){
-                last = new Segment(offset, offset, (long) pageOffset.getAndAdd(1) * pageSize, pageSize);
+                last = new Segment(offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
                 queue.addSegment(last);
                 ByteBuffer idxBuffer = ByteBuffer.allocate(26)
                         .putShort((short) queueId)
@@ -167,12 +173,13 @@ public class MessageQueueImpl extends MessageQueue {
                         .putLong(last.getPos())
                         .putLong(last.getCap());
                 idxBuffer.flip();
-                idx.write(idxBuffer);
+                group.getIdx().write(idxBuffer);
             }
             last.setEnd(offset);
-            last.write(db, wrapper);
+            last.write(group.getDb(), wrapper);
             return offset;
         }
 
     }
+
 }
