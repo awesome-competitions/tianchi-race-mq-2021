@@ -21,7 +21,11 @@ public class Cache {
     public Cache(String path, long heapSize, int cacheSize){
         if (Objects.nonNull(path)){
             this.heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
-            this.pMemBlocks = new Lru<>(cacheSize, MemoryAccessor::freeMemory);
+            this.pMemBlocks = new Lru<>(cacheSize, v -> {
+                if(v.isValid()){
+                    v.freeMemory();    
+                }
+            });
         }else{
             this.ssdBlocks = new Lru<>(cacheSize, v -> {});
         }
