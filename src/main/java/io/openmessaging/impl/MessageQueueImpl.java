@@ -40,7 +40,7 @@ public class MessageQueueImpl extends MessageQueue {
         LOGGER.info("start");
         this.config = config;
         this.topics = new ConcurrentHashMap<>();
-        this.cache = new Cache(config.getHeapDir(), config.getHeapSize(), config.getCacheSize());
+        this.cache = new Cache(config.getHeapDir(), config.getHeapSize(), config.getCacheSize(), config.getPageSize());
     }
 
     public void cleanDB(){

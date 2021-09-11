@@ -88,9 +88,9 @@ public class Segment {
         this.idx = idx;
     }
 
-    public List<byte[]> getData(FileWrapper fw) {
+    public List<ByteBuffer> getData(FileWrapper fw) {
         MappedByteBuffer mmb = null;
-        List<byte[]> data = null;
+        List<ByteBuffer> data = null;
         try {
             mmb = fw.getChannel().map(FileChannel.MapMode.READ_ONLY, pos, aos - pos);
             short size;
@@ -98,7 +98,7 @@ public class Segment {
             while (mmb.remaining() > 2 && (size = mmb.getShort()) > 0){
                 byte[] bytes = new byte[size];
                 mmb.get(bytes);
-                data.add(bytes);
+                data.add(ByteBuffer.wrap(bytes));
             }
         } catch (IOException e) {
             e.printStackTrace();

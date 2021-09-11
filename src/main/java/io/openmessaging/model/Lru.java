@@ -51,10 +51,6 @@ public class Lru<K,V>{
         }
     }
 
-    public V get(K k){
-        return map.get(k);
-    }
-
     public V computeIfAbsent(K k, Function<? super K, ? extends V> mappingFunction){
         try{
             lock.lock();

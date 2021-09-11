@@ -7,6 +7,7 @@ import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 import org.omg.CORBA.Any;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -14,11 +15,13 @@ public class Cache {
 
     private Heap heap;
 
+    private int blockSize;
+
     private Lru<Triple<String, Integer, Long>, AnyMemoryBlock> pMemBlocks;
 
-    private Lru<Triple<String, Integer, Long>, ByteBuffer> ssdBlocks;
+    private Lru<Triple<String, Integer, Long>, List<ByteBuffer>> ssdBlocks;
 
-    public Cache(String path, long heapSize, int cacheSize){
+    public Cache(String path, long heapSize, int cacheSize, int blockSize){
         if (Objects.nonNull(path)){
             this.heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
             this.pMemBlocks = new Lru<>(cacheSize, v -> {
@@ -29,34 +32,36 @@ public class Cache {
         }else{
             this.ssdBlocks = new Lru<>(cacheSize, v -> {});
         }
+        this.blockSize = blockSize;
     }
 
-    public ByteBuffer computeIfAbsent(Triple<String, Integer, Long> key, Segment segment, FileWrapper fw){
+    public List<ByteBuffer> computeIfAbsent(Triple<String, Integer, Long> key, Segment segment, FileWrapper fw){
         if (heap == null){
             return computeIfAbsentSSD(key, segment, fw);
         }
         return computeIfAbsentPEME(key, segment, fw);
     }
 
-    private ByteBuffer computeIfAbsentSSD(Triple<String, Integer, Long> key, Segment segment, FileWrapper fw){
-        return ssdBlocks.computeIfAbsent(key, k -> {
-            List<byte[]> data = segment.getData(fw);
-            long startOffset = segment.getBeg();
-            ByteBuffer buffer = null;
-            for (byte[] bytes: data){
-                ssdBlocks.computeIfAbsent(new Triple<>(key.getK1(), key.getK2(), startOffset), k1 -> ByteBuffer.wrap(bytes));
-                if (Objects.equals(startOffset, key.getK3())){
-                    buffer = ByteBuffer.wrap(bytes);
-                }
-                startOffset ++;
-            }
-            return buffer;
-        });
+    private List<ByteBuffer> computeIfAbsentSSD(Triple<String, Integer, Long> key, Segment segment, FileWrapper fw){
+        return ssdBlocks.computeIfAbsent(key, k -> segment.getData(fw));
     }
 
-    private ByteBuffer computeIfAbsentPEME(Triple<String, Integer, Long> key, Segment segment, FileWrapper fw){
+    private List<ByteBuffer> computeIfAbsentPEME(Triple<String, Integer, Long> key, Segment segment, FileWrapper fw){
+        List<ByteBuffer> results = new ArrayList<>();
         AnyMemoryBlock block = pMemBlocks.computeIfAbsent(key, k -> {
-            List<byte[]> data = segment.getData(fw);
+            List<ByteBuffer> buffers = segment.getData(fw);
+            if (buffers == null){
+                return null;
+            }
+            results.addAll(buffers);
+
+            AnyMemoryBlock anyMemoryBlock = heap.allocateMemoryBlock(bytes.length);
+            for( int i = 0; i < bytes.length; i ++){
+                anyMemoryBlock.setByte(i, bytes[i]);
+            }
+            return anyMemoryBlock;
+
+
             long startOffset = segment.getBeg();
             AnyMemoryBlock curr = null;
             for (byte[] bytes: data){
