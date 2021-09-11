@@ -1,5 +1,6 @@
 package io.openmessaging.impl;
 
+import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 import io.openmessaging.MessageQueue;
 import io.openmessaging.model.*;
 import io.openmessaging.model.Queue;
@@ -47,18 +48,38 @@ public class MessageQueueImpl extends MessageQueue {
             for (File file: Objects.requireNonNull(root.listFiles())){
                 if (file.exists() && ! file.isDirectory() && file.delete()){ }
             }
+            Map<String, Map<Integer, File>> dbs = new HashMap<>();
+            Map<String, Map<Integer, File>> ids = new HashMap<>();
+            Map<String, Map<Integer, File>> cur;
+            if (ArrayUtils.isNotEmpty(root.listFiles())){
+                for (File file: Objects.requireNonNull(root.listFiles())){
+                    if (! file.isDirectory()) {
+                        String[] infos = file.getName().substring(0, file.getName().lastIndexOf(".")).split("_");
+                        cur = file.getName().endsWith(".db") ? dbs : ids;
+                        cur.computeIfAbsent(infos[0], k -> new HashMap<>()).put(Integer.parseInt(infos[1]), file);
+                    }
+                }
+            }
         }
     }
 
     public void loadDB(){
-
+        File root = new File(config.getDataDir());
+        if (! root.exists() && ! root.mkdirs() && ! root.isDirectory()){
+            throw new RuntimeException("load db error");
+        }
     }
 
     final static AtomicLong SIZE = new AtomicLong(0);
+    final static AtomicInteger COUNT = new AtomicInteger(0);
     @Override
     public long append(String topic, int queueId, ByteBuffer data) {
         try {
-            LOGGER.info("topic {}, queueId {}, Size {}", topic, queueId, SIZE.getAndAdd(data.capacity()));
+            long count = COUNT.getAndIncrement();
+            long size = SIZE.getAndAdd(data.capacity());
+            if (count % 100000 == 0){
+                LOGGER.info("count {}, size {}", count, size);
+            }
             return getTopic(topic).write(queueId, data);
         } catch (IOException e) {
             e.printStackTrace();
