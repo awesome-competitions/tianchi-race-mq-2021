@@ -29,7 +29,7 @@ public class FileWrapper {
 
     public synchronized int write(ByteBuffer src) throws IOException {
         int pos = channel.write(src);
-        channel.force(true);
+//        channel.force(true);
         return pos;
     }
 

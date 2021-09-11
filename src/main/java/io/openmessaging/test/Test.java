@@ -11,11 +11,11 @@ import java.util.function.Supplier;
 
 public class Test {
 
-    private final static int BATCH = 100;
+    private final static int BATCH = 10000;
     private final static int QUEUE_SIZE = 10;
 
     public static void main(String[] args) throws InterruptedException {
-        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config("D:\\test\\nio\\", 1024 * 1024 * 16, 10, QUEUE_SIZE / 10, QUEUE_SIZE));
+        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config("D:\\test\\nio\\", 1024 * 1024 * 16, BATCH, QUEUE_SIZE / 10, QUEUE_SIZE));
         mMapMessageQueue.cleanDB();
         List<Supplier<?>> suppliers = new ArrayList<>();
 

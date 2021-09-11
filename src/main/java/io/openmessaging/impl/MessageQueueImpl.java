@@ -29,17 +29,18 @@ public class MessageQueueImpl extends MessageQueue {
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageQueueImpl.class);
 
     private final Config config;
+    private final Cache cache;
     private final Map<String, Topic> topics;
 
     public MessageQueueImpl() {
-//        this("/essd/", 1024 * 1024 * 16, 10);
-        this(new Config("/essd/", 1024 * 1024 * 16, 1, 10, 10000));
+        this(new Config("/essd/", "/pmem/nico", 1024 * 1024 * 1024 * 59L, 1024 * 1024 * 16, 4000000, 10, 10000));
     }
 
     public MessageQueueImpl(Config config) {
         LOGGER.info("start");
         this.config = config;
         this.topics = new ConcurrentHashMap<>();
+        this.cache = new Cache(config.getHeapDir(), config.getHeapSize(), config.getCacheSize());
     }
 
     public void cleanDB(){
@@ -97,8 +98,12 @@ public class MessageQueueImpl extends MessageQueue {
                 return null;
             }
             Map<Integer, ByteBuffer> byteBuffers = new HashMap<>();
-            for(int i = 0; i < results.size(); i ++){
-                byteBuffers.put(i, results.get(i));
+            for(int i = 0; i < fetchNum; i ++){
+                if (i < results.size()){
+                    byteBuffers.put(i, results.get(i));
+                }else{
+                    byteBuffers.put(i, null);
+                }
             }
             return byteBuffers;
         } catch (IOException e) {
@@ -110,7 +115,7 @@ public class MessageQueueImpl extends MessageQueue {
     public synchronized Topic getTopic(String name) throws FileNotFoundException {
         Topic topic = topics.get(name);
         if (topic == null){
-            topic = new Topic(name, config);
+            topic = new Topic(name, config, cache);
             topics.put(name, topic);
         }
         return topic;
@@ -121,14 +126,14 @@ public class MessageQueueImpl extends MessageQueue {
         private final Config config;
         private final List<Group> groups;
         private final Map<Integer, Queue> queues;
-        private final Lru<Tuple<Integer, Integer>, List<ByteBuffer>> caches;
+        private final Cache cache;
 
-        public Topic(String name, Config config) throws FileNotFoundException {
+        public Topic(String name, Config config, Cache cache) throws FileNotFoundException {
             this.name = name;
             this.config = config;
             this.queues = new ConcurrentHashMap<>();
-            this.caches = new Lru<>(config.getCacheSize(), x->{});
             this.groups = new ArrayList<>(config.getGroupSize());
+            this.cache = cache;
             initGroups();
         }
 
@@ -150,34 +155,22 @@ public class MessageQueueImpl extends MessageQueue {
 
         public List<ByteBuffer> read(int queueId, long offset, int num) throws IOException {
             Queue queue = getQueue(queueId);
+            Group group = getQueueGroup(queue);
             Segment seg = queue.search(offset);
             if (seg == null){
                 return null;
             }
-            List<ByteBuffer> data = readData(queue, seg);
-            if (data == null){
-                return null;
-            }
             long startOffset = offset;
             long endOffset = offset + num - 1;
-            int startIndex = (int) (startOffset - seg.getBeg());
-            List<ByteBuffer> results = new ArrayList<>(num);
+            List<ByteBuffer> buffers = new ArrayList<>(num);
             while (startOffset <= endOffset){
-                if (startIndex >= data.size()){
-                    seg = queue.nextSegment(seg);
-                    if (seg == null) break;
-                    data = readData(queue, seg);
-                    startIndex = 0;
+                if (startOffset > seg.getEnd() && (seg = queue.nextSegment(seg)) == null){
+                    return null;
                 }
-                results.add(data.get(startIndex ++));
+                buffers.add(cache.computeIfAbsent(new Triple<>(name, queue.getId(), offset), seg, group.getDb()));
                 startOffset ++;
             }
-            return results;
-        }
-
-        public List<ByteBuffer> readData(Queue queue, final Segment seg){
-            Group group = getQueueGroup(queue);
-            return caches.computeIfAbsent(new Tuple<>(queue.getId(), seg.getIdx()), k -> seg.getData(group.getDb()));
+            return buffers;
         }
 
         public long write(int queueId, ByteBuffer data) throws IOException{
