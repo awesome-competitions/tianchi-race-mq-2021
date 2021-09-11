@@ -40,8 +40,6 @@ public class MessageQueueImpl extends MessageQueue {
         this.topics = new ConcurrentHashMap<>();
     }
 
-    public void loadDB(){}
-
     public void cleanDB(){
         File root = new File(config.getDataDir());
         if (root.exists() && root.isDirectory()){
@@ -50,6 +48,10 @@ public class MessageQueueImpl extends MessageQueue {
                 if (file.exists() && ! file.isDirectory() && file.delete()){ }
             }
         }
+    }
+
+    public void loadDB(){
+
     }
 
     final static AtomicLong SIZE = new AtomicLong(0);

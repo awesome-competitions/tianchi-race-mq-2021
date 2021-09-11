@@ -92,7 +92,7 @@ public class Segment {
         MappedByteBuffer mmb = null;
         List<ByteBuffer> data = null;
         try {
-            mmb = fw.getChannel().map(FileChannel.MapMode.READ_ONLY, pos, aos);
+            mmb = fw.getChannel().map(FileChannel.MapMode.READ_ONLY, pos, aos - pos);
             short size;
             data = new ArrayList<>();
             while (mmb.remaining() > 2 && (size = mmb.getShort()) > 0){
