@@ -37,6 +37,7 @@ public class MessageQueueImpl extends MessageQueue {
     }
 
     public MessageQueueImpl(Config config) {
+        LOGGER.info("start");
         this.config = config;
         this.topics = new ConcurrentHashMap<>();
     }
