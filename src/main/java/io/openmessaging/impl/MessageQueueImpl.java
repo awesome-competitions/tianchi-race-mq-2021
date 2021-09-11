@@ -19,6 +19,7 @@ import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class MessageQueueImpl extends MessageQueue {
 
@@ -51,9 +52,11 @@ public class MessageQueueImpl extends MessageQueue {
         }
     }
 
+    final static AtomicLong SIZE = new AtomicLong(0);
     @Override
     public long append(String topic, int queueId, ByteBuffer data) {
         try {
+            LOGGER.info("topic {}, queueId {}, Size {}", topic, queueId, SIZE.getAndAdd(data.capacity()));
             return getTopic(topic).write(queueId, data);
         } catch (IOException e) {
             e.printStackTrace();
