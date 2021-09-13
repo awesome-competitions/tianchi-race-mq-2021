@@ -4,13 +4,14 @@ import com.intel.pmem.llpl.Heap;
 import com.intel.pmem.llpl.MemoryBlock;
 import io.openmessaging.consts.Const;
 import io.openmessaging.impl.MessageQueueImpl;
+import io.openmessaging.model.Config;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 public class DefaultMessageQueueImpl extends MessageQueue{
 
-    private final MessageQueue queue = new MessageQueueImpl();
+    private final MessageQueue queue = new MessageQueueImpl(new Config("", 1, 1, 1, 1));
 
     public DefaultMessageQueueImpl(){
         test();
