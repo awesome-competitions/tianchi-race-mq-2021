@@ -123,6 +123,9 @@ public class Segment {
     }
 
     public byte[] loadBytes(FileWrapper fw) {
+        if (aos == pos){
+            return null;
+        }
         MappedByteBuffer mmb = null;
         byte[] bytes = null;
         try {

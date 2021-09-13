@@ -4,6 +4,7 @@ import com.intel.pmem.llpl.AnyMemoryBlock;
 import com.intel.pmem.llpl.Heap;
 import io.openmessaging.model.*;
 import io.openmessaging.model.Readable;
+import io.openmessaging.utils.ArrayUtils;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -60,8 +61,8 @@ public class Cache {
     }
 
     public void write(Topic topic, Queue queue, Segment segment, ByteBuffer buffer){
-        Triple<String, Integer, Integer> key = new Triple<>(topic.getName(), queue.getId(), segment.getIdx());
-        AbstractMedium mm = heap == null ? dram.get(key) : pMem.get(key);
+        Group group = topic.getGroup(queue.getId());
+        AbstractMedium mm = loadMedium(topic, queue, group, segment);
         if (mm != null){
             mm.write(buffer);
         }
@@ -82,7 +83,9 @@ public class Cache {
         return pMem.computeIfAbsent(new Triple<>(topic.getName(), queue.getId(), segment.getIdx()), k -> {
             byte[] bytes = segment.loadBytes(group.getDb());
             AnyMemoryBlock anyMemoryBlock = heap.allocateMemoryBlock(blockSize);
-            anyMemoryBlock.copyFromArray(bytes, 0, 0, bytes.length);
+            if (bytes != null && bytes.length > 0){
+                anyMemoryBlock.copyFromArray(bytes, 0, 0, bytes.length);
+            }
             return new PMem(anyMemoryBlock, segment.getBeg(), segment.getAos() - segment.getPos());
         });
     }
