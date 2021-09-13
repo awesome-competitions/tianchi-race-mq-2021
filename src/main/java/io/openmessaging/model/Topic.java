@@ -76,8 +76,8 @@ public class Topic{
             group.getIdx().write(idxBuffer);
         }
         last.setEnd(offset);
-        cache.write(this, queue, last, wrapper);
-        wrapper.reset();
+//        cache.write(this, queue, last, wrapper);
+//        wrapper.reset();
         last.write(group.getDb(), wrapper);
         return offset;
     }
