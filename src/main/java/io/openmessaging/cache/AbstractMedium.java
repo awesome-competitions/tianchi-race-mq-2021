@@ -10,7 +10,7 @@ public abstract class AbstractMedium {
 
     public abstract List<ByteBuffer> read(long startOffset, long endOffset);
 
-    public abstract void write(ByteBuffer buffer);
+    public abstract void write(byte[] bytes);
 
     public abstract void clean();
 

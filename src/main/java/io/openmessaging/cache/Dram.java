@@ -5,6 +5,7 @@ import io.openmessaging.model.Segment;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Dram extends AbstractMedium{
 
@@ -23,7 +24,9 @@ public class Dram extends AbstractMedium{
     }
 
     @Override
-    public void write(ByteBuffer buffer) {
+    public void write(byte[] bytes) {
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+        buffer.flip();
         data.add(buffer);
     }
 

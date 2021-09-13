@@ -61,10 +61,10 @@ public class Cache {
         return buffers;
     }
 
-    public void write(Topic topic, Queue queue, Segment segment, ByteBuffer buffer){
+    public void write(Topic topic, Queue queue, Segment segment, byte[] bytes){
         AbstractMedium medium = getMedium(topic, queue, topic.getGroup(queue.getId()), segment);
         if (medium != null){
-            medium.write(buffer);
+            medium.write(bytes);
         }
     }
 

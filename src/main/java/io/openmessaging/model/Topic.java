@@ -6,6 +6,7 @@ import io.openmessaging.consts.Const;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,11 +58,16 @@ public class Topic{
         Group group = getGroup(queueId);
         int offset = queue.getAndIncrementOffset();
 
+        int n = data.remaining();
+        byte[] bytes = new byte[n];
+        for (int i = 0; i < n; i++){
+            bytes[i] = data.get();
+        }
+
         ByteBuffer wrapper = ByteBuffer.allocate(2 + data.capacity());
         wrapper.putShort((short) data.capacity());
-        wrapper.put(data);
+        wrapper.put(bytes);
         wrapper.flip();
-        wrapper.mark();
 
         Segment last = queue.getLast();
         if (last == null || ! last.writable(wrapper.capacity())){
@@ -77,8 +83,8 @@ public class Topic{
         }
         last.setEnd(offset);
         last.write(group.getDb(), wrapper);
-        wrapper.reset();
-        cache.write(this, queue, last, data);
+
+        cache.write(this, queue, last, bytes);
         return offset;
     }
 
