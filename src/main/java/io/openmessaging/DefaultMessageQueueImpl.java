@@ -5,21 +5,27 @@ import com.intel.pmem.llpl.MemoryBlock;
 import io.openmessaging.consts.Const;
 import io.openmessaging.impl.MessageQueueImpl;
 import io.openmessaging.model.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 public class DefaultMessageQueueImpl extends MessageQueue{
 
-    private final MessageQueue queue = new MessageQueueImpl();
+//    private final MessageQueue queue = new MessageQueueImpl();
+    private final MessageQueue queue = null;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMessageQueueImpl.class);
 
     public DefaultMessageQueueImpl(){
-//        test();
+        test();
     }
 
     @Override
     public long append(String topic, int queueId, ByteBuffer data) {
-        return queue.append(topic, queueId, data);
+        throw new RuntimeException("END");
+//        return queue.append(topic, queueId, data);
     }
 
     @Override
@@ -30,19 +36,25 @@ public class DefaultMessageQueueImpl extends MessageQueue{
     public void test(){
         String path = "/pmem/nico";
         Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, 53 * Const.G);
-        int n = 5;
-        long size = n * Const.G;
-        MemoryBlock block = heap.allocateMemoryBlock(size);
-        byte[] bytes = new byte[1024 * 1024 * 16];
 
-        long start = System.currentTimeMillis();
-        for (int i = 0; i < n * 64; i ++){
-            block.copyFromArray(bytes, 0, i * Const.M * 16, bytes.length);
+        for (int i = 0; i < 100; i ++){
+            MemoryBlock block = heap.allocateMemoryBlock(64 * Const.M);
+            LOGGER.info("alloc");
         }
-        for (int i = 0; i < n * 64; i ++){
-            block.copyToArray(i * Const.M * 16, bytes, 0, bytes.length);
-        }
-        long end = System.currentTimeMillis();
-        System.out.println((end - start));
+
+//        int n = 5;
+//        long size = n * Const.G;
+//        MemoryBlock block = heap.allocateMemoryBlock(size);
+//        byte[] bytes = new byte[1024 * 1024 * 16];
+//
+//        long start = System.currentTimeMillis();
+//        for (int i = 0; i < n * 64; i ++){
+//            block.copyFromArray(bytes, 0, i * Const.M * 16, bytes.length);
+//        }
+//        for (int i = 0; i < n * 64; i ++){
+//            block.copyToArray(i * Const.M * 16, bytes, 0, bytes.length);
+//        }
+//        long end = System.currentTimeMillis();
+//        System.out.println((end - start));
     }
 }

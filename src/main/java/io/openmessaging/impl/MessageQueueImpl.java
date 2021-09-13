@@ -42,7 +42,6 @@ public class MessageQueueImpl extends MessageQueue {
 
     public MessageQueueImpl(Config config) {
         LOGGER.info("start");
-        lsPmem();
         this.config = config;
         this.topics = new ConcurrentHashMap<>();
         this.cache = new Cache(config.getHeapDir(), config.getHeapSize(), config.getCacheSize(), config.getPageSize());
