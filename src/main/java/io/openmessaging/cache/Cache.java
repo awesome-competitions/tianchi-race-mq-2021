@@ -85,7 +85,7 @@ public class Cache {
 
     private AbstractMedium loadPMem(Topic topic, Queue queue, Group group, Segment segment){
         return pMem.computeIfAbsent(new Triple<>(topic.getName(), queue.getId(), segment.getIdx()), k -> {
-            LOGGER.info("load Pmem pos {}, aos {}", segment.getPos(), segment.getAos());
+            LOGGER.info("load Pmem pos {}, aos {}, topic {}, queue {}, idx {}", segment.getPos(), segment.getAos(), topic.getName(), queue.getId(), segment.getIdx());
             byte[] bytes = segment.loadBytes(group.getDb());
             AnyMemoryBlock anyMemoryBlock = heap.allocateMemoryBlock(blockSize);
             if (bytes != null && bytes.length > 0){
