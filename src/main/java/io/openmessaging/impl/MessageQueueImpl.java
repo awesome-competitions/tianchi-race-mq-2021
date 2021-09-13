@@ -1,7 +1,9 @@
 package io.openmessaging.impl;
 
+import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 import io.openmessaging.MessageQueue;
 import io.openmessaging.cache.Cache;
+import io.openmessaging.consts.Const;
 import io.openmessaging.model.*;
 import io.openmessaging.model.Queue;
 import io.openmessaging.utils.ArrayUtils;
@@ -20,8 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class MessageQueueImpl extends MessageQueue {
-
-
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageQueueImpl.class);
 
     private final Config config;
@@ -29,7 +29,15 @@ public class MessageQueueImpl extends MessageQueue {
     private final Map<String, Topic> topics;
 
     public MessageQueueImpl() {
-        this(new Config("/essd/", "/pmem/nico", 1024 * 1024 * 1024 * 59L, 1024 * 1024 * 16, 4000000, 10, 10000));
+        this(new Config(
+                "/essd/",
+                "/pmem/nico",
+                Const.G * 59,
+                (int) (Const.M * 16),
+                (int) (Const.G * 59 / (Const.M * 16)),
+                10,
+                10000)
+        );
     }
 
     public MessageQueueImpl(Config config) {
@@ -76,7 +84,7 @@ public class MessageQueueImpl extends MessageQueue {
             long count = COUNT.getAndIncrement();
             long size = SIZE.getAndAdd(data.capacity());
             if (count % 100000 == 0){
-                LOGGER.info("count {}, size {}", count, size);
+                LOGGER.info("write count {}, size {}", count, size);
             }
             return getTopic(topic).write(queueId, data);
         } catch (IOException e) {
@@ -85,9 +93,14 @@ public class MessageQueueImpl extends MessageQueue {
         return 0;
     }
 
+    final static AtomicInteger READ_COUNT = new AtomicInteger(0);
     @Override
     public Map<Integer, ByteBuffer> getRange(String name, int queueId, long offset, int fetchNum) {
         try {
+            long count = READ_COUNT.addAndGet(fetchNum);
+            if (count % 100000 == 0){
+                LOGGER.info("read count {}", count);
+            }
             Topic topic = getTopic(name);
             List<ByteBuffer> results = topic.read(queueId, offset, fetchNum);
             if (CollectionUtils.isEmpty(results)){
