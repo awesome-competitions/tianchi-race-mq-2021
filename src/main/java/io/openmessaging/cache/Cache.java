@@ -17,10 +17,6 @@ public class Cache {
 
     private Heap heap;
 
-    private Allocate allocate;
-
-    private final int blockSize;
-
     private Lru<Triple<String, Integer, Integer>, AbstractMedium> pMem;
 
     private Lru<Triple<String, Integer, Integer>, AbstractMedium> dram;
@@ -34,7 +30,6 @@ public class Cache {
         }else{
             this.dram = new Lru<>(cacheSize, AbstractMedium::clean);
         }
-        this.blockSize = blockSize;
     }
 
     public List<ByteBuffer> load(Topic topic, Queue queue, long offset, int num){
@@ -68,10 +63,7 @@ public class Cache {
 
     public void write(Topic topic, Queue queue, Segment segment, ByteBuffer buffer){
         Group group = topic.getGroup(queue.getId());
-        AbstractMedium mm = loadMedium(topic, queue, group, segment);
-        if (mm != null){
-            mm.write(buffer);
-        }
+        loadMedium(topic, queue, group, segment).write(buffer);
     }
 
     private AbstractMedium loadMedium(Topic topic, Queue queue, Group group, Segment segment){
@@ -87,13 +79,17 @@ public class Cache {
 
     private AbstractMedium loadPMem(Topic topic, Queue queue, Group group, Segment segment){
         return pMem.computeIfAbsent(new Triple<>(topic.getName(), queue.getId(), segment.getIdx()), k -> {
-            LOGGER.info("load Pmem pos {}, aos {}, topic {}, queue {}, idx {}", segment.getPos(), segment.getAos(), topic.getName(), queue.getId(), segment.getIdx());
-            byte[] bytes = segment.loadBytes(group.getDb());
-            AnyMemoryBlock anyMemoryBlock = heap.allocateMemoryBlock(blockSize);
-            if (bytes != null && bytes.length > 0){
-                anyMemoryBlock.copyFromArray(bytes, 0, 0, bytes.length);
+            if (segment.getAos() == segment.getPos()){
+                return new PMem(heap, new ArrayList<>(), segment.getBeg());
             }
-            return new PMem(anyMemoryBlock, segment.getBeg(), segment.getAos() - segment.getPos());
+            List<ByteBuffer> buffers = segment.load(group.getDb());
+            List<AnyMemoryBlock> blocks = new ArrayList<>(buffers.size());
+            for (ByteBuffer buffer: buffers){
+                AnyMemoryBlock anyMemoryBlock = heap.allocateCompactMemoryBlock(buffer.capacity());
+                anyMemoryBlock.copyFromArray(buffer.array(), 0, 0, buffer.capacity());
+                blocks.add(anyMemoryBlock);
+            }
+            return new PMem(heap, blocks, segment.getBeg());
         });
     }
 }

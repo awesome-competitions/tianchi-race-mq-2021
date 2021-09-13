@@ -1,6 +1,9 @@
 package io.openmessaging.cache;
 
 import com.intel.pmem.llpl.AnyMemoryBlock;
+import com.intel.pmem.llpl.Heap;
+import com.intel.pmem.llpl.MemoryBlock;
+import io.openmessaging.utils.CollectionUtils;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -9,43 +12,27 @@ import java.util.List;
 
 public class PMem extends AbstractMedium{
 
-    private final AnyMemoryBlock block;
+    private final List<AnyMemoryBlock> blocks;
 
     private final long beginOffset;
 
-    private long position;
+    private final Heap heap;
 
-    public PMem(AnyMemoryBlock block, long beginOffset, long position) {
-        this.block = block;
+    public PMem(Heap heap, List<AnyMemoryBlock> blocks, long beginOffset) {
+        this.blocks = blocks;
         this.beginOffset = beginOffset;
-        this.position = position;
-    }
-
-    short getShort(long pos){
-        byte[] bytes = new byte[2];
-        block.copyToArray(pos, bytes, 0, 2);
-        return (short)((bytes[0] << 8) | (bytes[1] & 0xff));
+        this.heap = heap;
     }
 
     @Override
     public List<ByteBuffer> read(long startOffset, long endOffset) {
         int startIndex = (int) (startOffset - beginOffset);
         int endIndex = (int) (endOffset - beginOffset);
-        short size;
-        long offset = 0;
-        int currentIndex = 0;
-        while (currentIndex < startIndex){
-            size = getShort(offset);
-            offset += 2 + size;
-            currentIndex ++;
-        }
         List<ByteBuffer> buffers = new ArrayList<>();
-        while (startIndex <= endIndex){
-            size = getShort(offset);
-            offset += 2;
-            byte[] bytes = new byte[size];
-            block.copyToArray(offset, bytes, 0, size);
-            offset += size;
+        while (startIndex <= endIndex && startIndex < blocks.size()){
+            AnyMemoryBlock block = blocks.get(startIndex);
+            byte[] bytes = new byte[(int) block.size()];
+            block.copyToArray(0, bytes, 0, bytes.length);
             buffers.add(ByteBuffer.wrap(bytes));
             startIndex ++;
         }
@@ -54,14 +41,15 @@ public class PMem extends AbstractMedium{
 
     @Override
     public void write(ByteBuffer buffer) {
-        block.copyFromArray(buffer.array(), 0, position, buffer.capacity());
-        position += buffer.capacity();
+        AnyMemoryBlock anyMemoryBlock = heap.allocateCompactMemoryBlock(buffer.capacity());
+        anyMemoryBlock.copyFromArray(buffer.array(), 0, 0, buffer.capacity());
+        blocks.add(anyMemoryBlock);
     }
 
     @Override
     public void clean() {
-        if (block != null && block.isValid()){
-            block.freeMemory();
+        if (CollectionUtils.isNotEmpty(blocks)){
+            blocks.forEach(AnyMemoryBlock::freeMemory);
         }
     }
 }

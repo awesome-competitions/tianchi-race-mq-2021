@@ -101,7 +101,6 @@ public class MessageQueueImpl extends MessageQueue {
                 LOGGER.info("write count {}, size {}", count, size);
                 throw new RuntimeException("stop");
             }
-            LOGGER.info("write topic {}, queueId {}", topic, queueId);
             return getTopic(topic).write(queueId, data);
         } catch (IOException e) {
             e.printStackTrace();

@@ -61,7 +61,7 @@ public class Topic{
         wrapper.putShort((short) data.capacity());
         wrapper.put(data);
         wrapper.flip();
-        wrapper.mark();
+//        wrapper.mark();
 
         Segment last = queue.getLast();
         if (last == null || ! last.writable(wrapper.capacity())){
