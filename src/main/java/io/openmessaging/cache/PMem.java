@@ -49,6 +49,7 @@ public class PMem extends AbstractMedium{
             offset += 2;
             byte[] bytes = new byte[size];
             block.copyToArray(offset, bytes, 0, size);
+            offset += size;
             buffers.add(ByteBuffer.wrap(bytes));
             startIndex ++;
         }

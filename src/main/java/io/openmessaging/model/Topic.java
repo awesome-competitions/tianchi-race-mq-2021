@@ -61,7 +61,7 @@ public class Topic{
         wrapper.putShort((short) data.capacity());
         wrapper.put(data);
         wrapper.flip();
-//        wrapper.mark();
+        wrapper.mark();
 
         Segment last = queue.getLast();
         if (last == null || ! last.writable(wrapper.capacity())){
@@ -77,8 +77,8 @@ public class Topic{
         }
         last.setEnd(offset);
         last.write(group.getDb(), wrapper);
-//        wrapper.reset();
-//        cache.write(this, queue, last, wrapper);
+        wrapper.reset();
+        cache.write(this, queue, last, wrapper);
         return offset;
     }
 
