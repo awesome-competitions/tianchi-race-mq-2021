@@ -5,6 +5,8 @@ import com.intel.pmem.llpl.Heap;
 import io.openmessaging.model.*;
 import io.openmessaging.model.Readable;
 import io.openmessaging.utils.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -20,6 +22,8 @@ public class Cache {
     private Lru<Triple<String, Integer, Integer>, AbstractMedium> pMem;
 
     private Lru<Triple<String, Integer, Integer>, AbstractMedium> dram;
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(Cache.class);
 
     public Cache(String path, long heapSize, int cacheSize, int blockSize){
         if (Objects.nonNull(path)){
@@ -81,6 +85,7 @@ public class Cache {
 
     private AbstractMedium loadPMem(Topic topic, Queue queue, Group group, Segment segment){
         return pMem.computeIfAbsent(new Triple<>(topic.getName(), queue.getId(), segment.getIdx()), k -> {
+            LOGGER.info("load Pmem pos {}, aos {}", segment.getPos(), segment.getAos());
             byte[] bytes = segment.loadBytes(group.getDb());
             AnyMemoryBlock anyMemoryBlock = heap.allocateMemoryBlock(blockSize);
             if (bytes != null && bytes.length > 0){
