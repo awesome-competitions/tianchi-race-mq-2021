@@ -30,16 +30,16 @@ public class DefaultMessageQueueImpl extends MessageQueue{
 
     public void test(){
         String path = "/pmem/nico";
-        Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, 30 * Const.G);
-        long size = 16 * Const.G;
+        Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, 53 * Const.G);
+        long size = 1 * Const.G;
         MemoryBlock block = heap.allocateMemoryBlock(size);
         byte[] bytes = new byte[1024 * 1024 * 16];
 
         long start = System.currentTimeMillis();
-        for (int i = 0; i < 1024; i ++){
+        for (int i = 0; i < 64; i ++){
             block.copyFromArray(bytes, 0, i * Const.M * 16, bytes.length);
         }
-        for (int i = 0; i < 1024; i ++){
+        for (int i = 0; i < 64; i ++){
             block.copyToArray(i * Const.M * 16, bytes, 0, bytes.length);
         }
         long end = System.currentTimeMillis();
