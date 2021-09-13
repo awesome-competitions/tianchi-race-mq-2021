@@ -17,6 +17,8 @@ public class Cache {
 
     private Heap heap;
 
+    private Allocate allocate;
+
     private final int blockSize;
 
     private Lru<Triple<String, Integer, Integer>, AbstractMedium> pMem;
