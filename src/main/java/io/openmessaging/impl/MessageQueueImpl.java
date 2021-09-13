@@ -120,6 +120,7 @@ public class MessageQueueImpl extends MessageQueue {
                 LOGGER.info("read count {}, times {}", readCount, time);
                 readCount = 0;
             }
+            LOGGER.info("write topic {}, queueId {}", name, queueId);
             Topic topic = getTopic(name);
             List<ByteBuffer> results = topic.read(queueId, offset, fetchNum);
             if (CollectionUtils.isEmpty(results)){
