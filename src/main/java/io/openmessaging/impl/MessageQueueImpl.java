@@ -42,6 +42,7 @@ public class MessageQueueImpl extends MessageQueue {
 
     public MessageQueueImpl(Config config) {
         LOGGER.info("start");
+        lsPmem();
         this.config = config;
         this.topics = new ConcurrentHashMap<>();
         this.cache = new Cache(config.getHeapDir(), config.getHeapSize(), config.getCacheSize(), config.getPageSize());
@@ -73,6 +74,16 @@ public class MessageQueueImpl extends MessageQueue {
         File root = new File(config.getDataDir());
         if (! root.exists() && ! root.mkdirs() && ! root.isDirectory()){
             throw new RuntimeException("load db error");
+        }
+    }
+
+    public void lsPmem(){
+        File root = new File("/pmem/");
+        if (root.exists() && root.isDirectory()){
+            if (ArrayUtils.isEmpty(root.listFiles())) return;
+            for (File file: Objects.requireNonNull(root.listFiles())){
+                LOGGER.info("file {}", file.getPath());
+            }
         }
     }
 
