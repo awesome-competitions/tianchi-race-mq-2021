@@ -83,7 +83,6 @@ public class Topic{
         }
         last.setEnd(offset);
         last.write(group.getDb(), wrapper);
-
         cache.write(this, queue, last, bytes);
         return offset;
     }
