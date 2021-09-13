@@ -108,7 +108,7 @@ public class MessageQueueImpl extends MessageQueue {
             }
             Map<Integer, ByteBuffer> byteBuffers = new HashMap<>();
             for(int i = 0; i < fetchNum; i ++){
-                byteBuffers.put(i, results.get(i));
+                byteBuffers.put(i, i < results.size() ? results.get(i): null);
             }
             return byteBuffers;
         } catch (IOException e) {
