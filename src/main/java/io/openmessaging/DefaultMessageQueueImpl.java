@@ -31,7 +31,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
     public void test(){
         String path = "/pmem/nico";
         Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, 53 * Const.G);
-        int n = 2;
+        int n = 5;
         long size = n * Const.G;
         MemoryBlock block = heap.allocateMemoryBlock(size);
         byte[] bytes = new byte[1024 * 1024 * 16];
