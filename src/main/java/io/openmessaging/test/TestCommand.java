@@ -2,6 +2,7 @@ package io.openmessaging.test;
 
 import io.openmessaging.MessageQueue;
 import io.openmessaging.impl.MessageQueueImpl;
+import io.openmessaging.model.Config;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -10,7 +11,7 @@ import java.util.Scanner;
 public class TestCommand {
 
     public static void main(String[] args) {
-        MessageQueueImpl messageQueue = new MessageQueueImpl();
+        MessageQueueImpl messageQueue = new MessageQueueImpl(new Config("D:\\test\\nio\\", 1024 * 1024 * 16, 30, 1, 1));
         messageQueue.loadDB();
         Scanner in = new Scanner(System.in);
         String topic = "test_command";
@@ -22,7 +23,7 @@ public class TestCommand {
                 long offset = messageQueue.append(topic, 1, ByteBuffer.wrap(commands[1].getBytes()));
                 System.out.print("new offset " + offset);
             }else{
-                Map<Integer, ByteBuffer> result = messageQueue.getRange(topic, 1, Integer.parseInt(commands[1]), 1);
+                Map<Integer, ByteBuffer> result = messageQueue.getRange(topic, 1, Integer.parseInt(commands[1]), 3);
                 System.out.print("result " + (result == null ? "null" : new String(result.get(0).array())));
             }
             long end = System.currentTimeMillis();

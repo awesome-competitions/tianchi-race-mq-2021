@@ -56,7 +56,7 @@ public class Cache {
             AbstractMedium mm = loadMedium(topic, queue, group, readable.getSegment());
             buffers.addAll(mm.read(readable.getStartOffset(), readable.getEndOffset()));
         }
-        for (int i = 0; i < num - buffers.size(); i ++){
+        for (int i = 0; i <= num - buffers.size(); i ++){
             buffers.add(null);
         }
         return buffers;
