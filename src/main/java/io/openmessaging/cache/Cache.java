@@ -39,7 +39,7 @@ public class Cache {
         long startOffset = offset;
         long endOffset = offset + num - 1;
         List<Readable> readableList = new ArrayList<>();
-        while (num > 0){
+        while (num > 0 && segment != null){
             if (segment.getEnd() >= endOffset){
                 readableList.add(new Readable(segment, startOffset, endOffset));
                 break;
