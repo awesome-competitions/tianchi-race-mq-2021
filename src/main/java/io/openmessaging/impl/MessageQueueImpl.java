@@ -34,7 +34,7 @@ public class MessageQueueImpl extends MessageQueue {
                 "/pmem/nico",
                 Const.G * 59,
                 (int) (Const.M * 16),
-                (int) (Const.G * 59 / (Const.M * 16)),
+                (int) (Const.G * 55 / (Const.M * 16)),
                 10,
                 10000)
         );
@@ -76,13 +76,13 @@ public class MessageQueueImpl extends MessageQueue {
         }
     }
 
-    final static AtomicLong SIZE = new AtomicLong(0);
-    final static AtomicInteger COUNT = new AtomicInteger(0);
+    long size = 0;
+    int count = 0;
     @Override
     public long append(String topic, int queueId, ByteBuffer data) {
         try {
-            long count = COUNT.getAndIncrement();
-            long size = SIZE.getAndAdd(data.capacity());
+            ++count;
+            size += data.capacity();
             if (count % 100000 == 0){
                 LOGGER.info("write count {}, size {}", count, size);
             }
@@ -93,13 +93,16 @@ public class MessageQueueImpl extends MessageQueue {
         return 0;
     }
 
-    final static AtomicInteger READ_COUNT = new AtomicInteger(0);
+    int readCount = 0;
+    int times = 0;
     @Override
     public Map<Integer, ByteBuffer> getRange(String name, int queueId, long offset, int fetchNum) {
         try {
-            long count = READ_COUNT.addAndGet(fetchNum);
-            if (count % 100000 == 0){
-                LOGGER.info("read count {}", count);
+            long count = ++readCount;
+            if (count > 20000){
+                int time = ++times;
+                LOGGER.info("read count {}, times {}", count, time);
+                readCount = 0;
             }
             Topic topic = getTopic(name);
             List<ByteBuffer> results = topic.read(queueId, offset, fetchNum);
