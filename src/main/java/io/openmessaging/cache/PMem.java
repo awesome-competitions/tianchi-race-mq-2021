@@ -4,6 +4,7 @@ import com.intel.pmem.llpl.AnyMemoryBlock;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
 public class PMem extends AbstractMedium{
@@ -20,6 +21,12 @@ public class PMem extends AbstractMedium{
         this.position = position;
     }
 
+    short getShort(long pos){
+        byte[] bytes = new byte[2];
+        block.copyToArray(pos, bytes, 0, 2);
+        return (short)((bytes[0] << 8) | (bytes[1] & 0xff));
+    }
+
     @Override
     public List<ByteBuffer> read(long startOffset, long endOffset) {
         int startIndex = (int) (startOffset - beginOffset);
@@ -28,13 +35,13 @@ public class PMem extends AbstractMedium{
         long offset = 0;
         int currentIndex = 0;
         while (currentIndex < startIndex){
-            size = block.getShort(offset);
+            size = getShort(offset);
             offset += 2 + size;
             currentIndex ++;
         }
         List<ByteBuffer> buffers = new ArrayList<>();
         while (startIndex <= endIndex){
-            size = block.getShort(offset);
+            size = getShort(offset);
             offset += 2;
             byte[] bytes = new byte[size];
             block.copyToArray(offset, bytes, 0, size);
@@ -46,8 +53,6 @@ public class PMem extends AbstractMedium{
 
     @Override
     public void write(ByteBuffer buffer) {
-        block.setShort(position, (short) buffer.capacity());
-        position += 2;
         block.copyFromArray(buffer.array(), 0, position, buffer.capacity());
         position += buffer.capacity();
     }
