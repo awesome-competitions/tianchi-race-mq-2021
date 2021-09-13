@@ -36,11 +36,13 @@ public class DefaultMessageQueueImpl extends MessageQueue{
 
     public void test(){
         String path = "/pmem/nico";
-        Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, 59 * Const.G);
+        Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, 10 * Const.G);
 
-        LOGGER.info("before allocate");
-        MemoryBlock block = heap.allocateMemoryBlock(50 * Const.G);
-        LOGGER.info("after allocate");
+       for (int i = 0; i < 500; i ++){
+           LOGGER.info("ALLOC");
+           MemoryBlock block = heap.allocateMemoryBlock(17 * Const.K);
+       }
+       throw new RuntimeException("ex");
 
 //        int n = 5;
 //        long size = n * Const.G;
