@@ -79,13 +79,13 @@ public class Cache {
 
     private AbstractMedium loadPMem(Topic topic, Queue queue, Group group, Segment segment){
         return pMem.computeIfAbsent(new Triple<>(topic.getName(), queue.getId(), segment.getIdx()), k -> {
-            if (segment.getAos() == segment.getPos()){
+                if (segment.getAos() == segment.getPos()){
                 return new PMem(heap, new ArrayList<>(), segment.getBeg());
             }
             List<ByteBuffer> buffers = segment.load(group.getDb());
             List<AnyMemoryBlock> blocks = new ArrayList<>(buffers.size());
             for (ByteBuffer buffer: buffers){
-                AnyMemoryBlock anyMemoryBlock = heap.allocateCompactMemoryBlock(buffer.capacity());
+                AnyMemoryBlock anyMemoryBlock = heap.allocateMemoryBlock(buffer.capacity());
                 anyMemoryBlock.copyFromArray(buffer.array(), 0, 0, buffer.capacity());
                 blocks.add(anyMemoryBlock);
             }

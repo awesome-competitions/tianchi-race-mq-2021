@@ -41,7 +41,7 @@ public class PMem extends AbstractMedium{
 
     @Override
     public void write(ByteBuffer buffer) {
-        AnyMemoryBlock anyMemoryBlock = heap.allocateCompactMemoryBlock(buffer.capacity());
+        AnyMemoryBlock anyMemoryBlock = heap.allocateMemoryBlock(buffer.capacity());
         anyMemoryBlock.copyFromArray(buffer.array(), 0, 0, buffer.capacity());
         blocks.add(anyMemoryBlock);
     }

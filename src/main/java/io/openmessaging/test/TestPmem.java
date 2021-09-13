@@ -13,15 +13,15 @@ import java.util.function.Supplier;
 
 public class TestPmem {
 
-    private final static int BATCH = 10000;
-    private final static int QUEUE_SIZE = 2;
+    private final static int BATCH = 10000 * 10;
+    private final static int QUEUE_SIZE = 1;
 
     public static void main(String[] args) throws InterruptedException {
         MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config(
                 "/data/test/",
-                "/mnt/mem/heap", 
-                1024 * 1024 * 1024,
-                1024 * 1024 * 4,
+                "/mnt/mem/nico1",
+                1024 * 1024 * 256,
+                1024 * 1024 * 16,
                 1024 / 4,
                 1,
                 QUEUE_SIZE

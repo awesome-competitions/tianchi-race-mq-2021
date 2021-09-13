@@ -96,11 +96,11 @@ public class MessageQueueImpl extends MessageQueue {
             if (count % 100000 == 0){
                 LOGGER.info("write count {}, size {}", count, size);
             }
-            if (count > 500){
-                LOGGER.info("end");
-                LOGGER.info("write count {}, size {}", count, size);
-                throw new RuntimeException("stop");
-            }
+//            if (count > 500){
+//                LOGGER.info("end");
+//                LOGGER.info("write count {}, size {}", count, size);
+//                throw new RuntimeException("stop");
+//            }
             return getTopic(topic).write(queueId, data);
         } catch (IOException e) {
             e.printStackTrace();
