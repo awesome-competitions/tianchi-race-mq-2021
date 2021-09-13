@@ -1,5 +1,7 @@
 package io.openmessaging.model;
 
+import com.intel.pmem.llpl.AnyMemoryBlock;
+import io.openmessaging.cache.AbstractMedium;
 import io.openmessaging.utils.BufferUtils;
 
 import java.io.IOException;
@@ -11,9 +13,9 @@ import java.util.List;
 
 public class Segment {
 
-    private int beg;
+    private long beg;
 
-    private int end;
+    private long end;
 
     private long pos;
 
@@ -22,6 +24,8 @@ public class Segment {
     private int cap;
 
     private int idx;
+
+    private AbstractMedium cache;
 
     public Segment(int beg, int end, long pos, int cap) {
         this.beg = beg;
@@ -40,19 +44,19 @@ public class Segment {
         aos += data.capacity();
     }
 
-    public int getBeg() {
+    public long getBeg() {
         return beg;
     }
 
-    public void setBeg(int beg) {
+    public void setBeg(long beg) {
         this.beg = beg;
     }
 
-    public int getEnd() {
+    public long getEnd() {
         return end;
     }
 
-    public void setEnd(int end) {
+    public void setEnd(long end) {
         this.end = end;
     }
 
@@ -88,7 +92,15 @@ public class Segment {
         this.idx = idx;
     }
 
-    public List<ByteBuffer> getData(FileWrapper fw) {
+    public AbstractMedium getCache() {
+        return cache;
+    }
+
+    public void setCache(AbstractMedium cache) {
+        this.cache = cache;
+    }
+
+    public List<ByteBuffer> load(FileWrapper fw) {
         MappedByteBuffer mmb = null;
         List<ByteBuffer> data = null;
         try {
@@ -108,5 +120,22 @@ public class Segment {
             }
         }
         return data;
+    }
+
+    public byte[] loadBytes(FileWrapper fw) {
+        MappedByteBuffer mmb = null;
+        byte[] bytes = null;
+        try {
+            mmb = fw.getChannel().map(FileChannel.MapMode.READ_ONLY, pos, aos - pos);
+            bytes = new byte[mmb.capacity()];
+            mmb.get(bytes);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally {
+            if (mmb != null){
+                BufferUtils.clean(mmb);
+            }
+        }
+        return bytes;
     }
 }

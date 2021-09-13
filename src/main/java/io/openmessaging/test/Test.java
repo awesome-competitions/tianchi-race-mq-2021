@@ -11,20 +11,20 @@ import java.util.function.Supplier;
 
 public class Test {
 
-    private final static int BATCH = 10000;
-    private final static int QUEUE_SIZE = 10;
+    private final static int BATCH = 10000 * 100;
+    private final static int QUEUE_SIZE = 1;
 
     public static void main(String[] args) throws InterruptedException {
-        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config("D:\\test\\nio\\", 1024 * 1024 * 16, BATCH, QUEUE_SIZE / 10, QUEUE_SIZE));
+        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config("D:\\test\\nio\\", 1024 * 1024 * 16, 30, QUEUE_SIZE, QUEUE_SIZE));
         mMapMessageQueue.cleanDB();
         List<Supplier<?>> suppliers = new ArrayList<>();
 
         for (int i = 1; i <= QUEUE_SIZE; i ++){
             suppliers.add(test(mMapMessageQueue, "test1", i));
         }
-        for (int i = 1; i <= QUEUE_SIZE; i ++){
-            suppliers.add(test(mMapMessageQueue, "test2", i));
-        }
+//        for (int i = 1; i <= QUEUE_SIZE; i ++){
+//            suppliers.add(test(mMapMessageQueue, "test2", i));
+//        }
 
         final CountDownLatch cdl = new CountDownLatch(suppliers.size());
         ExecutorService POOLS = Executors.newFixedThreadPool(suppliers.size());
@@ -37,7 +37,7 @@ public class Test {
 
     public static Supplier<?> test(MessageQueue mq, String topic, Integer queueId){
         return ()->{
-            String[] inputs = new String[BATCH / 1];
+            String[] inputs = new String[BATCH / 100];
             for (int i = 0; i < inputs.length; i ++){
                 inputs[i] = randomString((int) (Math.random() * 100) + 1);
 //                inputs[i] = randomString(1);

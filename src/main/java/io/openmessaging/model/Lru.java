@@ -33,6 +33,10 @@ public class Lru<K,V>{
         };
     }
 
+    public V get(K k){
+        return map.get(k);
+    }
+
     public void put(K k, V v){
         try{
             lock.lock();

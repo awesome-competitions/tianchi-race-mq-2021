@@ -54,7 +54,7 @@ public class Queue {
         return last;
     }
 
-    public Segment search(long offset){
+    public Segment getSegment(long offset){
         if (segments.isEmpty()){
             return null;
         }
@@ -63,9 +63,6 @@ public class Queue {
         while(true){
             int index = (left + right) / 2;
             Segment mid = segments.get(index);
-            if (mid == null){
-                System.out.println("bingo");
-            }
             if (offset < mid.getBeg()){
                 right = index - 1;
                 if (right < left) break;
