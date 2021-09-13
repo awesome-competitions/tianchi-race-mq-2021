@@ -24,11 +24,7 @@ public class PMem extends AbstractMedium{
     short getShort(long pos){
         byte[] bytes = new byte[2];
         block.copyToArray(pos, bytes, 0, 2);
-        short s = (short)((bytes[0] << 8) | (bytes[1] & 0xff));
-        if (s < 0){
-            System.out.println(Arrays.toString(bytes));
-        }
-        return s;
+        return (short)((bytes[0] << 8) | (bytes[1] & 0xff));
     }
 
     @Override

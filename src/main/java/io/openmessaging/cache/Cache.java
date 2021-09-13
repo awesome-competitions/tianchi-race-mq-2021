@@ -46,7 +46,7 @@ public class Cache {
             }else{
                 readableList.add(new Readable(segment, startOffset, segment.getEnd()));
                 long score = segment.getEnd() - startOffset;
-                num -= score;
+                num -= score + 1;
                 startOffset += score;
                 segment = queue.nextSegment(segment);
             }
