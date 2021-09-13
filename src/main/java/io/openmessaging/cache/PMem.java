@@ -4,7 +4,7 @@ import com.intel.pmem.llpl.AnyMemoryBlock;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.BitSet;
+import java.util.Arrays;
 import java.util.List;
 
 public class PMem extends AbstractMedium{
@@ -24,7 +24,11 @@ public class PMem extends AbstractMedium{
     short getShort(long pos){
         byte[] bytes = new byte[2];
         block.copyToArray(pos, bytes, 0, 2);
-        return (short)((bytes[0] << 8) | (bytes[1] & 0xff));
+        short s = (short)((bytes[0] << 8) | (bytes[1] & 0xff));
+        if (s < 0){
+            System.out.println(Arrays.toString(bytes));
+        }
+        return s;
     }
 
     @Override
