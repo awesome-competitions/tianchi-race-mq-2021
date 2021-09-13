@@ -40,7 +40,7 @@ public class Segment {
     }
 
     public void write(FileWrapper fw, ByteBuffer data) throws IOException {
-        fw.write(aos, data);
+//        fw.write(aos, data);
         aos += data.capacity();
     }
 
