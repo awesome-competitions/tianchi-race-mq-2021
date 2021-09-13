@@ -39,7 +39,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, 59 * Const.G);
 
         LOGGER.info("before allocate");
-        MemoryBlock block = heap.allocateMemoryBlock(53 * Const.G);
+        MemoryBlock block = heap.allocateMemoryBlock(50 * Const.G);
         LOGGER.info("after allocate");
 
 //        int n = 5;
