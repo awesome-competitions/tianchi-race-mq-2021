@@ -1,5 +1,6 @@
 package io.openmessaging;
 
+import com.intel.pmem.llpl.Accessor;
 import com.intel.pmem.llpl.Heap;
 import com.intel.pmem.llpl.MemoryBlock;
 import io.openmessaging.consts.Const;
@@ -37,9 +38,9 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         String path = "/pmem/nico";
         Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, 59 * Const.G);
 
-
+        LOGGER.info("before allocate");
         MemoryBlock block = heap.allocateMemoryBlock(55 * Const.G);
-        System.out.println(block);
+        LOGGER.info("after allocate");
 
 //        int n = 5;
 //        long size = n * Const.G;
