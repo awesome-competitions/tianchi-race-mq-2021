@@ -11,16 +11,15 @@ import java.util.Map;
 
 public class DefaultMessageQueueImpl extends MessageQueue{
 
-    private final MessageQueue queue = new MessageQueueImpl(new Config("", 1, 1, 1, 1));
+    private final MessageQueue queue = new MessageQueueImpl();
 
     public DefaultMessageQueueImpl(){
-        test();
+//        test();
     }
 
     @Override
     public long append(String topic, int queueId, ByteBuffer data) {
-        throw new RuntimeException("test");
-//        return queue.append(topic, queueId, data);
+        return queue.append(topic, queueId, data);
     }
 
     @Override
