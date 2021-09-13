@@ -62,8 +62,10 @@ public class Cache {
     }
 
     public void write(Topic topic, Queue queue, Segment segment, ByteBuffer buffer){
-        Group group = topic.getGroup(queue.getId());
-        loadMedium(topic, queue, group, segment).write(buffer);
+        AbstractMedium medium = getMedium(topic, queue, topic.getGroup(queue.getId()), segment);
+        if (medium != null){
+            medium.write(buffer);
+        }
     }
 
     private AbstractMedium loadMedium(Topic topic, Queue queue, Group group, Segment segment){
@@ -73,13 +75,21 @@ public class Cache {
         return loadPMem(topic, queue, group, segment);
     }
 
+    private AbstractMedium getMedium(Topic topic, Queue queue, Group group, Segment segment){
+        Triple<String, Integer, Integer> key = new Triple<>(topic.getName(), queue.getId(), segment.getIdx());
+        if (heap == null){
+            return dram.get(key);
+        }
+        return pMem.get(key);
+    }
+
     private AbstractMedium loadDram(Topic topic, Queue queue, Group group, Segment segment){
         return dram.computeIfAbsent(new Triple<>(topic.getName(), queue.getId(), segment.getIdx()), k -> new Dram(segment.load(group.getDb()), segment.getBeg()));
     }
 
     private AbstractMedium loadPMem(Topic topic, Queue queue, Group group, Segment segment){
         return pMem.computeIfAbsent(new Triple<>(topic.getName(), queue.getId(), segment.getIdx()), k -> {
-                if (segment.getAos() == segment.getPos()){
+            if (segment.getAos() == segment.getPos()){
                 return new PMem(heap, new ArrayList<>(), segment.getBeg());
             }
             List<ByteBuffer> buffers = segment.load(group.getDb());
