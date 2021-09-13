@@ -14,19 +14,19 @@ import java.util.Map;
 
 public class DefaultMessageQueueImpl extends MessageQueue{
 
-//    private final MessageQueue queue = new MessageQueueImpl();
-    private final MessageQueue queue = null;
+    private final MessageQueue queue = new MessageQueueImpl();
+//    private final MessageQueue queue = null;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMessageQueueImpl.class);
 
     public DefaultMessageQueueImpl(){
-        test();
+//        test();
     }
 
     @Override
     public long append(String topic, int queueId, ByteBuffer data) {
-        throw new RuntimeException("END");
-//        return queue.append(topic, queueId, data);
+//        throw new RuntimeException("END");
+        return queue.append(topic, queueId, data);
     }
 
     @Override
