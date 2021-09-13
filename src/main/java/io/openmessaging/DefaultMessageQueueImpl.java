@@ -37,10 +37,11 @@ public class DefaultMessageQueueImpl extends MessageQueue{
     public void test(){
         String path = "/pmem/nico";
         Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, 10 * Const.G);
-
+        byte[] bytes = new byte[17 * 1024];
        for (int i = 0; i < 500; i ++){
            LOGGER.info("ALLOC");
            MemoryBlock block = heap.allocateMemoryBlock(17 * Const.K);
+           block.copyFromArray(bytes, 0, 0, bytes.length);
        }
        throw new RuntimeException("ex");
 
