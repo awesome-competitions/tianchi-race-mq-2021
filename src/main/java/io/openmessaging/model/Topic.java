@@ -77,8 +77,8 @@ public class Topic{
         }
         last.setEnd(offset);
         cache.write(this, queue, last, wrapper);
-        last.write(group.getDb(), wrapper);
         wrapper.reset();
+        last.write(group.getDb(), wrapper);
         return offset;
     }
 
