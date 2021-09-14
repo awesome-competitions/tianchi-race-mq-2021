@@ -75,11 +75,16 @@ public class Cache {
     }
 
     private AbstractMedium getMedium(Topic topic, Queue queue, Group group, Segment segment){
-        Triple<String, Integer, Integer> key = new Triple<>(topic.getName(), queue.getId(), segment.getIdx());
-        if (heap == null){
-            return dram.get(key);
+        try {
+            segment.getReadLock().lock();
+            Triple<String, Integer, Integer> key = new Triple<>(topic.getName(), queue.getId(), segment.getIdx());
+            if (heap == null){
+                return dram.get(key);
+            }
+            return pMem.get(key);
+        }finally {
+            segment.getReadLock().unlock();
         }
-        return pMem.get(key);
     }
 
     private AbstractMedium loadDram(Topic topic, Queue queue, Group group, Segment segment){
@@ -87,18 +92,23 @@ public class Cache {
     }
 
     private AbstractMedium loadPMem(Topic topic, Queue queue, Group group, Segment segment){
-        return pMem.computeIfAbsent(new Triple<>(topic.getName(), queue.getId(), segment.getIdx()), k -> {
-            if (segment.getAos() == segment.getPos()){
-                return new PMem(heap, new ArrayList<>(), segment.getBeg());
-            }
-            List<ByteBuffer> buffers = segment.load(group.getDb());
-            List<AnyMemoryBlock> blocks = new ArrayList<>(buffers.size());
-            for (ByteBuffer buffer: buffers){
-                AnyMemoryBlock anyMemoryBlock = heap.allocateMemoryBlock(buffer.capacity());
-                anyMemoryBlock.copyFromArray(buffer.array(), 0, 0, buffer.capacity());
-                blocks.add(anyMemoryBlock);
-            }
-            return new PMem(heap, blocks, segment.getBeg());
-        });
+        try{
+            segment.getWriteLock().lock();
+            return pMem.computeIfAbsent(new Triple<>(topic.getName(), queue.getId(), segment.getIdx()), k -> {
+                if (segment.getAos() == segment.getPos()){
+                    return new PMem(heap, new ArrayList<>(), segment.getBeg());
+                }
+                List<ByteBuffer> buffers = segment.load(group.getDb());
+                List<AnyMemoryBlock> blocks = new ArrayList<>(buffers.size());
+                for (ByteBuffer buffer: buffers){
+                    AnyMemoryBlock anyMemoryBlock = heap.allocateMemoryBlock(buffer.capacity());
+                    anyMemoryBlock.copyFromArray(buffer.array(), 0, 0, buffer.capacity());
+                    blocks.add(anyMemoryBlock);
+                }
+                return new PMem(heap, blocks, segment.getBeg());
+            });
+        }finally {
+            segment.getWriteLock().unlock();
+        }
     }
 }

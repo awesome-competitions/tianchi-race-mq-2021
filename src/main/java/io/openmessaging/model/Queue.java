@@ -8,7 +8,9 @@ import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Queue {
 
@@ -20,14 +22,11 @@ public class Queue {
 
     private int offset;
 
-    private final ReentrantLock lock;
-
     private byte[] data;
 
     public Queue(int id) {
         this.id = id;
         this.segments = new ArrayList<>();
-        this.lock = new ReentrantLock();
     }
 
     public int getAndIncrementOffset(){
@@ -36,14 +35,6 @@ public class Queue {
 
     public int getOffset() {
         return offset;
-    }
-
-    public void lock(){
-        lock.lock();
-    }
-
-    public void unlock(){
-        lock.unlock();
     }
 
     public byte[] getData(long offset) {

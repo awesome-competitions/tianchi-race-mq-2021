@@ -10,6 +10,9 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Segment {
 
@@ -25,12 +28,15 @@ public class Segment {
 
     private int idx;
 
+    private ReadWriteLock lock;
+
     public Segment(int beg, int end, long pos, int cap) {
         this.beg = beg;
         this.end = end;
         this.pos = pos;
         this.aos = pos;
         this.cap = cap;
+        this.lock = new ReentrantReadWriteLock();
     }
 
     public boolean writable(int len){
@@ -88,6 +94,14 @@ public class Segment {
 
     public void setIdx(int idx) {
         this.idx = idx;
+    }
+
+    public Lock getReadLock(){
+        return lock.readLock();
+    }
+
+    public Lock getWriteLock(){
+        return lock.writeLock();
     }
 
     public List<ByteBuffer> load(FileWrapper fw) {

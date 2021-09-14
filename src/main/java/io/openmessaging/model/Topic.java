@@ -62,14 +62,14 @@ public class Topic{
     }
 
     public long write(int queueId, ByteBuffer data) throws IOException{
+        Queue queue = getQueue(queueId);
+        Group group = getGroup(queueId);
+
         int n = data.remaining();
         byte[] bytes = new byte[n];
         for (int i = 0; i < n; i++){
             bytes[i] = data.get();
         }
-
-        Queue queue = getQueue(queueId);
-        Group group = getGroup(queueId);
         int offset = queue.getAndIncrementOffset();
         queue.setData(bytes);
 
@@ -90,6 +90,7 @@ public class Topic{
             idxBuffer.flip();
             group.getIdx().write(idxBuffer);
         }
+
         cache.write(this, queue, last, bytes);
         last.setEnd(offset);
         last.write(group.getDb(), wrapper);
