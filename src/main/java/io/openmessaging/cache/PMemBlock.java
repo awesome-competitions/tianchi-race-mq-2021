@@ -4,6 +4,7 @@ import com.intel.pmem.llpl.AnyMemoryBlock;
 import com.intel.pmem.llpl.Heap;
 import io.openmessaging.utils.CollectionUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -20,18 +21,25 @@ public class PMemBlock extends Storage {
     private int idx;
 
     public PMemBlock(AnyMemoryBlock block) {
-        this.block = block;
+        this(block, null, 0);
     }
 
     public PMemBlock(AnyMemoryBlock block, List<ByteBuffer> buffers, long beginOffset) {
         this.block = block;
-        reset(0, buffers, beginOffset);
+        reset(-1, buffers, beginOffset);
     }
 
     short getShort(long pos){
         byte[] bytes = new byte[2];
         block.copyToArray(pos, bytes, 0, 2);
         return (short)((bytes[0] << 8) | (bytes[1] & 0xff));
+    }
+
+    byte[] shortToBytes(int s) {
+        byte[] bytes = new byte[2];
+        bytes[0] = (byte) (s >> 8 & 0xFF);
+        bytes[1] = (byte) (s & 0xFF);
+        return bytes;
     }
 
     @Override
@@ -67,14 +75,20 @@ public class PMemBlock extends Storage {
     public void reset(int idx, List<ByteBuffer> buffers, long beginOffset) {
         this.idx = idx;
         long newPos = 0;
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
         if (CollectionUtils.isNotEmpty(buffers)) {
+            if (positions == null){
+                positions = new ArrayList<>();
+            }
+            positions.clear();
             for (ByteBuffer buffer : buffers) {
                 positions.add(newPos);
-                block.setShort(newPos, (short) buffer.capacity());
-                newPos += 2;
-                block.copyFromArray(buffer.array(), 0, newPos, buffer.capacity());
-                newPos += buffer.capacity();
+                stream.write(shortToBytes(buffer.capacity()), 0, 2);
+                stream.write(buffer.array(), 0, buffer.capacity());
+                newPos += 2 + buffer.capacity();
             }
+            byte[] src = stream.toByteArray();
+            block.copyFromArray(src, 0, 0, src.length);
         }
         this.position = newPos;
         this.beginOffset = beginOffset;
