@@ -66,9 +66,6 @@ public class Topic{
                 readableList.add(new Readable(segment, startOffset, endOffset));
                 break;
             }else {
-                if (segment.getEnd() < startOffset){
-                    System.out.println(1);
-                }
                 readableList.add(new Readable(segment, startOffset, segment.getEnd()));
                 num -= segment.getEnd() - startOffset + 1;
                 startOffset = segment.getEnd() + 1;
