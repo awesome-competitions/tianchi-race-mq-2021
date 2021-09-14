@@ -44,7 +44,11 @@ public class Topic{
     }
 
     public Queue getQueue(int queueId){
-        return queues.computeIfAbsent(queueId, Queue::new);
+        return queues.computeIfAbsent(queueId, id -> {
+            Queue queue = new Queue(id);
+            queue.setStorage(cache.applyBlock());
+            return queue;
+        });
     }
 
     public List<ByteBuffer> read(int queueId, long offset, int num) throws IOException {
@@ -77,7 +81,7 @@ public class Topic{
         }
         List<ByteBuffer> buffers = new ArrayList<>(num);
         for (Readable readable : readableList) {
-            Storage storage = cache.loadStorage(group, readable.getSegment());
+            Storage storage = cache.loadStorage(queue, group, readable.getSegment());
             if (storage == null) {
                 break;
             }
@@ -116,7 +120,7 @@ public class Topic{
             group.getIdx().write(idxBuffer);
         }
 
-        cache.write(head, bytes);
+        cache.write(queue, head, bytes);
         head.setEnd(offset);
         head.write(group.getDb(), wrapper);
         return offset;

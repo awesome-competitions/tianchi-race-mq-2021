@@ -2,6 +2,7 @@ package io.openmessaging.cache;
 
 import com.intel.pmem.llpl.AnyMemoryBlock;
 import com.intel.pmem.llpl.Heap;
+import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 import io.openmessaging.model.*;
 import io.openmessaging.model.Readable;
 import org.slf4j.Logger;
@@ -20,35 +21,38 @@ public class Cache {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Cache.class);
 
-    public Cache(String path, long heapSize){
+    private final long pageSize;
+
+    public Cache(String path, long heapSize, long pageSize){
         if (Objects.nonNull(path)){
             this.heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
         }
+        this.pageSize = pageSize;
     }
 
-    public void write(Segment segment, byte[] bytes){
+    public void write(Queue queue, Segment segment, byte[] bytes){
         try{
-            segment.readLock().lock();
-            Storage storage = segment.getStorage();
-            if (storage != null){
+            queue.getLock().readLock().lock();
+            PMemBlock storage = queue.getStorage();
+            if (storage != null && storage.getIdx() == segment.getIdx()){
                 storage.write(bytes);
             }
         }finally {
-            segment.readLock().unlock();
+            queue.getLock().readLock().unlock();
         }
     }
 
-    public Storage loadStorage(Group group, Segment segment){
-        Storage storage = segment.getStorage();
-        if (storage == null){
-            try {
-                segment.writeLock().lock();
-                if (segment.getStorage() == null){
-                    storage = heap == null ? loadDram(group, segment) : loadPMem(group, segment);
+    public Storage loadStorage(Queue queue, Group group, Segment segment){
+        PMemBlock storage = queue.getStorage();
+        if (storage.getIdx() != segment.getIdx()){
+            try{
+                queue.getLock().writeLock().lock();
+                storage = queue.getStorage();
+                if (storage.getIdx() != segment.getIdx()){
+                    storage.reset(segment.getIdx(), segment.load(group.getDb()), segment.getStart());
                 }
-                segment.setStorage(storage);
             }finally {
-                segment.writeLock().unlock();
+                queue.getLock().writeLock().unlock();
             }
         }
         return storage;
@@ -70,5 +74,16 @@ public class Cache {
             blocks.add(anyMemoryBlock);
         }
         return new PMem(heap, blocks, segment.getStart());
+    }
+
+    private Storage loadPMemBlock(Group group, Segment segment){
+        if (segment.getAos() == segment.getPos()){
+            return null;
+        }
+        return new PMemBlock(heap.allocateMemoryBlock(pageSize), segment.load(group.getDb()), segment.getStart());
+    }
+
+    public PMemBlock applyBlock(){
+        return new PMemBlock(heap.allocateMemoryBlock(pageSize));
     }
 }
