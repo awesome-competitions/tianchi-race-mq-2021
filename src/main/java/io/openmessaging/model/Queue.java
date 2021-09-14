@@ -34,6 +34,10 @@ public class Queue {
         return offset++;
     }
 
+    public int getOffset() {
+        return offset;
+    }
+
     public void lock(){
         lock.lock();
     }
