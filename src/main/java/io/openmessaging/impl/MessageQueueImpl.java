@@ -45,6 +45,7 @@ public class MessageQueueImpl extends MessageQueue {
         this.config = config;
         this.topics = new ConcurrentHashMap<>();
         this.cache = new Cache(config.getHeapDir(), config.getHeapSize(), config.getCacheSize(), config.getPageSize());
+        lsPmem();
     }
 
     public void cleanDB(){
@@ -97,6 +98,7 @@ public class MessageQueueImpl extends MessageQueue {
                 LOGGER.info("write count {}, size {}", count, size);
             }
             if (count > 2000000){
+                LOGGER.info("stop count {}, size {}", count, size);
                 throw new RuntimeException("stop");
             }
             return getTopic(topic).write(queueId, data);
