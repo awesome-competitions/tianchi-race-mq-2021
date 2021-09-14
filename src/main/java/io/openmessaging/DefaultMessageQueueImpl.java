@@ -14,8 +14,8 @@ import java.util.Map;
 
 public class DefaultMessageQueueImpl extends MessageQueue{
 
-    private final MessageQueue queue = new MessageQueueImpl();
-//    private final MessageQueue queue = null;
+//    private final MessageQueue queue = new MessageQueueImpl();
+    private final MessageQueue queue = null;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMessageQueueImpl.class);
 
@@ -25,8 +25,8 @@ public class DefaultMessageQueueImpl extends MessageQueue{
 
     @Override
     public long append(String topic, int queueId, ByteBuffer data) {
-//        throw new RuntimeException("END");
-        return queue.append(topic, queueId, data);
+        throw new RuntimeException("END");
+//        return queue.append(topic, queueId, data);
     }
 
     @Override
@@ -36,14 +36,14 @@ public class DefaultMessageQueueImpl extends MessageQueue{
 
     public void test(){
         String path = "/pmem/nico";
-        Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, 10 * Const.G);
-        byte[] bytes = new byte[17 * 1024];
-       for (int i = 0; i < 500; i ++){
-           LOGGER.info("ALLOC");
-           MemoryBlock block = heap.allocateMemoryBlock(17 * Const.K);
-           block.copyFromArray(bytes, 0, 0, bytes.length);
-       }
-       throw new RuntimeException("ex");
+        Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, 59 * Const.G);
+        long start = System.currentTimeMillis();
+        for (int i = 0; i < 500000; i++){
+           heap.allocateMemoryBlock(Const.K * 96);
+        }
+        long end = System.currentTimeMillis();
+        LOGGER.info("time {}", end - start);
+        throw new RuntimeException("ex");
 
 //        int n = 5;
 //        long size = n * Const.G;
