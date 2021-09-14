@@ -95,7 +95,7 @@ public class MessageQueueImpl extends MessageQueue {
             ++count;
             size += data.capacity();
             if (count % 100000 == 0){
-                LOGGER.info("write count {}, size {}", count, size);
+                LOGGER.info("write count {}, size {}, topic size{}", count, size, topics.size());
             }
 //            if (count > 2000000){
 //                LOGGER.info("stop count {}, size {}", count, size);
