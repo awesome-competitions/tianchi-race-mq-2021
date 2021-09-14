@@ -96,7 +96,7 @@ public class MessageQueueImpl extends MessageQueue {
             if (count % 100000 == 0){
                 LOGGER.info("write count {}, size {}", count, size);
             }
-            if (count > 1000){
+            if (count > 1000000){
                 LOGGER.info("end");
                 LOGGER.info("write count {}, size {}", count, size);
                 throw new RuntimeException("stop");
