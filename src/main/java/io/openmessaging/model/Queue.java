@@ -16,6 +16,8 @@ public class Queue {
 
     private final int id;
 
+    private Segment head;
+
     private Segment last;
 
     private final List<Segment> segments;
@@ -51,15 +53,32 @@ public class Queue {
     public void addSegment(Segment seg){
         seg.setIdx(this.segments.size());
         this.segments.add(seg);
-        this.last = seg;
+        this.head = seg;
     }
 
     public int getId(){
         return id;
     }
 
-    public Segment getLast() {
+    public Segment getHead() {
+        return head;
+    }
+
+    public Segment getLast(long offset) {
+        if (last == null){
+            last = getSegment(offset);
+        }
         return last;
+    }
+
+    public void setLast(Segment last) {
+        if (this.last != null){
+            if (this.last.getIdx() == last.getIdx()){
+                return;
+            }
+            this.last.clean();
+        }
+        this.last = last;
     }
 
     public Segment getSegment(long offset){
@@ -71,7 +90,7 @@ public class Queue {
         while(true){
             int index = (left + right) / 2;
             Segment mid = segments.get(index);
-            if (offset < mid.getBeg()){
+            if (offset < mid.getStart()){
                 right = index - 1;
                 if (right < left) break;
             }else if (offset > mid.getEnd()){
@@ -90,5 +109,4 @@ public class Queue {
         }
         return null;
     }
-
 }

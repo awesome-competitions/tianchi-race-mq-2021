@@ -21,10 +21,8 @@ public class TestPmem {
                 "/data/test/",
                 "/mnt/mem/nico1",
                 1024 * 1024 * 256,
-                1024 * 1024 * 16,
-                1024 / 4,
-                1,
-                QUEUE_SIZE
+                1024 * 64,
+                1
         ));
         mMapMessageQueue.cleanDB();
         List<Supplier<?>> suppliers = new ArrayList<>();

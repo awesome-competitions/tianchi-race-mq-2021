@@ -1,6 +1,7 @@
 package io.openmessaging.model;
 
 import io.openmessaging.cache.Cache;
+import io.openmessaging.cache.Storage;
 import io.openmessaging.consts.Const;
 
 import java.io.FileNotFoundException;
@@ -46,54 +47,78 @@ public class Topic{
         return queues.computeIfAbsent(queueId, Queue::new);
     }
 
-    public String getName(){
-        return name;
-    }
-
     public List<ByteBuffer> read(int queueId, long offset, int num) throws IOException {
         Queue queue = getQueue(queueId);
-        if (num == 1){
-            byte[] data = queue.getData(offset);
-            if (data != null){
-                return Collections.singletonList(ByteBuffer.wrap(data));
+        Group group = getGroup(queue.getId());
+        Segment segment = queue.getLast(offset);
+        if (segment == null){
+            return null;
+        }
+        long startOffset = offset;
+        long endOffset = offset + num - 1;
+        List<Readable> readableList = new ArrayList<>();
+        while (num > 0 && segment != null){
+            if (segment.getStart() > startOffset || segment.getEnd() < startOffset){
+                segment = queue.getSegment(startOffset);
+                continue;
+            }
+            if (segment.getEnd() >= endOffset){
+                readableList.add(new Readable(segment, startOffset, endOffset));
+                break;
+            }else {
+                if (segment.getEnd() < startOffset){
+                    System.out.println(1);
+                }
+                readableList.add(new Readable(segment, startOffset, segment.getEnd()));
+                num -= segment.getEnd() - startOffset + 1;
+                startOffset = segment.getEnd() + 1;
+                segment = queue.nextSegment(segment);
             }
         }
-        return cache.load(this, queue, offset, num);
+        List<ByteBuffer> buffers = new ArrayList<>(num);
+        for (Readable readable : readableList) {
+            Storage storage = cache.loadStorage(group, readable.getSegment());
+            if (storage == null) {
+                break;
+            }
+            buffers.addAll(storage.read(readable.getStartOffset(), readable.getEndOffset()));
+            queue.setLast(readable.getSegment());
+        }
+        return buffers;
     }
 
     public long write(int queueId, ByteBuffer data) throws IOException{
-        Queue queue = getQueue(queueId);
-        Group group = getGroup(queueId);
-
         int n = data.remaining();
         byte[] bytes = new byte[n];
         for (int i = 0; i < n; i++){
             bytes[i] = data.get();
         }
+
+        Queue queue = getQueue(queueId);
+        Group group = getGroup(queueId);
         int offset = queue.getAndIncrementOffset();
-        queue.setData(bytes);
 
         ByteBuffer wrapper = ByteBuffer.allocate(2 + data.capacity());
         wrapper.putShort((short) data.capacity());
         wrapper.put(bytes);
         wrapper.flip();
 
-        Segment last = queue.getLast();
-        if (last == null || ! last.writable(wrapper.capacity())){
-            last = new Segment(offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
-            queue.addSegment(last);
+        Segment head = queue.getHead();
+        if (head == null || ! head.writable(wrapper.capacity())){
+            head = new Segment(offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
+            queue.addSegment(head);
             ByteBuffer idxBuffer = ByteBuffer.allocate(26)
                     .putShort((short) queueId)
-                    .putLong(last.getBeg())
-                    .putLong(last.getPos())
-                    .putLong(last.getCap());
+                    .putLong(head.getStart())
+                    .putLong(head.getPos())
+                    .putLong(head.getCap());
             idxBuffer.flip();
             group.getIdx().write(idxBuffer);
         }
 
-        cache.write(this, queue, last, bytes);
-        last.setEnd(offset);
-        last.write(group.getDb(), wrapper);
+        cache.write(head, bytes);
+        head.setEnd(offset);
+        head.write(group.getDb(), wrapper);
         return offset;
     }
 

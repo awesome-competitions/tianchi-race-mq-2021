@@ -1,7 +1,6 @@
 package io.openmessaging.model;
 
-import com.intel.pmem.llpl.AnyMemoryBlock;
-import io.openmessaging.cache.AbstractMedium;
+import io.openmessaging.cache.Storage;
 import io.openmessaging.utils.BufferUtils;
 
 import java.io.IOException;
@@ -16,7 +15,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Segment {
 
-    private long beg;
+    private long start;
 
     private long end;
 
@@ -24,14 +23,16 @@ public class Segment {
 
     private long aos;
 
-    private int cap;
+    private long cap;
 
     private int idx;
 
     private ReadWriteLock lock;
 
-    public Segment(int beg, int end, long pos, int cap) {
-        this.beg = beg;
+    private Storage storage;
+
+    public Segment(int start, int end, long pos, long cap) {
+        this.start = start;
         this.end = end;
         this.pos = pos;
         this.aos = pos;
@@ -48,12 +49,20 @@ public class Segment {
         aos += data.capacity();
     }
 
-    public long getBeg() {
-        return beg;
+    public Storage getStorage() {
+        return storage;
+    }
+
+    public void setStorage(Storage storage) {
+        this.storage = storage;
+    }
+
+    public long getStart() {
+        return start;
     }
 
     public void setBeg(long beg) {
-        this.beg = beg;
+        this.start = beg;
     }
 
     public long getEnd() {
@@ -80,11 +89,11 @@ public class Segment {
         this.aos = aos;
     }
 
-    public int getCap() {
+    public long getCap() {
         return cap;
     }
 
-    public void setCap(int cap) {
+    public void setCap(long cap) {
         this.cap = cap;
     }
 
@@ -96,11 +105,11 @@ public class Segment {
         this.idx = idx;
     }
 
-    public Lock getReadLock(){
+    public Lock readLock(){
         return lock.readLock();
     }
 
-    public Lock getWriteLock(){
+    public Lock writeLock(){
         return lock.writeLock();
     }
 
@@ -144,5 +153,13 @@ public class Segment {
             }
         }
         return bytes;
+    }
+
+    public void clean(){
+        Storage s = storage;
+        if (s != null){
+            this.storage = null;
+            s.clean();
+        }
     }
 }

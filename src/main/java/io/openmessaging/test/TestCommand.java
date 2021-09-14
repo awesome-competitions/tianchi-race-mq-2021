@@ -1,6 +1,7 @@
 package io.openmessaging.test;
 
 import io.openmessaging.MessageQueue;
+import io.openmessaging.consts.Const;
 import io.openmessaging.impl.MessageQueueImpl;
 import io.openmessaging.model.Config;
 
@@ -11,7 +12,7 @@ import java.util.Scanner;
 public class TestCommand {
 
     public static void main(String[] args) {
-        MessageQueueImpl messageQueue = new MessageQueueImpl(new Config("D:\\test\\nio\\", 1024 * 1024 * 16, 30, 1, 1));
+        MessageQueueImpl messageQueue = new MessageQueueImpl(new Config("D:\\test\\nio\\", 64 * Const.K, 1));
         messageQueue.loadDB();
         Scanner in = new Scanner(System.in);
         String topic = "test_command";

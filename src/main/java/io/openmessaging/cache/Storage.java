@@ -6,7 +6,7 @@ import io.openmessaging.model.Segment;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-public abstract class AbstractMedium {
+public abstract class Storage {
 
     public abstract List<ByteBuffer> read(long startOffset, long endOffset);
 

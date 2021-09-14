@@ -2,15 +2,13 @@ package io.openmessaging.cache;
 
 import com.intel.pmem.llpl.AnyMemoryBlock;
 import com.intel.pmem.llpl.Heap;
-import com.intel.pmem.llpl.MemoryBlock;
 import io.openmessaging.utils.CollectionUtils;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-public class PMem extends AbstractMedium{
+public class PMem extends Storage {
 
     private final List<AnyMemoryBlock> blocks;
 

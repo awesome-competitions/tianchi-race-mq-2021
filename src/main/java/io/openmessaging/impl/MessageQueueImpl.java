@@ -33,10 +33,8 @@ public class MessageQueueImpl extends MessageQueue {
                 "/essd/",
                 "/pmem/nico",
                 Const.G * 59,
-                (int) (Const.K * 256),
-                (int) (Const.G * 50 / (Const.K * 256)),
-                20,
-                5000)
+                Const.K * 96,
+                20)
         );
     }
 
@@ -44,7 +42,7 @@ public class MessageQueueImpl extends MessageQueue {
         LOGGER.info("start");
         this.config = config;
         this.topics = new ConcurrentHashMap<>();
-        this.cache = new Cache(config.getHeapDir(), config.getHeapSize(), config.getCacheSize(), config.getPageSize());
+        this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
         lsPmem();
     }
 

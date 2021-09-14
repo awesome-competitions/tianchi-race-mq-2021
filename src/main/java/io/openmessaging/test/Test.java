@@ -1,6 +1,7 @@
 package io.openmessaging.test;
 
 import io.openmessaging.MessageQueue;
+import io.openmessaging.consts.Const;
 import io.openmessaging.impl.MessageQueueImpl;
 import io.openmessaging.model.Config;
 
@@ -11,11 +12,11 @@ import java.util.function.Supplier;
 
 public class Test {
 
-    private final static int BATCH = 10000 * 10;
+    private final static int BATCH = 10000 * 100;
     private final static int QUEUE_SIZE = 1;
 
     public static void main(String[] args) throws InterruptedException {
-        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config("D:\\test\\nio\\", 1024 * 1024 * 16, 30, QUEUE_SIZE, QUEUE_SIZE));
+        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config("D:\\test\\nio\\", 64 * Const.K, QUEUE_SIZE));
         mMapMessageQueue.cleanDB();
         List<Supplier<?>> suppliers = new ArrayList<>();
 
