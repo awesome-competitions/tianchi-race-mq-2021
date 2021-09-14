@@ -90,7 +90,7 @@ public class Topic{
             idxBuffer.flip();
             group.getIdx().write(idxBuffer);
         }
-//        cache.write(this, queue, last, bytes);
+        cache.write(this, queue, last, bytes);
         last.setEnd(offset);
         last.write(group.getDb(), wrapper);
         return offset;
