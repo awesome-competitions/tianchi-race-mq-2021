@@ -25,7 +25,7 @@ public class TestCommand {
                 System.out.print("new offset " + offset);
             }else{
                 Map<Integer, ByteBuffer> result = messageQueue.getRange(topic, 1, Integer.parseInt(commands[1]), 3);
-                System.out.print("result " + (result == null ? "null" : new String(result.get(0).array())));
+                System.out.print("result " + result);
             }
             long end = System.currentTimeMillis();
             System.out.println(", " + commands[0] + " spend " + (end - start) + "ms");

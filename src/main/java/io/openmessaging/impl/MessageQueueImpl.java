@@ -120,12 +120,9 @@ public class MessageQueueImpl extends MessageQueue {
             LOGGER.info("r {} {} {} {}", name, queueId, offset, fetchNum);
             Topic topic = getTopic(name);
             List<ByteBuffer> results = topic.read(queueId, offset, fetchNum);
-            if (CollectionUtils.isEmpty(results)){
-                return null;
-            }
             Map<Integer, ByteBuffer> byteBuffers = new HashMap<>();
             for(int i = 0; i < fetchNum; i ++){
-                byteBuffers.put(i, i < results.size() ? results.get(i): null);
+                byteBuffers.put(i, CollectionUtils.isNotEmpty(results) && i < results.size() ? results.get(i): null);
             }
             return byteBuffers;
         } catch (IOException e) {
