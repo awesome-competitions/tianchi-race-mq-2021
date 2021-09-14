@@ -47,9 +47,8 @@ public class Cache {
                 break;
             }else{
                 readableList.add(new Readable(segment, startOffset, segment.getEnd()));
-                long score = segment.getEnd() - startOffset;
-                num -= score + 1;
-                startOffset += score;
+                num -= segment.getEnd() - startOffset + 1;
+                startOffset = segment.getEnd() + 1;
                 segment = queue.nextSegment(segment);
             }
         }
@@ -62,7 +61,7 @@ public class Cache {
     }
 
     public void write(Topic topic, Queue queue, Segment segment, byte[] bytes){
-        AbstractMedium medium = getMedium(topic, queue, topic.getGroup(queue.getId()), segment);
+        AbstractMedium medium = loadMedium(topic, queue, topic.getGroup(queue.getId()), segment);
         if (medium != null){
             medium.write(bytes);
         }
