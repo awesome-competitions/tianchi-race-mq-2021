@@ -1,5 +1,7 @@
 package io.openmessaging.model;
 
+import io.openmessaging.cache.PMemBlock;
+import io.openmessaging.cache.Storage;
 import io.openmessaging.utils.CollectionUtils;
 import sun.java2d.pipe.AAShapePipe;
 
@@ -26,9 +28,14 @@ public class Queue {
 
     private byte[] data;
 
+    private ReadWriteLock lock;
+
+    private PMemBlock storage;
+
     public Queue(int id) {
         this.id = id;
         this.segments = new ArrayList<>();
+        this.lock = new ReentrantReadWriteLock();
     }
 
     public int getAndIncrementOffset(){
@@ -46,6 +53,10 @@ public class Queue {
         return null;
     }
 
+    public ReadWriteLock getLock() {
+        return lock;
+    }
+
     public void setData(byte[] data) {
         this.data = data;
     }
@@ -60,6 +71,14 @@ public class Queue {
         return id;
     }
 
+    public PMemBlock getStorage() {
+        return storage;
+    }
+
+    public void setStorage(PMemBlock storage) {
+        this.storage = storage;
+    }
+
     public Segment getHead() {
         return head;
     }
@@ -72,12 +91,6 @@ public class Queue {
     }
 
     public void setLast(Segment last) {
-        if (this.last != null){
-            if (this.last.getIdx() == last.getIdx()){
-                return;
-            }
-            this.last.clean();
-        }
         this.last = last;
     }
 

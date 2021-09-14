@@ -29,8 +29,6 @@ public class Segment {
 
     private ReadWriteLock lock;
 
-    private Storage storage;
-
     public Segment(int start, int end, long pos, long cap) {
         this.start = start;
         this.end = end;
@@ -49,20 +47,8 @@ public class Segment {
         aos += data.capacity();
     }
 
-    public Storage getStorage() {
-        return storage;
-    }
-
-    public void setStorage(Storage storage) {
-        this.storage = storage;
-    }
-
     public long getStart() {
         return start;
-    }
-
-    public void setBeg(long beg) {
-        this.start = beg;
     }
 
     public long getEnd() {
@@ -155,11 +141,4 @@ public class Segment {
         return bytes;
     }
 
-    public void clean(){
-        Storage s = storage;
-        if (s != null){
-            this.storage = null;
-            s.clean();
-        }
-    }
 }
