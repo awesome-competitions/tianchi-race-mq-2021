@@ -25,8 +25,6 @@ public class Segment {
 
     private int idx;
 
-    private AbstractMedium cache;
-
     public Segment(int beg, int end, long pos, int cap) {
         this.beg = beg;
         this.end = end;
@@ -90,14 +88,6 @@ public class Segment {
 
     public void setIdx(int idx) {
         this.idx = idx;
-    }
-
-    public AbstractMedium getCache() {
-        return cache;
-    }
-
-    public void setCache(AbstractMedium cache) {
-        this.cache = cache;
     }
 
     public List<ByteBuffer> load(FileWrapper fw) {

@@ -33,8 +33,8 @@ public class MessageQueueImpl extends MessageQueue {
                 "/essd/",
                 "/pmem/nico",
                 Const.G * 59,
-                (int) (Const.K * 100),
-                (int) (Const.G * 50 / (Const.K * 100)),
+                (int) (Const.K * 256),
+                (int) (Const.G * 50 / (Const.K * 256)),
                 10,
                 5000)
         );
@@ -114,7 +114,7 @@ public class MessageQueueImpl extends MessageQueue {
     public Map<Integer, ByteBuffer> getRange(String name, int queueId, long offset, int fetchNum) {
         try {
             readCount += fetchNum;
-            if (readCount > 20000){
+            if (readCount > 200000){
                 int time = ++times;
                 LOGGER.info("read count {}, times {}", readCount, time);
                 readCount = 0;

@@ -22,6 +22,8 @@ public class Queue {
 
     private final ReentrantLock lock;
 
+    private byte[] data;
+
     public Queue(int id) {
         this.id = id;
         this.segments = new ArrayList<>();
@@ -38,6 +40,17 @@ public class Queue {
 
     public void unlock(){
         lock.unlock();
+    }
+
+    public byte[] getData(long offset) {
+        if (this.offset == offset){
+            return data;
+        }
+        return null;
+    }
+
+    public void setData(byte[] data) {
+        this.data = data;
     }
 
     public void addSegment(Segment seg){
@@ -82,4 +95,5 @@ public class Queue {
         }
         return null;
     }
+
 }

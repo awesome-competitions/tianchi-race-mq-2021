@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,7 +51,14 @@ public class Topic{
     }
 
     public List<ByteBuffer> read(int queueId, long offset, int num) throws IOException {
-        return cache.load(this, getQueue(queueId), offset, num);
+        Queue queue = getQueue(queueId);
+        if (num == 1){
+            byte[] data = queue.getData(offset);
+            if (data != null){
+                return Collections.singletonList(ByteBuffer.wrap(data));
+            }
+        }
+        return cache.load(this, queue, offset, num);
     }
 
     public long write(int queueId, ByteBuffer data) throws IOException{
@@ -82,6 +90,7 @@ public class Topic{
             group.getIdx().write(idxBuffer);
         }
         cache.write(this, queue, last, bytes);
+        queue.setData(bytes);
         last.setEnd(offset);
         last.write(group.getDb(), wrapper);
         return offset;
