@@ -49,7 +49,9 @@ public class PMem extends AbstractMedium{
     @Override
     public void clean() {
         if (CollectionUtils.isNotEmpty(blocks)){
-            blocks.forEach(AnyMemoryBlock::freeMemory);
+            try{
+                blocks.stream().filter(AnyMemoryBlock::isValid).forEach(AnyMemoryBlock::freeMemory);
+            }catch (IllegalStateException e){}
         }
     }
 }
