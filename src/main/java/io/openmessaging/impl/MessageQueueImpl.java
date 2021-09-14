@@ -27,6 +27,7 @@ public class MessageQueueImpl extends MessageQueue {
     private final Config config;
     private final Cache cache;
     private final Map<String, Topic> topics;
+    private static final Map<Integer, ByteBuffer> EMPTY = new HashMap<>();
 
     public MessageQueueImpl() {
         this(new Config(
@@ -117,12 +118,14 @@ public class MessageQueueImpl extends MessageQueue {
                 LOGGER.info("read count {}, times {}", readCount, time);
                 readCount = 0;
             }
-            LOGGER.info("r {} {} {} {}", name, queueId, offset, fetchNum);
             Topic topic = getTopic(name);
             List<ByteBuffer> results = topic.read(queueId, offset, fetchNum);
+            if (CollectionUtils.isEmpty(results)){
+                return EMPTY;
+            }
             Map<Integer, ByteBuffer> byteBuffers = new HashMap<>();
-            for(int i = 0; i < fetchNum; i ++){
-                byteBuffers.put(i, CollectionUtils.isNotEmpty(results) && i < results.size() ? results.get(i): null);
+            for(int i = 0; i < results.size(); i ++){
+                byteBuffers.put(i, results.get(i));
             }
             return byteBuffers;
         } catch (IOException e) {
