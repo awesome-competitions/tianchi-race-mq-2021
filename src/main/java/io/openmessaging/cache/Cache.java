@@ -25,7 +25,7 @@ public class Cache {
 
     public Cache(String path, long heapSize, long pageSize){
         if (Objects.nonNull(path)){
-            this.heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
+            this.heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path);
         }
         this.pageSize = pageSize;
     }
