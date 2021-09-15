@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,8 +35,8 @@ public class Topic{
 
     private void initGroups() throws IOException {
         for (int i = 0; i < config.getGroupSize(); i ++){
-            FileWrapper db = new FileWrapper(new RandomAccessFile(String.format(Const.DB_NAMED_FORMAT, config.getDataDir(), name, i), "rw"));
-            FileWrapper idx = new FileWrapper(new RandomAccessFile(String.format(Const.IDX_NAMED_FORMAT, config.getDataDir(), name, i), "rw"));
+            FileWrapper db = new FileWrapper(Paths.get(String.format(Const.DB_NAMED_FORMAT, config.getDataDir(), name, i)));
+            FileWrapper idx = new FileWrapper(Paths.get(String.format(Const.IDX_NAMED_FORMAT, config.getDataDir(), name, i)));
             Group group = new Group(db, idx);
             group.initQueues(this);
             groups.add(group);

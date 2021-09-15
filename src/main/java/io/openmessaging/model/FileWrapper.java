@@ -1,19 +1,29 @@
 package io.openmessaging.model;
 
+import sun.nio.ch.FileChannelImpl;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 public class FileWrapper {
 
-    private final RandomAccessFile file;
+    static final OpenOption[] options = {
+            StandardOpenOption.READ,
+            StandardOpenOption.WRITE,
+            StandardOpenOption.CREATE_NEW
+    };
 
     private final FileChannel channel;
 
-    public FileWrapper(RandomAccessFile file) {
-        this.file = file;
-        this.channel = file.getChannel();
+    public FileWrapper(Path path) throws IOException {
+        this.channel = FileChannelImpl.open(path, options);
     }
 
     private void position(long pos) throws IOException {
@@ -44,10 +54,6 @@ public class FileWrapper {
 
     public FileChannel getChannel(){
         return channel;
-    }
-
-    public RandomAccessFile getFile() {
-        return file;
     }
 
 }

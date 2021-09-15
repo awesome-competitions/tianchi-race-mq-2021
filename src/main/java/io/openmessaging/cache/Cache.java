@@ -1,19 +1,11 @@
 package io.openmessaging.cache;
 
-import com.intel.pmem.llpl.AnyMemoryBlock;
 import com.intel.pmem.llpl.Heap;
-import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 import io.openmessaging.model.*;
-import io.openmessaging.model.Readable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class Cache {
 
@@ -33,7 +25,7 @@ public class Cache {
     public void write(Queue queue, Segment segment, byte[] bytes){
         try{
             queue.getLock().readLock().lock();
-            PMemBlock storage = queue.getStorage();
+            Storage storage = queue.getStorage();
             if (storage != null && storage.getIdx() == segment.getIdx()){
                 storage.write(bytes);
             }
@@ -43,7 +35,7 @@ public class Cache {
     }
 
     public Storage loadStorage(Queue queue, Group group, Segment segment){
-        PMemBlock storage = queue.getStorage();
+        Storage storage = queue.getStorage();
         if (storage.getIdx() != segment.getIdx()){
             try{
                 queue.getLock().writeLock().lock();
@@ -58,32 +50,10 @@ public class Cache {
         return storage;
     }
 
-    private Storage loadDram(Group group, Segment segment){
-        return new Dram(segment.load(group.getDb()), segment.getStart());
-    }
-
-    private Storage loadPMem(Group group, Segment segment){
-        if (segment.getAos() == segment.getPos()){
-            return null;
+    public Storage applyBlock(){
+        if (heap == null){
+            return new Dram();
         }
-        List<ByteBuffer> buffers = segment.load(group.getDb());
-        List<AnyMemoryBlock> blocks = new ArrayList<>(buffers.size());
-        for (ByteBuffer buffer: buffers){
-            AnyMemoryBlock anyMemoryBlock = heap.allocateMemoryBlock(buffer.capacity());
-            anyMemoryBlock.copyFromArray(buffer.array(), 0, 0, buffer.capacity());
-            blocks.add(anyMemoryBlock);
-        }
-        return new PMem(heap, blocks, segment.getStart());
-    }
-
-    private Storage loadPMemBlock(Group group, Segment segment){
-        if (segment.getAos() == segment.getPos()){
-            return null;
-        }
-        return new PMemBlock(heap.allocateMemoryBlock(pageSize), segment.load(group.getDb()), segment.getStart());
-    }
-
-    public PMemBlock applyBlock(){
-        return new PMemBlock(heap.allocateMemoryBlock(pageSize));
+        return new PMem(heap.allocateMemoryBlock(pageSize));
     }
 }

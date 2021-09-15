@@ -5,13 +5,14 @@ import java.util.List;
 
 public class Dram extends Storage {
 
-    private final List<ByteBuffer> data;
+    private List<ByteBuffer> data;
 
-    private final long beginOffset;
+    private long beginOffset;
 
-    public Dram(List<ByteBuffer> data, long beginOffset) {
-        this.data = data;
-        this.beginOffset = beginOffset;
+    private int idx;
+
+    public Dram() {
+        this.idx = -1;
     }
 
     @Override
@@ -27,7 +28,16 @@ public class Dram extends Storage {
     }
 
     @Override
-    public void clean() {
-        data.clear();
+    public void reset(int idx, List<ByteBuffer> buffers, long beginOffset) {
+        this.idx = idx;
+        this.data = buffers;
+        this.beginOffset = beginOffset;
     }
+
+    @Override
+    public long getIdx() {
+        return idx;
+    }
+
+
 }

@@ -1,17 +1,11 @@
 package io.openmessaging.model;
 
-import io.openmessaging.cache.PMemBlock;
+import io.openmessaging.cache.PMem;
 import io.openmessaging.cache.Storage;
-import io.openmessaging.utils.CollectionUtils;
-import sun.java2d.pipe.AAShapePipe;
 
-import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Queue {
@@ -30,7 +24,7 @@ public class Queue {
 
     private ReadWriteLock lock;
 
-    private PMemBlock storage;
+    private Storage storage;
 
     public Queue(int id) {
         this.id = id;
@@ -74,11 +68,11 @@ public class Queue {
         return id;
     }
 
-    public PMemBlock getStorage() {
+    public Storage getStorage() {
         return storage;
     }
 
-    public void setStorage(PMemBlock storage) {
+    public void setStorage(Storage storage) {
         this.storage = storage;
     }
 

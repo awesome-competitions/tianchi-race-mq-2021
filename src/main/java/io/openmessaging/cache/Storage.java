@@ -12,6 +12,8 @@ public abstract class Storage {
 
     public abstract void write(byte[] bytes);
 
-    public abstract void clean();
+    public abstract void reset(int idx, List<ByteBuffer> buffers, long beginOffset);
+
+    public abstract long getIdx();
 
 }
