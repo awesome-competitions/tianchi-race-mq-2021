@@ -35,7 +35,7 @@ public class MessageQueueImpl extends MessageQueue {
                 "/pmem/nico",
                 Const.G * 60,
                 Const.K * 288,
-                100)
+                1000)
         );
     }
 
