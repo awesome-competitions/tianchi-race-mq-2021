@@ -54,26 +54,12 @@ public class MessageQueueImpl extends MessageQueue {
             for (File file: Objects.requireNonNull(root.listFiles())){
                 if (file.exists() && ! file.isDirectory() && file.delete()){ }
             }
-            Map<String, Map<Integer, File>> dbs = new HashMap<>();
-            Map<String, Map<Integer, File>> ids = new HashMap<>();
-            Map<String, Map<Integer, File>> cur;
-            if (ArrayUtils.isNotEmpty(root.listFiles())){
-                for (File file: Objects.requireNonNull(root.listFiles())){
-                    if (! file.isDirectory()) {
-                        String[] infos = file.getName().substring(0, file.getName().lastIndexOf(".")).split("_");
-                        cur = file.getName().endsWith(".db") ? dbs : ids;
-                        cur.computeIfAbsent(infos[0], k -> new HashMap<>()).put(Integer.parseInt(infos[1]), file);
-                    }
-                }
-            }
+
         }
     }
 
     public void loadDB(){
-        File root = new File(config.getDataDir());
-        if (! root.exists() && ! root.mkdirs() && ! root.isDirectory()){
-            throw new RuntimeException("load db error");
-        }
+
     }
 
     public void lsPmem(){
@@ -134,7 +120,7 @@ public class MessageQueueImpl extends MessageQueue {
         return null;
     }
 
-    public synchronized Topic getTopic(String name) throws FileNotFoundException {
+    public synchronized Topic getTopic(String name) throws IOException {
         Topic topic = topics.get(name);
         if (topic == null){
             topic = new Topic(name, config, cache);
@@ -142,5 +128,6 @@ public class MessageQueueImpl extends MessageQueue {
         }
         return topic;
     }
+
 
 }

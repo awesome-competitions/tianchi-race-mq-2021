@@ -38,6 +38,10 @@ public class FileWrapper {
         return channel.read(dst);
     }
 
+    public synchronized int read(ByteBuffer dst) throws IOException {
+        return channel.read(dst);
+    }
+
     public FileChannel getChannel(){
         return channel;
     }

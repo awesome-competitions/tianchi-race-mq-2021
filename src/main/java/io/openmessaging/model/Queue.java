@@ -24,7 +24,7 @@ public class Queue {
 
     private final List<Segment> segments;
 
-    private int offset;
+    private long offset;
 
     private byte[] data;
 
@@ -38,11 +38,11 @@ public class Queue {
         this.lock = new ReentrantReadWriteLock();
     }
 
-    public int getAndIncrementOffset(){
+    public long getAndIncrementOffset(){
         return offset++;
     }
 
-    public int getOffset() {
+    public long getOffset() {
         return offset;
     }
 
@@ -63,6 +63,9 @@ public class Queue {
 
     public void addSegment(Segment seg){
         seg.setIdx(this.segments.size());
+        if (this.head != null){
+            this.head.setEnd(seg.getStart() - 1);
+        }
         this.segments.add(seg);
         this.head = seg;
     }

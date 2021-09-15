@@ -27,15 +27,12 @@ public class Segment {
 
     private int idx;
 
-    private ReadWriteLock lock;
-
-    public Segment(int start, int end, long pos, long cap) {
+    public Segment(long start, long end, long pos, long cap) {
         this.start = start;
         this.end = end;
         this.pos = pos;
         this.aos = pos;
         this.cap = cap;
-        this.lock = new ReentrantReadWriteLock();
     }
 
     public boolean writable(int len){
@@ -91,14 +88,6 @@ public class Segment {
         this.idx = idx;
     }
 
-    public Lock readLock(){
-        return lock.readLock();
-    }
-
-    public Lock writeLock(){
-        return lock.writeLock();
-    }
-
     public List<ByteBuffer> load(FileWrapper fw) {
         MappedByteBuffer mmb = null;
         List<ByteBuffer> data = null;
@@ -119,6 +108,26 @@ public class Segment {
             }
         }
         return data;
+    }
+
+    public void reset(FileWrapper fw) {
+        MappedByteBuffer mmb = null;
+        try {
+            mmb = fw.getChannel().map(FileChannel.MapMode.READ_ONLY, pos, aos - pos);
+            short size;
+            while (mmb.remaining() > 2 && (size = mmb.getShort()) > 0){
+                mmb.position(mmb.position() + size);
+            }
+            if (mmb.position() > 2){
+                this.aos = this.pos + mmb.position() - 2;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally {
+            if (mmb != null){
+                BufferUtils.clean(mmb);
+            }
+        }
     }
 
     public byte[] loadBytes(FileWrapper fw) {
