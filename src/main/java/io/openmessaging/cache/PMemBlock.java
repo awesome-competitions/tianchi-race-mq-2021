@@ -66,7 +66,7 @@ public class PMemBlock extends Storage {
     @Override
     public void write(byte[] bytes) {
         positions.add(position);
-        block.setShort(position, (short) bytes.length);
+        block.copyFromArray(shortToBytes(bytes.length), 0, position, 2);
         position += 2;
         block.copyFromArray(bytes, 0, position, bytes.length);
         position += bytes.length;
