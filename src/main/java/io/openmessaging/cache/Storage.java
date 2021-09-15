@@ -21,7 +21,7 @@ public abstract class Storage {
     public abstract void clean();
 
     public void killed(){
-        this.expire = System.currentTimeMillis() + 3000;
+        this.expire = System.currentTimeMillis() + 2000;
     }
 
     public long expire(){
