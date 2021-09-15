@@ -2,10 +2,13 @@ package io.openmessaging.cache;
 
 import com.intel.pmem.llpl.Heap;
 import io.openmessaging.model.*;
+import io.openmessaging.model.Queue;
+import io.openmessaging.utils.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Cache {
 
@@ -15,31 +18,48 @@ public class Cache {
 
     private final Lru<Integer, Queue> lru;
 
-    private final long pageSize;
+    private final List<Storage> cleans;
 
-    public void addLru(Queue queue){
-        lru.put(queue.getId(), queue);
-    }
+    private final long pageSize;
 
     public Cache(String path, long heapSize, int lruSize, long pageSize){
         if (Objects.nonNull(path)){
             this.heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
         }
         this.pageSize = pageSize;
+        this.cleans = new CopyOnWriteArrayList<>();
         this.lru = new Lru<>(lruSize, v -> {
-            try{
-                System.out.println("淘汰" + v.getId());
-                v.getLock().writeLock().lock();
-                Storage storage = v.getStorage();
-                if (storage != null){
-                    v.setStorage(null);
-                    storage.clean();
-                }
-            }finally {
-                v.getLock().writeLock().unlock();
-                System.out.println("un淘汰" + v.getId());
+            Storage storage = v.getStorage();
+            if (storage != null){
+                v.setStorage(null);
+                storage.killed();
+                cleans.add(storage);
             }
         });
+        Thread cleanJob = new Thread(this::clean);
+        cleanJob.setDaemon(true);
+        cleanJob.start();
+    }
+
+    public void clean(){
+        while (true){
+            try {
+                Thread.sleep(1000);
+                long curr = System.currentTimeMillis();
+                if (CollectionUtils.isNotEmpty(cleans)){
+                    Iterator<Storage> it = cleans.iterator();
+                    while(it.hasNext()){
+                        Storage s = it.next();
+                        if (curr > s.expire()){
+                            s.clean();
+                        }
+                        cleans.remove(s);
+                    }
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void write(Queue queue, Segment segment, byte[] bytes){
@@ -58,9 +78,11 @@ public class Cache {
     public Storage loadStorage(Queue queue, Group group, Segment segment){
         Storage storage = queue.getStorage();
         if (storage == null || storage.getIdx() != segment.getIdx()){
+            boolean locked = queue.getHead().getIdx() == segment.getIdx();
             try{
-                System.out.println("load" + queue.getId());
-                queue.getLock().writeLock().lock();
+                if (locked){
+                    queue.getLock().writeLock().lock();
+                }
                 storage = queue.getStorage();
                 if (storage == null || storage.getIdx() != segment.getIdx()){
                     if (storage == null){
@@ -70,8 +92,9 @@ public class Cache {
                     storage.reset(segment.getIdx(), segment.load(group.getDb()), segment.getStart());
                 }
             }finally {
-                queue.getLock().writeLock().unlock();
-                System.out.println("unload" + queue.getId());
+                if (locked){
+                    queue.getLock().writeLock().unlock();
+                }
             }
         }
         return storage;

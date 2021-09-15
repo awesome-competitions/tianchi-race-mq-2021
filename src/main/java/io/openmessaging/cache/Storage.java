@@ -8,6 +8,8 @@ import java.util.List;
 
 public abstract class Storage {
 
+    protected long expire;
+
     public abstract List<ByteBuffer> read(long startOffset, long endOffset);
 
     public abstract void write(byte[] bytes);
@@ -17,5 +19,13 @@ public abstract class Storage {
     public abstract long getIdx();
 
     public abstract void clean();
+
+    public void killed(){
+        this.expire = System.currentTimeMillis() + 10000;
+    }
+
+    public long expire(){
+        return expire;
+    }
 
 }
