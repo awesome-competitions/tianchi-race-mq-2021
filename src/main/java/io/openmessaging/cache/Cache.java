@@ -28,12 +28,12 @@ public class Cache {
         if (Objects.nonNull(path)){
             this.heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
         }
-        if (lruSize < 200){
-            lruSize = 200;
+        if (lruSize < 1000){
+            lruSize = 1000;
         }
         this.pageSize = pageSize;
         this.pools = new LinkedBlockingQueue<>();
-        this.lru = new Lru<>(lruSize - 100, v -> {
+        this.lru = new Lru<>(lruSize - 500, v -> {
             Storage storage = v.getStorage();
             if (storage != null){
                 v.setStorage(null);
