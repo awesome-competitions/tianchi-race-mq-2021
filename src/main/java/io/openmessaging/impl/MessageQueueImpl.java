@@ -44,7 +44,6 @@ public class MessageQueueImpl extends MessageQueue {
         this.config = config;
         this.topics = new ConcurrentHashMap<>();
         this.cache = new Cache(config.getHeapDir(), config.getHeapSize(), config.getPageSize());
-        lsPmem();
     }
 
     public void cleanDB(){

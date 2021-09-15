@@ -92,7 +92,7 @@ public class Segment {
         MappedByteBuffer mmb = null;
         List<ByteBuffer> data = null;
         try {
-            mmb = fw.getChannel().map(FileChannel.MapMode.READ_ONLY, pos, aos - pos);
+            mmb = fw.getChannel().map(FileChannel.MapMode.READ_ONLY, pos, cap);
             short size;
             data = new ArrayList<>();
             while (mmb.remaining() > 2 && (size = mmb.getShort()) > 0){
@@ -113,13 +113,16 @@ public class Segment {
     public void reset(FileWrapper fw) {
         MappedByteBuffer mmb = null;
         try {
-            mmb = fw.getChannel().map(FileChannel.MapMode.READ_ONLY, pos, aos - pos);
+            mmb = fw.getChannel().map(FileChannel.MapMode.READ_ONLY, pos, cap);
             short size;
+            int count = 0;
             while (mmb.remaining() > 2 && (size = mmb.getShort()) > 0){
                 mmb.position(mmb.position() + size);
+                count ++;
             }
             if (mmb.position() > 2){
                 this.aos = this.pos + mmb.position() - 2;
+                this.end = this.start + count - 1;
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -137,7 +140,7 @@ public class Segment {
         MappedByteBuffer mmb = null;
         byte[] bytes = null;
         try {
-            mmb = fw.getChannel().map(FileChannel.MapMode.READ_ONLY, pos, aos - pos);
+            mmb = fw.getChannel().map(FileChannel.MapMode.READ_ONLY, pos, cap);
             bytes = new byte[mmb.capacity()];
             mmb.get(bytes);
         } catch (IOException e) {

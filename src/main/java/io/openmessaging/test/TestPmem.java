@@ -19,7 +19,7 @@ public class TestPmem {
     public static void main(String[] args) throws InterruptedException {
         MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config(
                 "/data/test/",
-                "/mnt/mem/nico1",
+                "/mnt/mem/nico3",
                 1024 * 1024 * 256,
                 1024 * 64,
                 1

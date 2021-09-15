@@ -2,6 +2,7 @@ package io.openmessaging.test;
 
 import io.openmessaging.MessageQueue;
 import io.openmessaging.impl.MessageQueueImpl;
+import io.openmessaging.model.Config;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -12,11 +13,17 @@ import java.util.function.Supplier;
 public class TestLoadDB {
 
 
-    private final static int BATCH = 10000 * 10;
+    private final static int BATCH = 10000;
     private final static int PARALLEL_SIZE = 1;
 
     public static void main(String[] args) throws InterruptedException {
-        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl();
+        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config(
+                "/data/test/",
+                "/mnt/mem/nico2",
+                1024 * 1024 * 256,
+                1024,
+                1
+        ));
         mMapMessageQueue.cleanDB();
         List<Supplier<?>> suppliers = new ArrayList<>();
         Map<Long, Integer> results = new ConcurrentHashMap<>();
@@ -27,7 +34,7 @@ public class TestLoadDB {
         }
 
         long start = System.currentTimeMillis();
-        for (int i = 0; i <= PARALLEL_SIZE; i ++){
+        for (int i = 0; i < PARALLEL_SIZE; i ++){
             suppliers.add(test(msgQueue, mMapMessageQueue, results,"test3", 1));
         }
         final CountDownLatch cdl = new CountDownLatch(suppliers.size());
@@ -47,10 +54,19 @@ public class TestLoadDB {
         System.out.println("p1 spend time " + (end - start) + "ms");
 
 
-        MessageQueueImpl mMapMessageQueueNew = new MessageQueueImpl();
+        MessageQueueImpl mMapMessageQueueNew = new MessageQueueImpl(new Config(
+                "/data/test/",
+                "/mnt/mem/nico2",
+                1024 * 1024 * 256,
+                1024 * 64,
+                1
+        ));
         mMapMessageQueueNew.loadDB();
         for (int i = 0; i < BATCH; i ++){
             Map<Integer, ByteBuffer> data = mMapMessageQueueNew.getRange("test3", 1, i, 1);
+            if (data.isEmpty()){
+                throw new RuntimeException("err at " + i);
+            }
             if (! Objects.equals(new String(data.get(0).array()), String.valueOf(results.get((long) i)))){
                 throw new RuntimeException("err at " + i);
             }
