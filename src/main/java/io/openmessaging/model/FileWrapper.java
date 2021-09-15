@@ -17,7 +17,7 @@ public class FileWrapper {
     static final OpenOption[] options = {
             StandardOpenOption.READ,
             StandardOpenOption.WRITE,
-            StandardOpenOption.CREATE_NEW
+            StandardOpenOption.CREATE
     };
 
     private final FileChannel channel;

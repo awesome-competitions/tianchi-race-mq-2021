@@ -18,8 +18,8 @@ public class TestLoadDB {
 
     public static void main(String[] args) throws InterruptedException {
         MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config(
-                "/data/test/",
-                "/mnt/mem/nico2",
+                "D:\\test\\nio\\",
+                null,
                 1024 * 1024 * 256,
                 1024,
                 1
@@ -55,10 +55,10 @@ public class TestLoadDB {
 
 
         MessageQueueImpl mMapMessageQueueNew = new MessageQueueImpl(new Config(
-                "/data/test/",
-                "/mnt/mem/nico2",
+                "D:\\test\\nio\\",
+                null,
                 1024 * 1024 * 256,
-                1024 * 64,
+                1024,
                 1
         ));
         mMapMessageQueueNew.loadDB();
