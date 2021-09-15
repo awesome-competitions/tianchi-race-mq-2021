@@ -8,7 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class Cache {
 
@@ -18,47 +20,28 @@ public class Cache {
 
     private final Lru<Integer, Queue> lru;
 
-    private final List<Storage> cleans;
-
     private final long pageSize;
+
+    private final LinkedBlockingQueue<Storage> pools;
 
     public Cache(String path, long heapSize, int lruSize, long pageSize){
         if (Objects.nonNull(path)){
             this.heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
         }
+        if (lruSize < 200){
+            lruSize = 200;
+        }
         this.pageSize = pageSize;
-        this.cleans = new CopyOnWriteArrayList<>();
-        this.lru = new Lru<>(lruSize, v -> {
+        this.pools = new LinkedBlockingQueue<>();
+        this.lru = new Lru<>(lruSize - 100, v -> {
             Storage storage = v.getStorage();
             if (storage != null){
                 v.setStorage(null);
-                storage.killed();
-                cleans.add(storage);
+                pools.add(storage);
             }
         });
-        Thread cleanJob = new Thread(this::clean);
-        cleanJob.setDaemon(true);
-        cleanJob.start();
-    }
-
-    public void clean(){
-        while (true){
-            try {
-                Thread.sleep(1000);
-                long curr = System.currentTimeMillis();
-                if (CollectionUtils.isNotEmpty(cleans)){
-                    Iterator<Storage> it = cleans.iterator();
-                    while(it.hasNext()){
-                        Storage s = it.next();
-                        if (curr > s.expire()){
-                            s.clean();
-                        }
-                        cleans.remove(s);
-                    }
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        for (int i = 0; i < lruSize; i ++){
+            pools.add(applyBlock());
         }
     }
 
@@ -74,7 +57,7 @@ public class Cache {
         }
     }
 
-    public Storage loadStorage(Queue queue, Group group, Segment segment){
+    public Storage loadStorage(Queue queue, Group group, Segment segment) throws InterruptedException {
         lru.computeIfAbsent(queue.getId(), k -> queue);
         Storage storage = queue.getStorage();
         if (storage == null || storage.getIdx() != segment.getIdx()){
@@ -86,7 +69,7 @@ public class Cache {
                 storage = queue.getStorage();
                 if (storage == null || storage.getIdx() != segment.getIdx()){
                     if (storage == null){
-                        queue.setStorage(storage = applyBlock());
+                        queue.setStorage(storage = pools.take());
                     }
                     storage.reset(segment.getIdx(), segment.load(group.getDb()), segment.getStart());
                 }

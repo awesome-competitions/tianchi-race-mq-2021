@@ -34,7 +34,7 @@ public class MessageQueueImpl extends MessageQueue {
                 "/essd/",
                 "/pmem/nico",
                 Const.G * 60,
-                        50000,
+                (int) ((Const.G * 50) / (Const.K * 512)),
                 Const.K * 512,
                 80)
         );
@@ -114,7 +114,7 @@ public class MessageQueueImpl extends MessageQueue {
                 byteBuffers.put(i, results.get(i));
             }
             return byteBuffers;
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
         return null;

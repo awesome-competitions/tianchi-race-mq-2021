@@ -51,7 +51,7 @@ public class Topic{
         return queues.computeIfAbsent(queueId, Queue::new);
     }
 
-    public List<ByteBuffer> read(int queueId, long offset, int num) throws IOException {
+    public List<ByteBuffer> read(int queueId, long offset, int num) throws IOException, InterruptedException {
         Queue queue = getQueue(queueId);
         Group group = getGroup(queue.getId());
         Segment segment = queue.getLast(offset);
