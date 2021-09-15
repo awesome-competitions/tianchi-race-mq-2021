@@ -3,6 +3,7 @@ package io.openmessaging.model;
 import io.openmessaging.cache.Cache;
 import io.openmessaging.cache.Storage;
 import io.openmessaging.consts.Const;
+import io.openmessaging.utils.CollectionUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -79,10 +80,11 @@ public class Topic{
         List<ByteBuffer> buffers = new ArrayList<>(num);
         for (Readable readable : readableList) {
             Storage storage = cache.loadStorage(queue, group, readable.getSegment());
-            if (storage == null) {
+            List<ByteBuffer> data = storage.read(readable.getStartOffset(), readable.getEndOffset());
+            if (CollectionUtils.isEmpty(data)){
                 break;
             }
-            buffers.addAll(storage.read(readable.getStartOffset(), readable.getEndOffset()));
+            buffers.addAll(data);
             queue.setLast(readable.getSegment());
         }
         return buffers;

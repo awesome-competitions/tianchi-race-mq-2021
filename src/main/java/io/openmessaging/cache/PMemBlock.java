@@ -44,6 +44,9 @@ public class PMemBlock extends Storage {
 
     @Override
     public List<ByteBuffer> read(long startOffset, long endOffset) {
+        if (CollectionUtils.isEmpty(positions)){
+            return null;
+        }
         int startIndex = (int) (startOffset - beginOffset);
         int endIndex = (int) (endOffset - beginOffset);
         List<ByteBuffer> buffers = new ArrayList<>();
