@@ -67,7 +67,6 @@ public class Cache {
             queue.getLock().readLock().lock();
             Storage storage = queue.getStorage();
             if (storage != null && storage.getIdx() == segment.getIdx()){
-                lru.computeIfAbsent(queue.getId(), k -> queue);
                 storage.write(bytes);
             }
         }finally {
@@ -76,6 +75,7 @@ public class Cache {
     }
 
     public Storage loadStorage(Queue queue, Group group, Segment segment){
+        lru.computeIfAbsent(queue.getId(), k -> queue);
         Storage storage = queue.getStorage();
         if (storage == null || storage.getIdx() != segment.getIdx()){
             boolean locked = queue.getHead().getIdx() == segment.getIdx();
@@ -88,7 +88,6 @@ public class Cache {
                     if (storage == null){
                         queue.setStorage(storage = applyBlock());
                     }
-                    lru.computeIfAbsent(queue.getId(), k -> queue);
                     storage.reset(segment.getIdx(), segment.load(group.getDb()), segment.getStart());
                 }
             }finally {
