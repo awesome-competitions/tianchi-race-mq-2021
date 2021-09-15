@@ -7,17 +7,27 @@ public class Config {
     private final long heapSize;
     private final long pageSize;
     private final int groupSize;
+    private final int lruSize;
 
-    public Config(String dataDir, String heapDir, long heapSize, long pageSize, int groupSize) {
+    public Config(String dataDir, String heapDir, long heapSize, int lruSize, long pageSize, int groupSize) {
         this.dataDir = dataDir;
         this.heapDir = heapDir;
         this.heapSize = heapSize;
         this.pageSize = pageSize;
         this.groupSize = groupSize;
+        this.lruSize = lruSize;
+    }
+
+    public Config(String dataDir, String heapDir, long heapSize, long pageSize, int groupSize) {
+        this(dataDir, heapDir, heapSize, 1000, pageSize, groupSize);
     }
 
     public Config(String dataDir, long pageSize, int groupSize) {
         this(dataDir, null, 0, pageSize, groupSize);
+    }
+
+    public Config(String dataDir, int lruSize, long pageSize, int groupSize) {
+        this(dataDir, null, 0, lruSize, pageSize, groupSize);
     }
 
     public long getPageSize() {
@@ -38,5 +48,9 @@ public class Config {
 
     public long getHeapSize() {
         return heapSize;
+    }
+
+    public int getLruSize() {
+        return lruSize;
     }
 }
