@@ -34,8 +34,8 @@ public class MessageQueueImpl extends MessageQueue {
                 "/essd/",
                 "/pmem/nico",
                 Const.G * 59,
-                Const.K * 256,
-                30)
+                Const.K * 512,
+                50)
         );
     }
 
