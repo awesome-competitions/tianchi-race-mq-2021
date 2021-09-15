@@ -20,7 +20,7 @@ public class Lru<K,V>{
     public Lru(int core, Consumer<V> consumer){
         this.limit = core;
         this.lock = new ReentrantLock();
-        map = new LinkedHashMap<K, V>(){
+        map = new LinkedHashMap<K, V>(core,0.75f, true){
             @Override
             protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
                 boolean removed = size() > limit;

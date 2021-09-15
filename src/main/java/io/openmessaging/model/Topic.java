@@ -48,11 +48,7 @@ public class Topic{
     }
 
     public Queue getQueue(int queueId){
-        return queues.computeIfAbsent(queueId, id -> {
-            Queue queue = new Queue(id);
-            queue.setStorage(cache.applyBlock());
-            return queue;
-        });
+        return queues.computeIfAbsent(queueId, Queue::new);
     }
 
     public List<ByteBuffer> read(int queueId, long offset, int num) throws IOException {

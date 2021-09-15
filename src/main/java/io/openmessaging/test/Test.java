@@ -12,11 +12,11 @@ import java.util.function.Supplier;
 
 public class Test {
 
-    private final static int BATCH = 1000;
+    private final static int BATCH = 100;
     private final static int QUEUE_SIZE = 5;
 
     public static void main(String[] args) throws InterruptedException {
-        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config("D:\\test\\nio\\", 2 * Const.K, 1));
+        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config("D:\\test\\nio\\", 1, 2 * Const.K, 1));
         mMapMessageQueue.cleanDB();
         List<Supplier<?>> suppliers = new ArrayList<>();
 
@@ -38,7 +38,7 @@ public class Test {
 
     public static Supplier<?> test(MessageQueue mq, String topic, Integer queueId){
         return ()->{
-            String[] inputs = new String[BATCH / 100];
+            String[] inputs = new String[BATCH/100];
             for (int i = 0; i < inputs.length; i ++){
                 inputs[i] = randomString((int) (Math.random() * 1000) + 1);
 //                inputs[i] = randomString(1);

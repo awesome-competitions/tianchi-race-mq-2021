@@ -16,4 +16,6 @@ public abstract class Storage {
 
     public abstract long getIdx();
 
+    public abstract void clean();
+
 }

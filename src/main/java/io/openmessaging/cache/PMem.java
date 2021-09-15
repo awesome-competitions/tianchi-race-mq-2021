@@ -9,7 +9,7 @@ import java.util.*;
 
 public class PMem extends Storage {
 
-    private final AnyMemoryBlock block;
+    private AnyMemoryBlock block;
 
     private List<Long> positions;
 
@@ -97,5 +97,13 @@ public class PMem extends Storage {
     @Override
     public long getIdx() {
         return idx;
+    }
+
+    @Override
+    public void clean() {
+        if (block != null && block.isValid()){
+            block.freeMemory();
+            this.block = null;
+        }
     }
 }

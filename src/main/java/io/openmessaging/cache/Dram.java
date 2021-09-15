@@ -39,5 +39,10 @@ public class Dram extends Storage {
         return idx;
     }
 
+    @Override
+    public void clean() {
+        this.data = null;
+    }
+
 
 }
