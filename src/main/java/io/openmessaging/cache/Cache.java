@@ -33,7 +33,7 @@ public class Cache {
         }
         this.pageSize = pageSize;
         this.pools = new LinkedBlockingQueue<>();
-        this.lru = new Lru<>(lruSize - 500, v -> {
+        this.lru = new Lru<>(lruSize - 800, v -> {
             Storage storage = v.getStorage();
             if (storage != null){
                 v.setStorage(null);
@@ -43,6 +43,16 @@ public class Cache {
         for (int i = 0; i < lruSize; i ++){
             pools.add(applyBlock());
         }
+        new Thread(()->{
+            while (true){
+                try {
+                    Thread.sleep(10000);
+                    LOGGER.info("lru size {}, pools size {}", lru.size(), pools.size());
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     public void write(Queue queue, Segment segment, byte[] bytes){
