@@ -36,7 +36,7 @@ public class Group {
     }
 
     public void initQueues(Topic topic) throws IOException {
-        ByteBuffer index = ByteBuffer.allocate(26);
+        ByteBuffer index = ByteBuffer.allocate(18);
 
         Set<Short> queueIds = new HashSet<>();
         while (idx.read(index) > 0){
