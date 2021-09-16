@@ -75,11 +75,11 @@ public class PMem extends Storage {
     public void reset(int idx, List<ByteBuffer> buffers, long beginOffset) {
         this.idx = idx;
         long newPos = 0;
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        if (positions == null){
+            positions = new ArrayList<>();
+        }
         if (CollectionUtils.isNotEmpty(buffers)) {
-            if (positions == null){
-                positions = new ArrayList<>();
-            }
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
             positions.clear();
             for (ByteBuffer buffer : buffers) {
                 positions.add(newPos);

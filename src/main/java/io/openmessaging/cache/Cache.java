@@ -1,6 +1,7 @@
 package io.openmessaging.cache;
 
 import com.intel.pmem.llpl.Heap;
+import io.openmessaging.consts.Const;
 import io.openmessaging.model.*;
 import io.openmessaging.model.Queue;
 import io.openmessaging.utils.CollectionUtils;
@@ -42,8 +43,12 @@ public class Cache {
         });
         final int lruSizeFinal = lruSize;
         new Thread(()->{
-            for (int i = 0; i < lruSizeFinal; i ++){
-                pools.add(applyBlock());
+            int cacheLruSize = (int) (3 * Const.G / pageSize);
+            for (int i = 0; i < cacheLruSize; i ++){
+                pools.add(applyDram());
+            }
+            for (int i = cacheLruSize; i < lruSizeFinal; i ++){
+                pools.add(applyPMem());
             }
         }).start();
 
@@ -70,10 +75,14 @@ public class Cache {
         return storage;
     }
 
-    public Storage applyBlock(){
+    public Storage applyPMem(){
         if (heap == null){
             return new Dram();
         }
         return new PMem(heap.allocateMemoryBlock(pageSize));
+    }
+
+    public Storage applyDram(){
+        return new Dram();
     }
 }
