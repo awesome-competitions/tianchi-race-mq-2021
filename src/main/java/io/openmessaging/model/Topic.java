@@ -111,12 +111,12 @@ public class Topic{
         Group group = getGroup(queueId);
         long offset = queue.getAndIncrementOffset();
 
-        ByteBuffer wrapper = ByteBuffer.allocate(2 + data.capacity());
-        wrapper.putShort((short) data.capacity());
-        wrapper.put(data);
-        wrapper.flip();
+//        ByteBuffer wrapper = ByteBuffer.allocate(2 + data.capacity());
+//        wrapper.putShort((short) data.capacity());
+//        wrapper.put(data);
+//        wrapper.flip();
 
-        group.getDb().write(wrapper);
+        group.getDb().write(data);
         return offset;
 //
 //        int n = data.remaining();
