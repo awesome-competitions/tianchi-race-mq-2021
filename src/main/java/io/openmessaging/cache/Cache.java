@@ -40,9 +40,13 @@ public class Cache {
                 pools.add(storage);
             }
         });
-        for (int i = 0; i < lruSize; i ++){
-            pools.add(applyBlock());
-        }
+        final int lruSizeFinal = lruSize;
+        new Thread(()->{
+            for (int i = 0; i < lruSizeFinal; i ++){
+                pools.add(applyBlock());
+            }
+        });
+
     }
 
     public void write(Queue queue, Segment segment, byte[] bytes){
