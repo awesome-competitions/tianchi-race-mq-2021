@@ -22,8 +22,8 @@ public class FileWrapper {
 
     private final FileChannel channel;
 
-    public FileWrapper(Path path) throws IOException {
-        this.channel = FileChannelImpl.open(path, options);
+    public FileWrapper(RandomAccessFile file) throws IOException {
+        this.channel = file.getChannel();
     }
 
     private void position(long pos) throws IOException {

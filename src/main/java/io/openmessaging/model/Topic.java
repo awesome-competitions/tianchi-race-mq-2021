@@ -6,9 +6,11 @@ import io.openmessaging.consts.Const;
 import io.openmessaging.utils.CollectionUtils;
 
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,7 +29,7 @@ public class Topic{
         this.name = name;
         this.id = id;
         this.config = config;
-        this.queues = new ConcurrentHashMap<>();
+        this.queues = new HashMap<>();
         this.groups = new Group[config.getGroupSize()];
         this.cache = cache;
         this.lock = new ReentrantLock();
@@ -51,8 +53,8 @@ public class Topic{
                 this.lock.lock();
                 group = groups[index];
                 if (group == null){
-                    FileWrapper db = new FileWrapper(Paths.get(String.format(Const.DB_NAMED_FORMAT, config.getDataDir(), name, index)));
-                    FileWrapper idx = new FileWrapper(Paths.get(String.format(Const.IDX_NAMED_FORMAT, config.getDataDir(), name, index)));
+                    FileWrapper db = new FileWrapper(new RandomAccessFile(String.format(Const.DB_NAMED_FORMAT, config.getDataDir(), name, index), "rw"));
+                    FileWrapper idx = new FileWrapper(new RandomAccessFile(String.format(Const.IDX_NAMED_FORMAT, config.getDataDir(), name, index), "rw"));
                     group = new Group(db, idx);
                     group.initQueues(this);
                     groups[index] = group;
