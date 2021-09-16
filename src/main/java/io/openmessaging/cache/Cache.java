@@ -43,19 +43,6 @@ public class Cache {
         for (int i = 0; i < lruSize; i ++){
             pools.add(applyBlock());
         }
-        new Thread(()->{
-            while (true){
-                try {
-                    Thread.sleep(10000);
-                    LOGGER.info("lru core {}, lru size {}, pools size {}", lru.getLimit(), lru.size(), pools.size());
-                    if (pools.size() == 0){
-                        System.exit(0);
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
     }
 
     public void write(Queue queue, Segment segment, byte[] bytes){
