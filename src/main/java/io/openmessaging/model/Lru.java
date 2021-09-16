@@ -33,28 +33,6 @@ public class Lru<K,V>{
         };
     }
 
-    public V get(K k){
-        return map.get(k);
-    }
-
-    public void put(K k, V v){
-        try{
-            lock.lock();
-            map.put(k, v);
-        }finally {
-            lock.unlock();
-        }
-    }
-
-    public V remove(K k){
-        try{
-            lock.lock();
-            return map.remove(k);
-        }finally {
-            lock.unlock();
-        }
-    }
-
     public V computeIfAbsent(K k, Function<? super K, ? extends V> mappingFunction){
         try{
             lock.lock();

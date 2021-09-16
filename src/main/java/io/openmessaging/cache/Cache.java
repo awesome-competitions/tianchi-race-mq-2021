@@ -33,7 +33,7 @@ public class Cache {
         }
         this.pageSize = pageSize;
         this.pools = new LinkedBlockingQueue<>();
-        this.lru = new Lru<>(lruSize - 800, v -> {
+        this.lru = new Lru<>(lruSize / 3, v -> {
             Storage storage = v.getStorage();
             if (storage != null){
                 v.setStorage(null);
