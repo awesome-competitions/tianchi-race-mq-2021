@@ -38,8 +38,9 @@ public class Topic{
         return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
     }
 
-    private int indexFor(Object key){
-        return hash(key) & (config.getGroupSize() - 1);
+    private int indexFor(int queueId){
+//        return hash(key) & (config.getGroupSize() - 1);
+        return queueId % config.getGroupSize();
     }
 
     public Group getGroup(int queueId) throws IOException{
