@@ -41,11 +41,11 @@ public class Cache {
             }
         });
         final int lruSizeFinal = lruSize;
-        new Thread(()->{
-            for (int i = 0; i < lruSizeFinal; i ++){
-                pools.add(applyBlock());
-            }
-        }).start();
+//        new Thread(()->{
+//            for (int i = 0; i < lruSizeFinal; i ++){
+//                pools.add(applyBlock());
+//            }
+//        }).start();
 
     }
 
