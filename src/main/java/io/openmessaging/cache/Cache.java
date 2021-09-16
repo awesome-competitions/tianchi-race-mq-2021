@@ -38,7 +38,6 @@ public class Cache {
             if (storage != null){
                 v.setStorage(null);
                 pools.add(storage);
-                LOGGER.info("pools add, queue {}", v.getId());
             }
         });
         for (int i = 0; i < lruSize; i ++){
@@ -71,8 +70,8 @@ public class Cache {
         }
     }
 
-    public Storage loadStorage(Queue queue, Group group, Segment segment) throws InterruptedException {
-        lru.computeIfAbsent(queue.getId(), k -> queue);
+    public Storage loadStorage(Topic topic, Queue queue, Group group, Segment segment) throws InterruptedException {
+        lru.computeIfAbsent(topic.getId() + queue.getId(), k -> queue);
         Storage storage = queue.getStorage();
         if (storage == null || storage.getIdx() != segment.getIdx()){
             boolean locked = queue.getHead().getIdx() == segment.getIdx();
@@ -84,7 +83,6 @@ public class Cache {
                 if (storage == null || storage.getIdx() != segment.getIdx()){
                     if (storage == null){
                         storage = pools.take();
-                        LOGGER.info("pools take, queue {}", queue.getId());
                         queue.setStorage(storage);
                     }
                     storage.reset(segment.getIdx(), segment.load(group.getDb()), segment.getStart());

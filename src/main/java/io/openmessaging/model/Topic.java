@@ -5,27 +5,25 @@ import io.openmessaging.cache.Storage;
 import io.openmessaging.consts.Const;
 import io.openmessaging.utils.CollectionUtils;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Topic{
     private final String name;
+    private final int id;
     private final Config config;
     private final List<Group> groups;
     private final Map<Integer, Queue> queues;
     private final Cache cache;
 
-    public Topic(String name, Config config, Cache cache) throws IOException {
+    public Topic(String name, Integer id, Config config, Cache cache) throws IOException {
         this.name = name;
+        this.id = id;
         this.config = config;
         this.queues = new ConcurrentHashMap<>();
         this.groups = new ArrayList<>(config.getGroupSize());
@@ -78,7 +76,7 @@ public class Topic{
         }
         List<ByteBuffer> buffers = new ArrayList<>(num);
         for (Readable readable : readableList) {
-            Storage storage = cache.loadStorage(queue, group, readable.getSegment());
+            Storage storage = cache.loadStorage(this, queue, group, readable.getSegment());
             List<ByteBuffer> data = storage.read(readable.getStartOffset(), readable.getEndOffset());
             if (CollectionUtils.isEmpty(data)){
                 break;
@@ -124,4 +122,11 @@ public class Topic{
         return offset;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public int getId() {
+        return id;
+    }
 }

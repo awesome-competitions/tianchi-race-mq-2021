@@ -1,25 +1,20 @@
 package io.openmessaging.impl;
 
-import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 import io.openmessaging.MessageQueue;
 import io.openmessaging.cache.Cache;
 import io.openmessaging.consts.Const;
 import io.openmessaging.model.*;
-import io.openmessaging.model.Queue;
 import io.openmessaging.utils.ArrayUtils;
 import io.openmessaging.utils.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class MessageQueueImpl extends MessageQueue {
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageQueueImpl.class);
@@ -28,6 +23,7 @@ public class MessageQueueImpl extends MessageQueue {
     private final Cache cache;
     private final Map<String, Topic> topics;
     private static final Map<Integer, ByteBuffer> EMPTY = new HashMap<>();
+    private final AtomicInteger id;
 
     public MessageQueueImpl() {
         this(new Config(
@@ -45,6 +41,7 @@ public class MessageQueueImpl extends MessageQueue {
         this.config = config;
         this.topics = new ConcurrentHashMap<>();
         this.cache = new Cache(config.getHeapDir(), config.getHeapSize(), config.getLruSize(), config.getPageSize());
+        this.id = new AtomicInteger(1);
     }
 
     public void cleanDB(){
@@ -123,7 +120,7 @@ public class MessageQueueImpl extends MessageQueue {
     public synchronized Topic getTopic(String name) throws IOException {
         Topic topic = topics.get(name);
         if (topic == null){
-            topic = new Topic(name, config, cache);
+            topic = new Topic(name, id.getAndIncrement() * 10000, config, cache);
             topics.put(name, topic);
         }
         return topic;
