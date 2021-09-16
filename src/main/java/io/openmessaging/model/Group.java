@@ -46,10 +46,9 @@ public class Group {
             short queueId = index.getShort();
             long start = index.getLong();
             long pos = index.getLong();
-            long capacity = index.getLong();
             queueIds.add(queueId);
             Queue queue = topic.getQueue(queueId);
-            queue.addSegment(new Segment(start, start, pos, capacity));
+            queue.addSegment(new Segment(start, start, pos, topic.getPageSize()));
 
             index.clear();
         }

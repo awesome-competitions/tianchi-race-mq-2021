@@ -109,50 +109,37 @@ public class Topic{
     }
 
     public long write(int queueId, ByteBuffer data) throws IOException{
+        int n = data.capacity();
+        byte[] bytes = new byte[n];
+        for (int i = 0; i < n; i++){
+            bytes[i] = data.get();
+        }
+
         Queue queue = getQueue(queueId);
         Group group = getGroup(queueId);
         long offset = queue.getAndIncrementOffset();
 
-//        ByteBuffer wrapper = ByteBuffer.allocate(2 + data.capacity());
-//        wrapper.putShort((short) data.capacity());
-//        wrapper.put(data);
-//        wrapper.flip();
+        ByteBuffer wrapper = ByteBuffer.allocate(2 + data.capacity());
+        wrapper.putShort((short) data.capacity());
+        wrapper.put(bytes);
+        wrapper.flip();
 
-        group.getDb().write(data);
+        Segment head = queue.getHead();
+        if (head == null || ! head.writable(wrapper.capacity())){
+            head = new Segment(offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
+            queue.addSegment(head);
+            ByteBuffer idxBuffer = ByteBuffer.allocate(18)
+                    .putShort((short) queueId)
+                    .putLong(head.getStart())
+                    .putLong(head.getPos());
+            idxBuffer.flip();
+            group.getIdx().write(idxBuffer);
+        }
+
+        cache.write(queue, head, bytes);
+        head.setEnd(offset);
+        head.write(group.getDb(), wrapper);
         return offset;
-//
-//        int n = data.remaining();
-//        byte[] bytes = new byte[n];
-//        for (int i = 0; i < n; i++){
-//            bytes[i] = data.get();
-//        }
-//
-//        Queue queue = getQueue(queueId);
-//        Group group = getGroup(queueId);
-//        long offset = queue.getAndIncrementOffset();
-//
-//        ByteBuffer wrapper = ByteBuffer.allocate(2 + data.capacity());
-//        wrapper.putShort((short) data.capacity());
-//        wrapper.put(bytes);
-//        wrapper.flip();
-//
-//        Segment head = queue.getHead();
-//        if (head == null || ! head.writable(wrapper.capacity())){
-//            head = new Segment(offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
-//            queue.addSegment(head);
-//            ByteBuffer idxBuffer = ByteBuffer.allocate(26)
-//                    .putShort((short) queueId)
-//                    .putLong(head.getStart())
-//                    .putLong(head.getPos())
-//                    .putLong(head.getCap());
-//            idxBuffer.flip();
-//            group.getIdx().write(idxBuffer);
-//        }
-//
-//        cache.write(queue, head, bytes);
-//        head.setEnd(offset);
-//        head.write(group.getDb(), wrapper);
-//        return offset;
     }
 
     public String getName() {
@@ -161,5 +148,9 @@ public class Topic{
 
     public int getId() {
         return id;
+    }
+
+    public long getPageSize(){
+        return config.getPageSize();
     }
 }
