@@ -46,4 +46,7 @@ public class Lru<K,V>{
         return map.size();
     }
 
+    public int getLimit() {
+        return limit;
+    }
 }

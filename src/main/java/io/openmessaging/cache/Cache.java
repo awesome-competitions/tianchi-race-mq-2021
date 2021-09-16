@@ -38,6 +38,7 @@ public class Cache {
             if (storage != null){
                 v.setStorage(null);
                 pools.add(storage);
+                LOGGER.info("pools add, queue {}", v.getId());
             }
         });
         for (int i = 0; i < lruSize; i ++){
@@ -47,7 +48,10 @@ public class Cache {
             while (true){
                 try {
                     Thread.sleep(10000);
-                    LOGGER.info("lru size {}, pools size {}", lru.size(), pools.size());
+                    LOGGER.info("lru core {}, lru size {}, pools size {}", lru.getLimit(), lru.size(), pools.size());
+                    if (pools.size() == 0){
+                        System.exit(0);
+                    }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -79,7 +83,9 @@ public class Cache {
                 storage = queue.getStorage();
                 if (storage == null || storage.getIdx() != segment.getIdx()){
                     if (storage == null){
-                        queue.setStorage(storage = pools.take());
+                        storage = pools.take();
+                        LOGGER.info("pools take, queue {}", queue.getId());
+                        queue.setStorage(storage);
                     }
                     storage.reset(segment.getIdx(), segment.load(group.getDb()), segment.getStart());
                 }
