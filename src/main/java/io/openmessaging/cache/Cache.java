@@ -45,7 +45,7 @@ public class Cache {
             for (int i = 0; i < lruSizeFinal; i ++){
                 pools.add(applyBlock());
             }
-        });
+        }).start();
 
     }
 
