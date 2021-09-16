@@ -12,37 +12,55 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Topic{
     private final String name;
     private final int id;
     private final Config config;
-    private final List<Group> groups;
+    private final Group[] groups;
     private final Map<Integer, Queue> queues;
     private final Cache cache;
+    private final ReentrantLock lock;
 
     public Topic(String name, Integer id, Config config, Cache cache) throws IOException {
         this.name = name;
         this.id = id;
         this.config = config;
         this.queues = new ConcurrentHashMap<>();
-        this.groups = new ArrayList<>(config.getGroupSize());
+        this.groups = new Group[config.getGroupSize()];
         this.cache = cache;
-        initGroups();
+        this.lock = new ReentrantLock();
     }
 
-    private void initGroups() throws IOException {
-        for (int i = 0; i < config.getGroupSize(); i ++){
-            FileWrapper db = new FileWrapper(Paths.get(String.format(Const.DB_NAMED_FORMAT, config.getDataDir(), name, i)));
-            FileWrapper idx = new FileWrapper(Paths.get(String.format(Const.IDX_NAMED_FORMAT, config.getDataDir(), name, i)));
-            Group group = new Group(db, idx);
-            group.initQueues(this);
-            groups.add(group);
+    static int hash(Object key) {
+        int h;
+        return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
+    }
+
+    private int indexFor(Object key){
+        return hash(key) & (config.getGroupSize() - 1);
+    }
+
+    public Group getGroup(int queueId) throws IOException{
+        int index = indexFor(queueId);
+        Group group = groups[index];
+        if (group == null){
+            try{
+                this.lock.lock();
+                group = groups[index];
+                if (group == null){
+                    FileWrapper db = new FileWrapper(Paths.get(String.format(Const.DB_NAMED_FORMAT, config.getDataDir(), name, index)));
+                    FileWrapper idx = new FileWrapper(Paths.get(String.format(Const.IDX_NAMED_FORMAT, config.getDataDir(), name, index)));
+                    group = new Group(db, idx);
+                    group.initQueues(this);
+                    groups[index] = group;
+                }
+            }finally {
+                this.lock.unlock();
+            }
         }
-    }
-
-    public Group getGroup(int queueId){
-        return groups.get(queueId % config.getGroupSize());
+        return group;
     }
 
     public Queue getQueue(int queueId){
