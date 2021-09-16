@@ -32,7 +32,7 @@ public class MessageQueueImpl extends MessageQueue {
                 Const.G * 60,
                 (int) ((Const.G * 30) / (Const.K * 64)),
                 Const.K * 64,
-                100)
+                50)
         );
     }
 
@@ -79,10 +79,10 @@ public class MessageQueueImpl extends MessageQueue {
             if (count % 100000 == 0){
                 LOGGER.info("write count {}, size {}, topic size{}", count, size, topics.size());
             }
-//            if (count > 1000000){
-//                LOGGER.info("stop count {}, size {}", count, size);
-//                throw new RuntimeException("stop");
-//            }
+            if (count > 1000000){
+                LOGGER.info("stop count {}, size {}", count, size);
+                throw new RuntimeException("stop");
+            }
             return getTopic(topic).write(queueId, data);
         } catch (IOException e) {
             e.printStackTrace();
