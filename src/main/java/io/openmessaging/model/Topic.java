@@ -108,7 +108,7 @@ public class Topic{
         return buffers;
     }
 
-    public long write(int queueId, ByteBuffer data) throws IOException{
+    public long write(int queueId, ByteBuffer data) throws IOException, InterruptedException {
         int n = data.capacity();
         byte[] bytes = new byte[n];
         for (int i = 0; i < n; i++){
@@ -136,7 +136,7 @@ public class Topic{
             group.getIdx().write(idxBuffer);
         }
 
-        cache.write(queue, head, bytes);
+        cache.write(this, queue, group, head, bytes);
         head.setEnd(offset);
         head.write(group.getDb(), wrapper);
         return offset;

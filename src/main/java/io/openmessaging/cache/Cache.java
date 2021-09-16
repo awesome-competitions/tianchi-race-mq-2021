@@ -49,11 +49,9 @@ public class Cache {
 
     }
 
-    public void write(Queue queue, Segment segment, byte[] bytes){
-        Storage storage = queue.getStorage();
-        if (storage != null && storage.getIdx() == segment.getIdx()){
-            storage.write(bytes);
-        }
+    public void write(Topic topic, Queue queue, Group group, Segment segment, byte[] bytes) throws InterruptedException {
+        Storage storage = loadStorage(topic, queue, group, segment);
+        storage.write(bytes);
     }
 
     public Storage loadStorage(Topic topic, Queue queue, Group group, Segment segment) throws InterruptedException {
