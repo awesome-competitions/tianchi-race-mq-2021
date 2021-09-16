@@ -41,23 +41,18 @@ public class Cache {
             }
         });
         final int lruSizeFinal = lruSize;
-//        new Thread(()->{
-//            for (int i = 0; i < lruSizeFinal; i ++){
-//                pools.add(applyBlock());
-//            }
-//        }).start();
+        new Thread(()->{
+            for (int i = 0; i < lruSizeFinal; i ++){
+                pools.add(applyBlock());
+            }
+        }).start();
 
     }
 
     public void write(Queue queue, Segment segment, byte[] bytes){
-        try{
-            queue.getLock().readLock().lock();
-            Storage storage = queue.getStorage();
-            if (storage != null && storage.getIdx() == segment.getIdx()){
-                storage.write(bytes);
-            }
-        }finally {
-            queue.getLock().readLock().unlock();
+        Storage storage = queue.getStorage();
+        if (storage != null && storage.getIdx() == segment.getIdx()){
+            storage.write(bytes);
         }
     }
 
@@ -65,23 +60,13 @@ public class Cache {
         lru.computeIfAbsent(topic.getId() + queue.getId(), k -> queue);
         Storage storage = queue.getStorage();
         if (storage == null || storage.getIdx() != segment.getIdx()){
-            boolean locked = queue.getHead().getIdx() == segment.getIdx();
-            try{
-                if (locked){
-                    queue.getLock().writeLock().lock();
+            storage = queue.getStorage();
+            if (storage == null || storage.getIdx() != segment.getIdx()){
+                if (storage == null){
+                    storage = pools.take();
+                    queue.setStorage(storage);
                 }
-                storage = queue.getStorage();
-                if (storage == null || storage.getIdx() != segment.getIdx()){
-                    if (storage == null){
-                        storage = pools.take();
-                        queue.setStorage(storage);
-                    }
-                    storage.reset(segment.getIdx(), segment.load(group.getDb()), segment.getStart());
-                }
-            }finally {
-                if (locked){
-                    queue.getLock().writeLock().unlock();
-                }
+                storage.reset(segment.getIdx(), segment.load(group.getDb()), segment.getStart());
             }
         }
         return storage;
