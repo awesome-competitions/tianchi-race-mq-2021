@@ -105,9 +105,9 @@ public class Topic{
         for (Readable readable : readableList) {
             Storage storage = cache.loadStorage(this, queue, group, readable.getSegment());
             List<ByteBuffer> data = storage.read(readable.getStartOffset(), readable.getEndOffset());
-            if ("topic78".equals(this.name) && queueId == 1369){
-                LOGGER.info("read offset {}, fetch num {}, readable {}, data {}, pmem {}", offset, num, readable, data, (storage instanceof PMem));
-            }
+//            if ("topic78".equals(this.name) && queueId == 1369){
+//                LOGGER.info("read offset {}, fetch num {}, readable {}, data {}, pmem {}", offset, num, readable, data, (storage instanceof PMem));
+//            }
             if (CollectionUtils.isEmpty(data)){
                 break;
             }
