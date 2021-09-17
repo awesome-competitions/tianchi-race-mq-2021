@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 
 public class Test {
 
-    private final static int BATCH = 1000;
+    private final static int BATCH = 10000 * 100;
     private final static int QUEUE_SIZE = 10;
 
     public static void main(String[] args) throws InterruptedException {
@@ -54,10 +54,10 @@ public class Test {
             for (int i = 0; i < BATCH; i ++){
                 try{
                     Map<Integer, ByteBuffer> data = mq.getRange(topic, queueId, i, 1);
-//                    if (!Arrays.equals(data.get(0).array(), inputs[i%inputs.length].getBytes())){
-//                        System.out.println("topic " + topic + ", queue " + queueId + " read fail at " + i);
-//                        break;
-//                    }
+                    if (!Arrays.equals(data.get(0).array(), inputs[i%inputs.length].getBytes())){
+                        System.out.println("topic " + topic + ", queue " + queueId + " read fail at " + i);
+                        break;
+                    }
                 }catch (Exception e){
                     System.out.println(i);
                     throw e;
