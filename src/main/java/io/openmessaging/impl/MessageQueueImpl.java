@@ -95,12 +95,12 @@ public class MessageQueueImpl extends MessageQueue {
     @Override
     public Map<Integer, ByteBuffer> getRange(String name, int queueId, long offset, int fetchNum) {
         try {
-            readCount += fetchNum;
-            if (readCount > 200000){
-                int time = ++times;
-                LOGGER.info("read count {}, times {}", readCount, time);
-                readCount = 0;
-            }
+//            readCount += fetchNum;
+//            if (readCount > 200000){
+//                int time = ++times;
+//                LOGGER.info("read count {}, times {}", readCount, time);
+//                readCount = 0;
+//            }
             Topic topic = getTopic(name);
             List<ByteBuffer> results = topic.read(queueId, offset, fetchNum);
             if (CollectionUtils.isEmpty(results)){

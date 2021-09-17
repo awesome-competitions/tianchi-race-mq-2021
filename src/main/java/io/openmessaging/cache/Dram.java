@@ -1,6 +1,9 @@
 package io.openmessaging.cache;
 
+import io.openmessaging.utils.CollectionUtils;
+
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Dram extends Storage {
@@ -17,7 +20,16 @@ public class Dram extends Storage {
 
     @Override
     public List<ByteBuffer> read(long startOffset, long endOffset) {
-        return data.subList((int) (startOffset - beginOffset), (int) (endOffset - beginOffset + 1));
+        if (CollectionUtils.isEmpty(data)){
+            return null;
+        }
+        int startIndex = (int) (startOffset - beginOffset);
+        int endIndex = (int) (endOffset - beginOffset);
+        List<ByteBuffer> buffers = new ArrayList<>();
+        while (startIndex <= endIndex && startIndex < data.size()){
+            buffers.add(data.get(startIndex ++));
+        }
+        return buffers;
     }
 
     @Override

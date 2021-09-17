@@ -71,7 +71,7 @@ public class Cache {
                     storage = pools.take();
                     queue.setStorage(storage);
                 }
-                storage.reset(segment.getIdx(), segment.load(group.getDb(), storage instanceof Dram), segment.getStart());
+                storage.reset(segment.getIdx(), segment.load(group.getDb(), false), segment.getStart());
             }
         }
         return storage;
