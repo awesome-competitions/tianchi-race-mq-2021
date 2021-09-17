@@ -29,9 +29,9 @@ public class MessageQueueImpl extends MessageQueue {
         this(new Config(
                 "/essd/",
                 "/pmem/nico",
-                Const.G * 23,
-                (int) ((Const.G * 15) / (Const.K * 64)),
-                Const.K * 64,
+                Const.G * 60,
+                (int) ((Const.G * 51) / (Const.K * 288)),
+                Const.K * 288,
                 1)
         );
     }
