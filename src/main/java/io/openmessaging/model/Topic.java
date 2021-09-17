@@ -101,6 +101,9 @@ public class Topic{
         for (Readable readable : readableList) {
             Storage storage = cache.loadStorage(this, queue, group, readable.getSegment());
             List<ByteBuffer> data = storage.read(readable.getStartOffset(), readable.getEndOffset());
+            if ("topic78".equals(this.name) && queueId == 1369 && offset == 192){
+                System.out.println("read it, " + data + ", is pmem:  " + (storage instanceof PMem));
+            }
             if (CollectionUtils.isEmpty(data)){
                 break;
             }
@@ -134,7 +137,6 @@ public class Topic{
 
         head.setEnd(offset);
         head.write(group.getDb(), buffer);
-
         data.flip();
         cache.write(this, queue, group, head, data);
         return offset;
