@@ -43,7 +43,7 @@ public class Cache {
         });
         final int lruSizeFinal = lruSize;
         new Thread(()->{
-            int cacheLruSize = (int) (3 * Const.G / pageSize);
+            int cacheLruSize = (int) (Const.G / pageSize);
             for (int i = 0; i < cacheLruSize; i ++){
                 pools.add(applyDram());
             }
@@ -55,8 +55,10 @@ public class Cache {
     }
 
     public void write(Topic topic, Queue queue, Group group, Segment segment, byte[] bytes) throws InterruptedException {
-        Storage storage = loadStorage(topic, queue, group, segment);
-        storage.write(bytes);
+        Storage storage = queue.getStorage();
+        if (storage != null){
+            storage.write(bytes);
+        }
     }
 
     public Storage loadStorage(Topic topic, Queue queue, Group group, Segment segment) throws InterruptedException {
@@ -69,7 +71,7 @@ public class Cache {
                     storage = pools.take();
                     queue.setStorage(storage);
                 }
-                storage.reset(segment.getIdx(), segment.load(group.getDb()), segment.getStart());
+                storage.reset(segment.getIdx(), segment.load(group.getDb(), storage instanceof Dram), segment.getStart());
             }
         }
         return storage;

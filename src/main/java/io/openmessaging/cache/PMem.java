@@ -78,9 +78,9 @@ public class PMem extends Storage {
         if (positions == null){
             positions = new ArrayList<>();
         }
+        positions.clear();
         if (CollectionUtils.isNotEmpty(buffers)) {
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            positions.clear();
             for (ByteBuffer buffer : buffers) {
                 positions.add(newPos);
                 stream.write(shortToBytes(buffer.capacity()), 0, 2);

@@ -88,7 +88,7 @@ public class Segment {
         this.idx = idx;
     }
 
-    public List<ByteBuffer> load(FileWrapper fw) {
+    public List<ByteBuffer> load(FileWrapper fw, boolean direct) {
         MappedByteBuffer mmb = null;
         List<ByteBuffer> data = null;
         try {
@@ -98,6 +98,12 @@ public class Segment {
             while (mmb.remaining() > 2 && (size = mmb.getShort()) > 0){
                 byte[] bytes = new byte[size];
                 mmb.get(bytes);
+                if (direct){
+                    ByteBuffer directBuffer = ByteBuffer.allocateDirect(bytes.length);
+                    directBuffer.put(bytes);
+                    data.add(directBuffer);
+                    continue;
+                }
                 data.add(ByteBuffer.wrap(bytes));
             }
         } catch (IOException e) {
