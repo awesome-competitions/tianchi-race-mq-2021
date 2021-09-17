@@ -140,24 +140,4 @@ public class Segment {
         }
     }
 
-    public byte[] loadBytes(FileWrapper fw) {
-        if (aos == pos){
-            return null;
-        }
-        MappedByteBuffer mmb = null;
-        byte[] bytes = null;
-        try {
-            mmb = fw.getChannel().map(FileChannel.MapMode.READ_ONLY, pos, cap);
-            bytes = new byte[mmb.capacity()];
-            mmb.get(bytes);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }finally {
-            if (mmb != null){
-                BufferUtils.clean(mmb);
-            }
-        }
-        return bytes;
-    }
-
 }
