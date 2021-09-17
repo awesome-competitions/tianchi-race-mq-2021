@@ -89,15 +89,17 @@ public class Segment {
     }
 
     public List<ByteBuffer> load(FileWrapper fw, boolean direct) {
-        MappedByteBuffer mmb = null;
         List<ByteBuffer> data = null;
         try {
-            mmb = fw.getChannel().map(FileChannel.MapMode.READ_ONLY, pos, cap);
+            ByteBuffer byteBuffer = ByteBuffer.allocate((int) (aos - pos));
+            fw.read(pos, byteBuffer);
+            byteBuffer.flip();
+
             short size;
             data = new ArrayList<>();
-            while (mmb.remaining() > 2 && (size = mmb.getShort()) > 0){
+            while (byteBuffer.remaining() > 2 && (size = byteBuffer.getShort()) > 0){
                 byte[] bytes = new byte[size];
-                mmb.get(bytes);
+                byteBuffer.get(bytes);
                 if (direct){
                     ByteBuffer directBuffer = ByteBuffer.allocateDirect(bytes.length);
                     directBuffer.put(bytes);
@@ -109,10 +111,6 @@ public class Segment {
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }finally {
-            if (mmb != null){
-                BufferUtils.clean(mmb);
-            }
         }
         return data;
     }
