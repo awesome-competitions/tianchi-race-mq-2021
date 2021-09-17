@@ -47,7 +47,7 @@ public class Cache {
 //            for (int i = 0; i < directDramSize; i ++){
 //                pools.add(applyDram(true));
 //            }
-            int heapDramSize = (int) (2 * Const.G / pageSize);
+            int heapDramSize = (int) (0.5 * Const.G / pageSize);
             for (int i = 0; i < heapDramSize; i ++){
                 pools.add(applyDram(false));
             }

@@ -80,15 +80,13 @@ public class PMem extends Storage {
         }
         positions.clear();
         if (CollectionUtils.isNotEmpty(buffers)) {
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
             for (ByteBuffer buffer : buffers) {
                 positions.add(newPos);
-                stream.write(shortToBytes(buffer.capacity()), 0, 2);
-                stream.write(buffer.array(), 0, buffer.capacity());
-                newPos += 2 + buffer.capacity();
+                block.copyFromArray(shortToBytes(buffer.capacity()), 0, newPos, 2);
+                newPos += 2;
+                block.copyFromArray(buffer.array(), 0, newPos, buffer.capacity());
+                newPos += buffer.capacity();
             }
-            byte[] src = stream.toByteArray();
-            block.copyFromArray(src, 0, 0, src.length);
         }
         this.position = newPos;
         this.beginOffset = beginOffset;
