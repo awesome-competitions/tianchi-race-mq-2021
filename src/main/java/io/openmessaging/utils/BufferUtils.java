@@ -7,12 +7,13 @@ import java.io.FileDescriptor;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 
 public class BufferUtils {
 
-    public static void clean(MappedByteBuffer mappedByteBuffer) {
-        Cleaner var1 = ((DirectBuffer)mappedByteBuffer).cleaner();
+    public static void clean(ByteBuffer bf) {
+        Cleaner var1 = ((DirectBuffer)bf).cleaner();
         if (var1 != null) {
             var1.clean();
         }

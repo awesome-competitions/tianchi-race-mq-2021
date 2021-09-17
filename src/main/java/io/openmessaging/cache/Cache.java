@@ -43,12 +43,16 @@ public class Cache {
         });
         final int lruSizeFinal = lruSize;
         new Thread(()->{
-            int cacheLruSize = (int) (Const.G / pageSize);
-            for (int i = 0; i < cacheLruSize; i ++){
-                pools.add(applyDram());
+            int directDramSize = (int) (1.6 * Const.G / pageSize);
+            for (int i = 0; i < directDramSize; i ++){
+                pools.add(applyDram(true));
             }
-            for (int i = cacheLruSize; i < lruSizeFinal; i ++){
-                pools.add(applyPMem());
+            int heapDramSize = (int) (2 * Const.G / pageSize);
+            for (int i = 0; i < directDramSize; i ++){
+                pools.add(applyDram(false));
+            }
+            for (int i = directDramSize + heapDramSize; i < lruSizeFinal; i ++){
+                pools.add(applyPMem(false));
             }
         }).start();
 
@@ -69,19 +73,19 @@ public class Cache {
                 storage = pools.take();
                 queue.setStorage(storage);
             }
-            storage.reset(segment.getIdx(), segment.load(group.getDb(), false), segment.getStart());
+            storage.reset(segment.getIdx(), segment.load(group.getDb(), storage.isDirect()), segment.getStart());
         }
         return storage;
     }
 
-    public Storage applyPMem(){
+    public Storage applyPMem(boolean direct){
         if (heap == null){
-            return new Dram();
+            return applyDram(direct);
         }
         return new PMem(heap.allocateMemoryBlock(pageSize));
     }
 
-    public Storage applyDram(){
-        return new Dram();
+    public Storage applyDram(boolean direct){
+        return new Dram(direct);
     }
 }

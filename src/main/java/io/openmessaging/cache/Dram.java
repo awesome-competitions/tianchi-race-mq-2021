@@ -1,5 +1,7 @@
 package io.openmessaging.cache;
 
+import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
+import io.openmessaging.utils.BufferUtils;
 import io.openmessaging.utils.CollectionUtils;
 
 import java.nio.ByteBuffer;
@@ -14,8 +16,9 @@ public class Dram extends Storage {
 
     private int idx;
 
-    public Dram() {
+    public Dram(boolean direct) {
         this.idx = -1;
+        this.direct = direct;
     }
 
     @Override
@@ -25,11 +28,7 @@ public class Dram extends Storage {
         }
         int startIndex = (int) (startOffset - beginOffset);
         int endIndex = (int) (endOffset - beginOffset);
-        List<ByteBuffer> buffers = new ArrayList<>();
-        while (startIndex <= endIndex && startIndex < data.size()){
-            buffers.add(data.get(startIndex ++));
-        }
-        return buffers;
+        return data.subList(startIndex, endIndex + 1);
     }
 
     @Override

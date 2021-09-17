@@ -10,6 +10,8 @@ public abstract class Storage {
 
     protected long expire;
 
+    protected boolean direct;
+
     public abstract List<ByteBuffer> read(long startOffset, long endOffset);
 
     public abstract void write(byte[] bytes);
@@ -28,4 +30,7 @@ public abstract class Storage {
         return expire;
     }
 
+    public boolean isDirect() {
+        return direct;
+    }
 }

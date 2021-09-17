@@ -71,13 +71,9 @@ public class MessageQueueImpl extends MessageQueue {
 
     long size = 0;
     int count = 0;
-    int offset = 0;
     @Override
     public long append(String topic, int queueId, ByteBuffer data) {
         try {
-            if ("topic78".equals(topic) && queueId == 1647){
-                LOGGER.info(" offset {}, queueId {}, data{}", offset ++, queueId, data);
-            }
             ++count;
             size += data.capacity();
             if (count % 100000 == 0){
