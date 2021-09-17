@@ -65,14 +65,11 @@ public class Cache {
         lru.computeIfAbsent(topic.getId() + queue.getId(), k -> queue);
         Storage storage = queue.getStorage();
         if (storage == null || storage.getIdx() != segment.getIdx()){
-            storage = queue.getStorage();
-            if (storage == null || storage.getIdx() != segment.getIdx()){
-                if (storage == null){
-                    storage = pools.take();
-                    queue.setStorage(storage);
-                }
-                storage.reset(segment.getIdx(), segment.load(group.getDb(), false), segment.getStart());
+            if (storage == null){
+                storage = pools.take();
+                queue.setStorage(storage);
             }
+            storage.reset(segment.getIdx(), segment.load(group.getDb(), false), segment.getStart());
         }
         return storage;
     }
