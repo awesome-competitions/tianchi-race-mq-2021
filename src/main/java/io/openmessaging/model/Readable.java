@@ -37,4 +37,13 @@ public class Readable {
     public void setEndOffset(long endOffset) {
         this.endOffset = endOffset;
     }
+
+    @Override
+    public String toString() {
+        return "Readable{" +
+                "segment=" + segment +
+                ", startOffset=" + startOffset +
+                ", endOffset=" + endOffset +
+                '}';
+    }
 }

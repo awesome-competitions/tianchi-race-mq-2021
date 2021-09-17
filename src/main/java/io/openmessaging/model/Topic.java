@@ -5,6 +5,8 @@ import io.openmessaging.cache.PMem;
 import io.openmessaging.cache.Storage;
 import io.openmessaging.consts.Const;
 import io.openmessaging.utils.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -25,6 +27,8 @@ public class Topic{
     private final Map<Integer, Queue> queues;
     private final Cache cache;
     private final ReentrantLock lock;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Topic.class);
 
     public Topic(String name, Integer id, Config config, Cache cache) throws IOException {
         this.name = name;
@@ -101,8 +105,8 @@ public class Topic{
         for (Readable readable : readableList) {
             Storage storage = cache.loadStorage(this, queue, group, readable.getSegment());
             List<ByteBuffer> data = storage.read(readable.getStartOffset(), readable.getEndOffset());
-            if ("topic78".equals(this.name) && queueId == 1369 && offset == 192){
-                System.out.println("read it, " + data + ", is pmem:  " + (storage instanceof PMem));
+            if ("topic78".equals(this.name) && queueId == 1369){
+                LOGGER.info("read offset {}, fetch num {}, readable {}, data {}, pmem {}", offset, num, readable, data, (storage instanceof PMem));
             }
             if (CollectionUtils.isEmpty(data)){
                 break;

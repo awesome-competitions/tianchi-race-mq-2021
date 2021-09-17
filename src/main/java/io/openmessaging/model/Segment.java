@@ -138,4 +138,15 @@ public class Segment {
         }
     }
 
+    @Override
+    public String toString() {
+        return "Segment{" +
+                "start=" + start +
+                ", end=" + end +
+                ", pos=" + pos +
+                ", aos=" + aos +
+                ", cap=" + cap +
+                ", idx=" + idx +
+                '}';
+    }
 }
