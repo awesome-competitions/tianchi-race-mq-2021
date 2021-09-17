@@ -71,6 +71,7 @@ public class MessageQueueImpl extends MessageQueue {
 
     long size = 0;
     int count = 0;
+    Map<String, AtomicInteger> test = new ConcurrentHashMap<>();
     @Override
     public long append(String topic, int queueId, ByteBuffer data) {
         try {
@@ -83,7 +84,8 @@ public class MessageQueueImpl extends MessageQueue {
                 LOGGER.info("stop count {}, size {}", count, size);
                 throw new RuntimeException("stop");
             }
-            return getTopic(topic).write(queueId, data);
+            getTopic(topic).write(queueId, data);
+            return test.computeIfAbsent(topic + "_" + queueId, k -> new AtomicInteger(0)).getAndIncrement();
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
