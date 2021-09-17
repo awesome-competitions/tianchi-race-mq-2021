@@ -1,6 +1,7 @@
 package io.openmessaging.model;
 
 import io.openmessaging.cache.Cache;
+import io.openmessaging.cache.PMem;
 import io.openmessaging.cache.Storage;
 import io.openmessaging.consts.Const;
 import io.openmessaging.utils.CollectionUtils;
@@ -95,10 +96,14 @@ public class Topic{
                 segment = queue.nextSegment(segment);
             }
         }
+
         List<ByteBuffer> buffers = new ArrayList<>(num);
         for (Readable readable : readableList) {
             Storage storage = cache.loadStorage(this, queue, group, readable.getSegment());
             List<ByteBuffer> data = storage.read(readable.getStartOffset(), readable.getEndOffset());
+            if ("topic78".equals(this.name) && queueId == 1647 && offset == 345){
+                System.out.println("read it, " + data + ", is pmem:  " + (storage instanceof PMem));
+            }
             if (CollectionUtils.isEmpty(data)){
                 break;
             }
