@@ -43,15 +43,15 @@ public class Cache {
         });
         final int lruSizeFinal = lruSize;
         new Thread(()->{
-            int directDramSize = (int) (1.6 * Const.G / pageSize);
-            for (int i = 0; i < directDramSize; i ++){
-                pools.add(applyDram(true));
-            }
+//            int directDramSize = (int) (1.6 * Const.G / pageSize);
+//            for (int i = 0; i < directDramSize; i ++){
+//                pools.add(applyDram(true));
+//            }
             int heapDramSize = (int) (2 * Const.G / pageSize);
-            for (int i = 0; i < directDramSize; i ++){
+            for (int i = 0; i < heapDramSize; i ++){
                 pools.add(applyDram(false));
             }
-            for (int i = directDramSize + heapDramSize; i < lruSizeFinal; i ++){
+            for (int i = heapDramSize; i < lruSizeFinal; i ++){
                 pools.add(applyPMem(false));
             }
         }).start();
