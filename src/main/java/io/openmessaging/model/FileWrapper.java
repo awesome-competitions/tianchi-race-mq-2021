@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 
 public class FileWrapper {
 
@@ -32,6 +33,11 @@ public class FileWrapper {
         }
     }
 
+    public synchronized long write(long position, ByteBuffer[] buffers) throws IOException {
+        position(position);
+        return write(buffers);
+    }
+
     public synchronized int write(long position, ByteBuffer src) throws IOException {
         position(position);
         return write(src);
@@ -39,6 +45,12 @@ public class FileWrapper {
 
     public synchronized int write(ByteBuffer src) throws IOException {
         int pos = channel.write(src);
+        channel.force(false);
+        return pos;
+    }
+
+    public synchronized long write(ByteBuffer[] buffers) throws IOException {
+        long pos = channel.write(buffers);
         channel.force(false);
         return pos;
     }

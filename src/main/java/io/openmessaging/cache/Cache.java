@@ -8,6 +8,7 @@ import io.openmessaging.utils.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -58,13 +59,13 @@ public class Cache {
 
     }
 
-    public void write(Topic topic, Queue queue, Group group, Segment segment, byte[] bytes) throws InterruptedException {
-//        Storage storage = queue.getStorage();
-//        if (storage != null && storage.getIdx() == segment.getIdx()){
-//            storage.write(bytes);
-//        }
-        Storage storage = loadStorage(topic, queue, group, segment);
-        storage.write(bytes);
+    public void write(Topic topic, Queue queue, Group group, Segment segment, ByteBuffer byteBuffer) throws InterruptedException {
+        Storage storage = queue.getStorage();
+        if (storage != null && storage.getIdx() == segment.getIdx()){
+            storage.write(byteBuffer);
+        }
+//        Storage storage = loadStorage(topic, queue, group, segment);
+//        storage.write(bytes);
     }
 
     public Storage loadStorage(Topic topic, Queue queue, Group group, Segment segment) throws InterruptedException {

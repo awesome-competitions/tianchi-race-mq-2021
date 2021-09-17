@@ -111,23 +111,16 @@ public class Topic{
     }
 
     public long write(int queueId, ByteBuffer data) throws IOException, InterruptedException {
-        int n = data.capacity();
-        byte[] bytes = new byte[n];
-        for (int i = 0; i < n; i++){
-            bytes[i] = data.get();
-        }
+        ByteBuffer sizeBuffer = ByteBuffer.allocate(2);
+        sizeBuffer.putShort((short) queueId);
+        int len = data.capacity() + sizeBuffer.capacity();
 
         Queue queue = getQueue(queueId);
         Group group = getGroup(queueId);
         long offset = queue.getAndIncrementOffset();
 
-        ByteBuffer wrapper = ByteBuffer.allocate(2 + data.capacity());
-        wrapper.putShort((short) data.capacity());
-        wrapper.put(bytes);
-        wrapper.flip();
-
         Segment head = queue.getHead();
-        if (head == null || ! head.writable(wrapper.capacity())){
+        if (head == null || ! head.writable(len)){
             head = new Segment(offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
             queue.addSegment(head);
             ByteBuffer idxBuffer = ByteBuffer.allocate(18)
@@ -138,9 +131,11 @@ public class Topic{
             group.getIdx().write(idxBuffer);
         }
 
-        cache.write(this, queue, group, head, bytes);
         head.setEnd(offset);
-        head.write(group.getDb(), wrapper);
+        head.write(group.getDb(), len, new ByteBuffer[]{sizeBuffer, data});
+
+        data.flip();
+        cache.write(this, queue, group, head, data);
         return offset;
     }
 
