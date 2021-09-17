@@ -101,6 +101,7 @@ public class Segment {
                 if (direct){
                     ByteBuffer directBuffer = ByteBuffer.allocateDirect(bytes.length);
                     directBuffer.put(bytes);
+                    directBuffer.flip();
                     data.add(directBuffer);
                     continue;
                 }
