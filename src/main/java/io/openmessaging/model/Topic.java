@@ -113,6 +113,7 @@ public class Topic{
     public long write(int queueId, ByteBuffer data) throws IOException, InterruptedException {
         ByteBuffer sizeBuffer = ByteBuffer.allocate(2);
         sizeBuffer.putShort((short) queueId);
+        sizeBuffer.flip();
         int len = data.capacity() + sizeBuffer.capacity();
 
         Queue queue = getQueue(queueId);
