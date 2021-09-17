@@ -71,7 +71,6 @@ public class MessageQueueImpl extends MessageQueue {
 
     long size = 0;
     int count = 0;
-    Map<String, AtomicInteger> test = new ConcurrentHashMap<>();
     @Override
     public long append(String topic, int queueId, ByteBuffer data) {
         try {
@@ -84,8 +83,7 @@ public class MessageQueueImpl extends MessageQueue {
                 LOGGER.info("stop count {}, size {}", count, size);
                 throw new RuntimeException("stop");
             }
-            getTopic(topic).write(queueId, data);
-            return test.computeIfAbsent(topic + "_" + queueId, k -> new AtomicInteger(0)).getAndIncrement();
+            return getTopic(topic).write(queueId, data);
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
@@ -120,7 +118,6 @@ public class MessageQueueImpl extends MessageQueue {
     }
 
     public synchronized Topic getTopic(String name) throws IOException {
-        name = "ababa";
         Topic topic = topics.get(name);
         if (topic == null){
             topic = new Topic(name, id.getAndIncrement() * 10000, config, cache);
