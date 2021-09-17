@@ -91,7 +91,12 @@ public class Segment {
     public List<ByteBuffer> load(FileWrapper fw, boolean direct) {
         List<ByteBuffer> data = null;
         try {
-            ByteBuffer byteBuffer = ByteBuffer.allocate((int) (aos - pos));
+
+            long allocateSize = cap;
+            if (aos > pos){
+                allocateSize = aos - pos;
+            }
+            ByteBuffer byteBuffer = ByteBuffer.allocate((int) allocateSize);
             fw.read(pos, byteBuffer);
             byteBuffer.flip();
 
