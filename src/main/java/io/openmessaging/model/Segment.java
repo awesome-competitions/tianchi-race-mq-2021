@@ -39,9 +39,9 @@ public class Segment {
         return cap - (aos - pos) >= len;
     }
 
-    public void write(FileWrapper fw, int len, ByteBuffer[] buffers) throws IOException {
-        fw.write(aos, buffers);
-        aos += len;
+    public void write(FileWrapper fw, ByteBuffer buffer) throws IOException {
+        fw.write(aos, buffer);
+        aos += buffer.capacity();
     }
 
     public long getStart() {
