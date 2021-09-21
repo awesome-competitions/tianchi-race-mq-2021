@@ -32,7 +32,6 @@ public class Aof {
     public void force() {
         try {
             this.wrapper.getFileChannel().force(false);
-            System.out.println("force");
         } catch (IOException e) {
             e.printStackTrace();
         }
