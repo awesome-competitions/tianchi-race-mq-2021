@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
@@ -21,6 +22,7 @@ public class MessageQueueImpl extends MessageQueue {
 
     private final Config config;
     private final Cache cache;
+    private Aof aof;
     private final Map<String, Topic> topics;
     private static final Map<Integer, ByteBuffer> EMPTY = new HashMap<>();
     private final AtomicInteger id;
@@ -32,7 +34,8 @@ public class MessageQueueImpl extends MessageQueue {
                 Const.G * 60,
                 (int) ((Const.G * 51) / (Const.K * 288)),
                 Const.K * 288,
-                1)
+                1,
+                30)
         );
     }
 
@@ -42,6 +45,11 @@ public class MessageQueueImpl extends MessageQueue {
         this.topics = new ConcurrentHashMap<>();
         this.cache = new Cache(config.getHeapDir(), config.getHeapSize(), config.getLruSize(), config.getPageSize());
         this.id = new AtomicInteger(1);
+        try {
+            this.aof = new Aof(new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof.log", "rw")), config);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void cleanDB(){
@@ -83,10 +91,10 @@ public class MessageQueueImpl extends MessageQueue {
             if (count % 100000 == 0){
                 LOGGER.info("write count {}, size {}, topic size{}", count, size, topics.size());
             }
-//            if (count > 1000000){
-//                LOGGER.info("stop count {}, size {}", count, size);
-//                throw new RuntimeException("stop");
-//            }
+            if (count > 100000){
+                LOGGER.info("stop count {}, size {}", count, size);
+                throw new RuntimeException("stop");
+            }
             return getTopic(topic).write(queueId, data);
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
@@ -122,12 +130,15 @@ public class MessageQueueImpl extends MessageQueue {
     }
 
     public synchronized Topic getTopic(String name) throws IOException {
-        Topic topic = topics.get(name);
-        if (topic == null){
-            topic = new Topic(name, id.getAndIncrement() * 10000, config, cache);
-            topics.put(name, topic);
-        }
-        return topic;
+        return topics.computeIfAbsent(name, k -> {
+            try {
+                int id = Integer.parseInt(name.substring(5));
+                return new Topic(name, id, config, cache, aof);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        });
     }
 
 

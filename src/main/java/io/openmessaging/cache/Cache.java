@@ -59,17 +59,17 @@ public class Cache {
 
     }
 
-    public void write(Topic topic, Queue queue, Group group, Segment segment, ByteBuffer byteBuffer) throws InterruptedException {
+    public void write(Topic topic, Queue queue, Group group, Segment segment, byte[] bytes) throws InterruptedException {
         Storage storage = queue.getStorage();
         if (storage != null && storage.getIdx() == segment.getIdx()){
-            storage.write(byteBuffer);
+            storage.write(ByteBuffer.wrap(bytes));
         }
 //        Storage storage = loadStorage(topic, queue, group, segment);
 //        storage.write(bytes);
     }
 
     public Storage loadStorage(Topic topic, Queue queue, Group group, Segment segment) throws InterruptedException {
-        lru.computeIfAbsent(topic.getId() + queue.getId(), k -> queue);
+        lru.computeIfAbsent(topic.getId() * 10000 + queue.getId(), k -> queue);
         Storage storage = queue.getStorage();
         if (storage == null || storage.getIdx() != segment.getIdx()){
             if (storage == null){

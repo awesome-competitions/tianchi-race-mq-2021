@@ -27,15 +27,14 @@ public class FileWrapper {
         this.channel = file.getChannel();
     }
 
+    public FileChannel getFileChannel(){
+        return this.channel;
+    }
+
     private void position(long pos) throws IOException {
         if (channel.position() != pos){
             channel.position(pos);
         }
-    }
-
-    public synchronized long write(long position, ByteBuffer[] buffers) throws IOException {
-        position(position);
-        return write(buffers);
     }
 
     public synchronized int write(long position, ByteBuffer src) throws IOException {
@@ -44,15 +43,7 @@ public class FileWrapper {
     }
 
     public synchronized int write(ByteBuffer src) throws IOException {
-        int pos = channel.write(src);
-        channel.force(false);
-        return pos;
-    }
-
-    public synchronized long write(ByteBuffer[] buffers) throws IOException {
-        long pos = channel.write(buffers);
-        channel.force(false);
-        return pos;
+        return channel.write(src);
     }
 
     public synchronized int read(long position, ByteBuffer dst) throws IOException {

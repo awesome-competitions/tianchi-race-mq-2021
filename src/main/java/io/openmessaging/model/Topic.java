@@ -27,10 +27,11 @@ public class Topic{
     private final Map<Integer, Queue> queues;
     private final Cache cache;
     private final ReentrantLock lock;
+    private final Aof aof;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Topic.class);
 
-    public Topic(String name, Integer id, Config config, Cache cache) throws IOException {
+    public Topic(String name, Integer id, Config config, Cache cache, Aof aof) throws IOException {
         this.name = name;
         this.id = id;
         this.config = config;
@@ -38,6 +39,7 @@ public class Topic{
         this.groups = new Group[config.getGroupSize()];
         this.cache = cache;
         this.lock = new ReentrantLock();
+        this.aof = aof;
     }
 
     static int hash(Object key) {
@@ -59,9 +61,8 @@ public class Topic{
                 group = groups[index];
                 if (group == null){
                     FileWrapper db = new FileWrapper(new RandomAccessFile(String.format(Const.DB_NAMED_FORMAT, config.getDataDir(), name, index), "rw"));
-                    FileWrapper idx = new FileWrapper(new RandomAccessFile(String.format(Const.IDX_NAMED_FORMAT, config.getDataDir(), name, index), "rw"));
-                    group = new Group(db, idx);
-                    group.initQueues(this);
+                    group = new Group(db, null);
+//                    group.initQueues(this);
                     groups[index] = group;
                 }
             }finally {
@@ -105,9 +106,6 @@ public class Topic{
         for (Readable readable : readableList) {
             Storage storage = cache.loadStorage(this, queue, group, readable.getSegment());
             List<ByteBuffer> data = storage.read(readable.getStartOffset(), readable.getEndOffset());
-//            if ("topic78".equals(this.name) && queueId == 1369){
-//                LOGGER.info("read offset {}, fetch num {}, readable {}, data {}, pmem {}", offset, num, readable, data, (storage instanceof PMem));
-//            }
             if (CollectionUtils.isEmpty(data)){
                 break;
             }
@@ -118,9 +116,15 @@ public class Topic{
     }
 
     public long write(int queueId, ByteBuffer data) throws IOException, InterruptedException {
+        byte[] bytes = new byte[data.capacity()];
+        data.get(bytes);
+
+        aof.write(this.id, queueId, bytes);
+        aof.await();
+
         ByteBuffer buffer = ByteBuffer.allocate(2 + data.capacity());
         buffer.putShort((short) data.capacity());
-        buffer.put(data);
+        buffer.put(bytes);
         buffer.flip();
 
         Queue queue = getQueue(queueId);
@@ -131,18 +135,11 @@ public class Topic{
         if (head == null || ! head.writable(buffer.capacity())){
             head = new Segment(offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
             queue.addSegment(head);
-            ByteBuffer idxBuffer = ByteBuffer.allocate(18)
-                    .putShort((short) queueId)
-                    .putLong(head.getStart())
-                    .putLong(head.getPos());
-            idxBuffer.flip();
-            group.getIdx().write(idxBuffer);
         }
 
         head.setEnd(offset);
         head.write(group.getDb(), buffer);
-        data.flip();
-        cache.write(this, queue, group, head, data);
+        cache.write(this, queue, group, head, bytes);
         return offset;
     }
 
