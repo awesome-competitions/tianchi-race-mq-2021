@@ -26,6 +26,7 @@ public class Aof {
                 .putShort((short) queueId)
                 .putShort((short) bytes.length)
                 .put(bytes);
+        buffer.flip();
         this.wrapper.getFileChannel().write(buffer);
     }
 
