@@ -126,7 +126,6 @@ public class Topic{
                 .put(bytes);
         buffer.flip();
         aof.write(buffer);
-        aof.await();
 
         Queue queue = getQueue(queueId);
 //        Group group = getGroup(queueId);

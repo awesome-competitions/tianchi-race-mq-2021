@@ -8,36 +8,82 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Aof {
 
-    private FileWrapper wrapper;
+    private final FileWrapper wrapper;
 
-    private CyclicBarrier cyclicBarrier;
+    private final ReentrantLock lock = new ReentrantLock();
 
-    public Aof(FileWrapper wrapper, Config config){
+    private final Condition cond = lock.newCondition();
+
+    private final int maxCount;
+
+    private final long maxSize;
+
+    private int count;
+
+    private long size;
+
+    private final AtomicInteger version;
+
+    public Aof(FileWrapper wrapper, Config config) {
         this.wrapper = wrapper;
-        this.cyclicBarrier = new CyclicBarrier(config.getBatchSize(), this::force);
+        this.maxCount = config.getMaxCount();
+        this.maxSize = config.getMaxSize();
+        this.version = new AtomicInteger();
     }
 
-    public synchronized void write(ByteBuffer buffer) throws IOException {
-        this.wrapper.getFileChannel().write(buffer);
-    }
-
-    public void force() {
+    public void write(ByteBuffer buffer) throws IOException {
         try {
-            this.wrapper.getFileChannel().force(false);
-        } catch (IOException e) {
+            lock.lock();
+            int v = this.version.get();
+            count ++;
+
+            long need = maxSize - size;
+            if (need >= buffer.capacity()){
+                wrapper.getChannel().write(buffer);
+                size += buffer.capacity();
+            }else{
+                buffer.limit((int) need);
+                wrapper.getChannel().write(buffer);
+                size += need;
+            }
+            if (maxSize <= size){
+                next(v);
+                if (buffer.limit() < buffer.capacity()){
+                    size += buffer.capacity() - buffer.limit();
+                    buffer.limit(buffer.capacity());
+                    wrapper.getChannel().write(buffer);
+                }
+                return;
+            }
+            if (count == maxCount){
+                next(v);
+                return;
+            }
+            long nanos = this.cond.awaitNanos(TimeUnit.SECONDS.toNanos(30));
+            if (nanos <= 0){
+                next(v);
+            }
+        } catch (InterruptedException e) {
             e.printStackTrace();
+        } finally {
+            lock.unlock();
         }
     }
 
-    public void await(){
-        try {
-            this.cyclicBarrier.await(30, TimeUnit.SECONDS);
-        } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
-            force();
+    private void next(int v) throws IOException, InterruptedException {
+        if (! version.compareAndSet(v, v + 1)){
+            return;
         }
+        this.count = 0;
+        this.size = 0;
+        this.cond.signalAll();
+        this.wrapper.getChannel().force(false);
     }
 
 }
