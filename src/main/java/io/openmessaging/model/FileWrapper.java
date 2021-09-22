@@ -38,10 +38,12 @@ public class FileWrapper {
     }
 
     public synchronized int write(long position, ByteBuffer src) throws IOException {
-        return channel.write(src, position);
+        position(position);
+        return channel.write(src);
     }
 
     public synchronized int read(long position, ByteBuffer dst) throws IOException {
+        position(position);
         return channel.read(dst, position);
     }
 
