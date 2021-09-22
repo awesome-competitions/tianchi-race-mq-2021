@@ -47,7 +47,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         RandomAccessFile randomAccessFile = new RandomAccessFile("/essd/aof.log", "rw");
         FileChannel channel = randomAccessFile.getChannel();
 
-        int batch = (int) (Const.K * 448);
+        int batch = (int) (Const.K * 1024);
         int count = (int) (Const.G * 10 / batch);
 
         ByteBuffer buffer = ByteBuffer.allocate(batch);
