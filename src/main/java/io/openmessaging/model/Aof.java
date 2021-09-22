@@ -90,6 +90,7 @@ public class Aof {
             this.wrapper.getChannel().write(buffer);
             buffer.clear();
         }
+        System.out.print(version + ",");
         this.wrapper.getChannel().force(false);
         this.cond.signalAll();
     }
