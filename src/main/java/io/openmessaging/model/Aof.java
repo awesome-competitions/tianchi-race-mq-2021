@@ -83,8 +83,8 @@ public class Aof {
         System.out.println(count + ":" + size + ":" + version);
         this.count = 0;
         this.size = 0;
-        this.cond.signalAll();
         this.wrapper.getChannel().force(false);
+        this.cond.signalAll();
     }
 
 }
