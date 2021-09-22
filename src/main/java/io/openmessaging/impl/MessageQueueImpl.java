@@ -51,6 +51,14 @@ public class MessageQueueImpl extends MessageQueue {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        new Thread(()->{
+            try {
+                Thread.sleep(1000 * 60 * 13);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.exit(0);
+        }).start();
     }
 
     public void cleanDB(){
