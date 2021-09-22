@@ -6,10 +6,15 @@ import com.intel.pmem.llpl.MemoryBlock;
 import io.openmessaging.consts.Const;
 import io.openmessaging.impl.MessageQueueImpl;
 import io.openmessaging.model.Config;
+import io.openmessaging.model.FileWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.Map;
 
 public class DefaultMessageQueueImpl extends MessageQueue{
@@ -20,7 +25,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMessageQueueImpl.class);
 
     public DefaultMessageQueueImpl(){
-//        test();
+        test();
     }
 
     @Override
@@ -34,12 +39,20 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         return queue.getRange(topic, queueId, offset, fetchNum);
     }
 
-    public void test(){
-        String path = "/pmem/nico";
-        Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, 59 * Const.G);
+    public void test() throws IOException {
+        RandomAccessFile randomAccessFile = new RandomAccessFile("/essd/aof.log", "rw");
+        FileChannel channel = randomAccessFile.getChannel();
+
+        ByteBuffer buffer = ByteBuffer.allocate((int) (Const.K * 64));
+        for (int i = 0; i < buffer.capacity(); i ++){
+            buffer.put((byte) 1);
+        }
+        buffer.flip();
         long start = System.currentTimeMillis();
-        for (int i = 0; i < 500000; i++){
-           heap.allocateMemoryBlock(Const.K * 96);
+        for (int i = 0; i < Const.G * 10 / Const.K / 64; i ++){
+            channel.write(buffer);
+            channel.force(false);
+            buffer.flip();
         }
         long end = System.currentTimeMillis();
         LOGGER.info("time {}", end - start);
