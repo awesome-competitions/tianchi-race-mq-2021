@@ -116,32 +116,30 @@ public class Topic{
     }
 
     public long write(int queueId, ByteBuffer data) throws IOException, InterruptedException {
+        byte[] bytes = new byte[data.capacity()];
+        data.get(bytes);
+
+        Queue queue = getQueue(queueId);
+        Group group = getGroup(queueId);
+        long offset = queue.getAndIncrementOffset();
+
         ByteBuffer buffer = ByteBuffer.allocate(5 + data.capacity())
                 .put((byte) id)
                 .putShort((short) queueId)
                 .putShort((short) data.capacity())
-                .put(data);
+                .put(bytes);
         buffer.flip();
         aof.write(buffer);
 
-        Queue queue = getQueue(queueId);
-//        Group group = getGroup(queueId);
-        long offset = queue.getAndIncrementOffset();
+        Segment head = queue.getHead();
+        if (head == null || ! head.writable(buffer.capacity())){
+            head = new Segment(offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
+            queue.addSegment(head);
+        }
 
-//        ByteBuffer buffer = ByteBuffer.allocate(2 + data.capacity());
-//        buffer.putShort((short) data.capacity());
-//        buffer.put(bytes);
-//        buffer.flip();
-//
-//        Segment head = queue.getHead();
-//        if (head == null || ! head.writable(buffer.capacity())){
-//            head = new Segment(offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
-//            queue.addSegment(head);
-//        }
-//
-//        head.setEnd(offset);
-//        head.write(group.getDb(), buffer);
-//        cache.write(this, queue, group, head, bytes);
+        head.setEnd(offset);
+        head.write(group.getDb(), buffer);
+        cache.write(this, queue, group, head, bytes);
         return offset;
     }
 
