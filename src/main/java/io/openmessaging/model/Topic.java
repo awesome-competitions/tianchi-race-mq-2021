@@ -116,14 +116,11 @@ public class Topic{
     }
 
     public long write(int queueId, ByteBuffer data) throws IOException, InterruptedException {
-        byte[] bytes = new byte[data.capacity()];
-        data.get(bytes);
-
-        ByteBuffer buffer = ByteBuffer.allocate(5 + bytes.length)
+        ByteBuffer buffer = ByteBuffer.allocate(5 + data.capacity())
                 .put((byte) id)
                 .putShort((short) queueId)
-                .putShort((short) bytes.length)
-                .put(bytes);
+                .putShort((short) data.capacity())
+                .put(data);
         buffer.flip();
         aof.write(buffer);
 
