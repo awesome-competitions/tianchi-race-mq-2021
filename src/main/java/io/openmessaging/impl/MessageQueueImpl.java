@@ -57,7 +57,7 @@ public class MessageQueueImpl extends MessageQueue {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            System.exit(0);
+            System.exit(-1);
         }).start();
     }
 
