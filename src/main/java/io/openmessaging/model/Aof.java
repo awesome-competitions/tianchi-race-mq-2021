@@ -38,12 +38,13 @@ public class Aof {
     }
 
     public void write(ByteBuffer buffer) throws IOException {
+        wrapper.getChannel().write(buffer);
         try {
             lock.lock();
             int v = this.version.get();
             count ++;
-            wrapper.getChannel().write(buffer);
             size += buffer.capacity();
+            System.out.println(maxSize + ":" + size);
             if (maxSize <= size || count == maxCount){
                 next(v);
                 return;
