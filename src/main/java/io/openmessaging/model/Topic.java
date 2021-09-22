@@ -119,7 +119,13 @@ public class Topic{
         byte[] bytes = new byte[data.capacity()];
         data.get(bytes);
 
-        aof.write(this.id, queueId, bytes);
+        ByteBuffer buffer = ByteBuffer.allocate(5 + bytes.length)
+                .put((byte) id)
+                .putShort((short) queueId)
+                .putShort((short) bytes.length)
+                .put(bytes);
+        buffer.flip();
+        aof.write(buffer);
         aof.await();
 
         Queue queue = getQueue(queueId);

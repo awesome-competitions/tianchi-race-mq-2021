@@ -20,13 +20,7 @@ public class Aof {
         this.cyclicBarrier = new CyclicBarrier(config.getBatchSize(), this::force);
     }
 
-    public synchronized void write(int topicId, int queueId, byte[] bytes) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocate(5 + bytes.length)
-                .put((byte) topicId)
-                .putShort((short) queueId)
-                .putShort((short) bytes.length)
-                .put(bytes);
-        buffer.flip();
+    public synchronized void write(ByteBuffer buffer) throws IOException {
         this.wrapper.getFileChannel().write(buffer);
     }
 
