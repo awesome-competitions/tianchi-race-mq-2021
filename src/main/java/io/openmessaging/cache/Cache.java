@@ -43,7 +43,7 @@ public class Cache {
             }
         });
         final int lruSizeFinal = lruSize;
-//        new Thread(()->{
+        new Thread(()->{
 //            int directDramSize = (int) (1.6 * Const.G / pageSize);
 //            for (int i = 0; i < directDramSize; i ++){
 //                pools.add(applyDram(true));
@@ -52,16 +52,18 @@ public class Cache {
 //            for (int i = 0; i < heapDramSize; i ++){
 //                pools.add(applyDram(false));
 //            }
-//            for (int i = 0; i < lruSizeFinal; i ++){
-//                pools.add(applyPMem(false));
-//            }
-//        }).start();
+            for (int i = 0; i < lruSizeFinal; i ++){
+                pools.add(applyPMem(false));
+            }
+        }).start();
 
     }
 
-    public void write(Topic topic, Queue queue, Group group, Segment segment, byte[] bytes) throws InterruptedException {
+    public void write(Topic topic, Queue queue, Group group, Segment segment, ByteBuffer data) throws InterruptedException {
         Storage storage = queue.getStorage();
         if (storage != null && storage.getIdx() == segment.getIdx()){
+            byte[] bytes = new byte[data.capacity()];
+            data.get(bytes);
             storage.write(ByteBuffer.wrap(bytes));
         }
 //        Storage storage = loadStorage(topic, queue, group, segment);

@@ -116,30 +116,33 @@ public class Topic{
     }
 
     public long write(int queueId, ByteBuffer data) throws IOException, InterruptedException {
-        byte[] bytes = new byte[data.capacity()];
-        data.get(bytes);
-
         Queue queue = getQueue(queueId);
         Group group = getGroup(queueId);
         long offset = queue.getAndIncrementOffset();
 
-        ByteBuffer buffer = ByteBuffer.allocate(5 + data.capacity())
+        ByteBuffer dataBuffer = ByteBuffer.allocate(2 + data.capacity())
+                .putShort((short) data.capacity())
+                .put(data);
+        data.flip();
+        dataBuffer.flip();
+
+        ByteBuffer aofBuffer = ByteBuffer.allocate(3 + dataBuffer.capacity())
                 .put((byte) id)
                 .putShort((short) queueId)
-                .putShort((short) data.capacity())
-                .put(bytes);
-        buffer.flip();
-        aof.write(buffer);
+                .put(dataBuffer);
+        dataBuffer.flip();
+        aofBuffer.flip();
 
         Segment head = queue.getHead();
-        if (head == null || ! head.writable(buffer.capacity())){
+        if (head == null || ! head.writable(dataBuffer.capacity())){
             head = new Segment(offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
             queue.addSegment(head);
         }
 
         head.setEnd(offset);
-        head.write(group.getDb(), buffer);
-        cache.write(this, queue, group, head, bytes);
+        head.write(group.getDb(), dataBuffer);
+        cache.write(this, queue, group, head, data);
+        aof.write(aofBuffer);
         return offset;
     }
 

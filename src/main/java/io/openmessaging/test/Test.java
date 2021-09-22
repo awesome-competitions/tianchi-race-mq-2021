@@ -16,12 +16,12 @@ public class Test {
     private final static int QUEUE_SIZE = 1;
 
     public static void main(String[] args) throws InterruptedException {
-        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config("D:\\test\\nio\\", 30, 2 * Const.K, 100));
+        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config("D:\\test\\nio\\", null, 1, 30, 2 * Const.K, 100, 1, 1));
         mMapMessageQueue.cleanDB();
         List<Supplier<?>> suppliers = new ArrayList<>();
 
         for (int i = 1; i <= QUEUE_SIZE; i ++){
-            suppliers.add(test(mMapMessageQueue, "test1", i));
+            suppliers.add(test(mMapMessageQueue, "topic1", i));
         }
 //        for (int i = 1; i <= QUEUE_SIZE; i ++){
 //            suppliers.add(test(mMapMessageQueue, "test2", i));

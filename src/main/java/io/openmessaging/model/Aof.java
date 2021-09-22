@@ -69,7 +69,7 @@ public class Aof {
                 next(v);
                 return;
             }
-            long nanos = this.cond.awaitNanos(TimeUnit.SECONDS.toNanos(30));
+            long nanos = this.cond.awaitNanos(TimeUnit.SECONDS.toNanos(5));
             if (nanos <= 0){
                 next(v);
             }
@@ -90,7 +90,6 @@ public class Aof {
             this.wrapper.getChannel().write(buffer);
             buffer.clear();
         }
-        System.out.print(version + ",");
         this.wrapper.getChannel().force(false);
         this.cond.signalAll();
     }
