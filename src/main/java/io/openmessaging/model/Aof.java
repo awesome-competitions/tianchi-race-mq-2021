@@ -1,5 +1,7 @@
 package io.openmessaging.model;
 
+import io.openmessaging.consts.Const;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -32,14 +34,14 @@ public class Aof {
 
     private final AtomicInteger version;
 
-    private List<ByteBuffer> buffers;
+    private ByteBuffer buffer;
 
     public Aof(FileWrapper wrapper, Config config) {
         this.wrapper = wrapper;
         this.maxCount = config.getMaxCount();
         this.maxSize = config.getMaxSize();
         this.version = new AtomicInteger();
-        this.buffers = new ArrayList<>();
+        this.buffer = ByteBuffer.allocate((int) (Const.K * 64));
     }
 
     public void write(ByteBuffer data) throws IOException {
@@ -48,7 +50,21 @@ public class Aof {
             int v = this.version.get();
             count ++;
             size += data.capacity();
-            buffers.add(data);
+
+            if (buffer.remaining() >= data.capacity()){
+                buffer.put(data);
+            }else{
+                data.limit(buffer.remaining());
+                buffer.put(data);
+                data.limit(data.capacity());
+            }
+            if (buffer.remaining() == 0){
+                this.wrapper.getChannel().write(buffer);
+                buffer.clear();
+                if (data.remaining() > 0){
+                    buffer.put(data);
+                }
+            }
             if (maxSize <= size || count == maxCount){
                 next(v);
                 return;
@@ -70,9 +86,11 @@ public class Aof {
         }
         this.count = 0;
         this.size = 0;
-        this.wrapper.getChannel().write(buffers.toArray(new ByteBuffer[]{}));
+        if (buffer.remaining() > 0){
+            this.wrapper.getChannel().write(buffer);
+            buffer.clear();
+        }
         this.wrapper.getChannel().force(false);
-        buffers.clear();
         this.cond.signalAll();
     }
 
