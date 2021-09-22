@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
@@ -30,14 +32,14 @@ public class Aof {
 
     private final AtomicInteger version;
 
-    private ByteBuffer buffer;
+    private List<ByteBuffer> buffers;
 
     public Aof(FileWrapper wrapper, Config config) {
         this.wrapper = wrapper;
         this.maxCount = config.getMaxCount();
         this.maxSize = config.getMaxSize();
         this.version = new AtomicInteger();
-        this.buffer = ByteBuffer.allocate((int) config.getMaxSize() * 2);
+        this.buffers = new ArrayList<>();
     }
 
     public void write(ByteBuffer data) throws IOException {
@@ -46,7 +48,7 @@ public class Aof {
             int v = this.version.get();
             count ++;
             size += data.capacity();
-            buffer.put(data);
+            buffers.add(data);
             if (maxSize <= size || count == maxCount){
                 next(v);
                 return;
@@ -68,10 +70,9 @@ public class Aof {
         }
         this.count = 0;
         this.size = 0;
-        buffer.flip();
-        this.wrapper.getChannel().write(buffer);
-        buffer.clear();
+        this.wrapper.getChannel().write(buffers.toArray(new ByteBuffer[]{}));
         this.wrapper.getChannel().force(false);
+        buffers.clear();
         this.cond.signalAll();
     }
 
