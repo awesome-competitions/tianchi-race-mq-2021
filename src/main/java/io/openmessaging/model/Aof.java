@@ -44,7 +44,6 @@ public class Aof {
             int v = this.version.get();
             count ++;
             size += buffer.capacity();
-            System.out.println(maxSize + ":" + size);
             if (maxSize <= size || count == maxCount){
                 next(v);
                 return;
