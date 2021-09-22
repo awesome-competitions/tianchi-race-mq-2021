@@ -30,20 +30,23 @@ public class Aof {
 
     private final AtomicInteger version;
 
+    private ByteBuffer buffer;
+
     public Aof(FileWrapper wrapper, Config config) {
         this.wrapper = wrapper;
         this.maxCount = config.getMaxCount();
         this.maxSize = config.getMaxSize();
         this.version = new AtomicInteger();
+        this.buffer = ByteBuffer.allocate((int) config.getMaxSize() * 2);
     }
 
-    public void write(ByteBuffer buffer) throws IOException {
-        wrapper.getChannel().write(buffer);
+    public void write(ByteBuffer data) throws IOException {
         try {
             lock.lock();
             int v = this.version.get();
             count ++;
-            size += buffer.capacity();
+            size += data.capacity();
+            buffer.put(data);
             if (maxSize <= size || count == maxCount){
                 next(v);
                 return;
@@ -63,9 +66,11 @@ public class Aof {
         if (! version.compareAndSet(v, v + 1)){
             return;
         }
-        System.out.print(size + ",");
         this.count = 0;
         this.size = 0;
+        buffer.flip();
+        this.wrapper.getChannel().write(buffer);
+        buffer.clear();
         this.wrapper.getChannel().force(false);
         this.cond.signalAll();
     }
