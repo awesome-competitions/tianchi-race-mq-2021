@@ -80,7 +80,6 @@ public class Aof {
         if (! version.compareAndSet(v, v + 1)){
             return;
         }
-        System.out.println(count + ":" + size + ":" + version);
         this.count = 0;
         this.size = 0;
         this.wrapper.getChannel().force(false);
