@@ -42,27 +42,9 @@ public class Aof {
             lock.lock();
             int v = this.version.get();
             count ++;
-
-            long need = maxSize - size;
-            if (need >= buffer.capacity()){
-                wrapper.getChannel().write(buffer);
-                size += buffer.capacity();
-            }else{
-                buffer.limit((int) need);
-                wrapper.getChannel().write(buffer);
-                size += need;
-            }
-            System.out.println(size);
-            if (maxSize <= size){
-                next(v);
-                if (buffer.limit() < buffer.capacity()){
-                    size += buffer.capacity() - buffer.limit();
-                    buffer.limit(buffer.capacity());
-                    wrapper.getChannel().write(buffer);
-                }
-                return;
-            }
-            if (count == maxCount){
+            wrapper.getChannel().write(buffer);
+            size += buffer.capacity();
+            if (maxSize <= size || count == maxCount){
                 next(v);
                 return;
             }
