@@ -25,7 +25,11 @@ public class DefaultMessageQueueImpl extends MessageQueue{
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMessageQueueImpl.class);
 
     public DefaultMessageQueueImpl(){
-        test();
+        try {
+            test();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
