@@ -35,8 +35,8 @@ public class MessageQueueImpl extends MessageQueue {
                 (int) ((Const.G * 51) / (Const.K * 288)),
                 Const.K * 288,
                 1,
-                35,
-                Const.K * 128)
+                50,
+                Const.K * 512)
         );
     }
 
@@ -53,7 +53,7 @@ public class MessageQueueImpl extends MessageQueue {
         }
         new Thread(()->{
             try {
-                Thread.sleep(1000 * 60 * 13);
+                Thread.sleep(1000 * 60);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

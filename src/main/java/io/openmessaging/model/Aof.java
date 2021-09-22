@@ -52,6 +52,7 @@ public class Aof {
                 wrapper.getChannel().write(buffer);
                 size += need;
             }
+            System.out.println(size);
             if (maxSize <= size){
                 next(v);
                 if (buffer.limit() < buffer.capacity()){
