@@ -122,24 +122,24 @@ public class Topic{
         aof.write(this.id, queueId, bytes);
         aof.await();
 
-        ByteBuffer buffer = ByteBuffer.allocate(2 + data.capacity());
-        buffer.putShort((short) data.capacity());
-        buffer.put(bytes);
-        buffer.flip();
-
         Queue queue = getQueue(queueId);
-        Group group = getGroup(queueId);
+//        Group group = getGroup(queueId);
         long offset = queue.getAndIncrementOffset();
 
-        Segment head = queue.getHead();
-        if (head == null || ! head.writable(buffer.capacity())){
-            head = new Segment(offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
-            queue.addSegment(head);
-        }
-
-        head.setEnd(offset);
-        head.write(group.getDb(), buffer);
-        cache.write(this, queue, group, head, bytes);
+//        ByteBuffer buffer = ByteBuffer.allocate(2 + data.capacity());
+//        buffer.putShort((short) data.capacity());
+//        buffer.put(bytes);
+//        buffer.flip();
+//
+//        Segment head = queue.getHead();
+//        if (head == null || ! head.writable(buffer.capacity())){
+//            head = new Segment(offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
+//            queue.addSegment(head);
+//        }
+//
+//        head.setEnd(offset);
+//        head.write(group.getDb(), buffer);
+//        cache.write(this, queue, group, head, bytes);
         return offset;
     }
 
