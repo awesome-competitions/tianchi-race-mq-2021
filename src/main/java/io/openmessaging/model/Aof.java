@@ -41,7 +41,7 @@ public class Aof {
         this.maxCount = config.getMaxCount();
         this.maxSize = config.getMaxSize();
         this.version = new AtomicInteger();
-        this.buffer = ByteBuffer.allocate((int) (Const.K * 128));
+        this.buffer = ByteBuffer.allocate((int) (Const.K * 256));
     }
 
     public void write(ByteBuffer data) throws IOException {
