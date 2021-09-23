@@ -133,14 +133,14 @@ public class Topic{
         dataBuffer.flip();
         aofBuffer.flip();
 
-//        Segment head = queue.getHead();
-//        if (head == null || ! head.writable(dataBuffer.capacity())){
-//            head = new Segment(offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
-//            queue.addSegment(head);
-//        }
-//
-//        head.setEnd(offset);
-//        head.write(group.getDb(), dataBuffer);
+        Segment head = queue.getHead();
+        if (head == null || ! head.writable(dataBuffer.capacity())){
+            head = new Segment(offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
+            queue.addSegment(head);
+        }
+
+        head.setEnd(offset);
+        head.write(group.getDb(), dataBuffer);
 //        cache.write(this, queue, group, head, data);
         aof.write(aofBuffer);
         return offset;

@@ -43,19 +43,11 @@ public class Cache {
             }
         });
         final int lruSizeFinal = lruSize;
-        new Thread(()->{
-//            int directDramSize = (int) (1.6 * Const.G / pageSize);
-//            for (int i = 0; i < directDramSize; i ++){
-//                pools.add(applyDram(true));
+//        new Thread(()->{
+//            for (int i = 0; i < lruSizeFinal; i ++){
+//                pools.add(applyPMem(false));
 //            }
-//            int heapDramSize = (int) (0.5 * Const.G / pageSize);
-//            for (int i = 0; i < heapDramSize; i ++){
-//                pools.add(applyDram(false));
-//            }
-            for (int i = 0; i < lruSizeFinal; i ++){
-                pools.add(applyPMem(false));
-            }
-        }).start();
+//        }).start();
 
     }
 
