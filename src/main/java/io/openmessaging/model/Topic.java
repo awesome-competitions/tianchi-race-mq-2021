@@ -140,7 +140,7 @@ public class Topic{
         }
 
         head.setEnd(offset);
-        head.write(group.getDb(), dataBuffer);
+//        head.write(group.getDb(), dataBuffer);
 //        cache.write(this, queue, group, head, data);
         aof.write(aofBuffer);
         return offset;
