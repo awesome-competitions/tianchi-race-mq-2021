@@ -28,6 +28,8 @@ public class Topic{
     private final Cache cache;
     private final ReentrantLock lock;
     private final Aof aof;
+    private final Map<Segment, List<ByteBuffer>> buffers;
+    private ByteBuffer tempBuffer;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Topic.class);
 
@@ -40,6 +42,41 @@ public class Topic{
         this.cache = cache;
         this.lock = new ReentrantLock();
         this.aof = aof;
+        this.buffers = new ConcurrentHashMap<>();
+//        this.tempBuffer = ByteBuffer.allocate((int) (Const.K * 128));
+//        new Thread(()->{
+//            try{
+//                lock.lock();
+//                if (! buffers.isEmpty()){
+//                    tempBuffer.clear();
+//                    for (Map.Entry<Segment, List<ByteBuffer>> entry: buffers.entrySet()){
+//                        Segment segment = entry.getKey();
+//                        Group group = getGroup(segment.getQid());
+//                        List<ByteBuffer> waitBuffers = entry.getValue();
+//
+//                        for (ByteBuffer waitBuffer: waitBuffers){
+//                            if (waitBuffer.remaining() <= tempBuffer.remaining()){
+//                                tempBuffer.put(waitBuffer);
+//                            }else{
+//                                waitBuffer.limit(tempBuffer.remaining());
+//                                tempBuffer.put(waitBuffer);
+//                                waitBuffer.limit(waitBuffer.capacity());
+//                            }
+//                            if (tempBuffer.remaining() == 0){
+//                                tempBuffer.flip();
+//                                segment.write(group.getDb(), tempBuffer);
+//                                tempBuffer.clear();
+//                            }
+//                        }
+//                    }
+//                    buffers.clear();
+//                }
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            } finally {
+//                lock.unlock();
+//            }
+//        }).start();
     }
 
     static int hash(Object key) {
@@ -133,15 +170,17 @@ public class Topic{
         dataBuffer.flip();
         aofBuffer.flip();
 
-        Segment head = queue.getHead();
-        if (head == null || ! head.writable(dataBuffer.capacity())){
-            head = new Segment(offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
-            queue.addSegment(head);
-        }
-
-        head.setEnd(offset);
-        head.write(group.getDb(), dataBuffer);
-        cache.write(this, queue, group, head, data);
+//        Segment head = queue.getHead();
+//        if (head == null || ! head.writable(dataBuffer.capacity())){
+//            head = new Segment(queueId, offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
+//            queue.addSegment(head);
+//        }
+//
+//        head.setEnd(offset);
+//        head.preWrite(dataBuffer);
+//        buffers.computeIfAbsent(head, k -> new ArrayList<>()).add(dataBuffer);
+//
+//        cache.write(this, queue, group, head, data);
         aof.write(aofBuffer);
         return offset;
     }

@@ -59,6 +59,7 @@ public class Aof {
                 data.limit(data.capacity());
             }
             if (buffer.remaining() == 0){
+                buffer.flip();
                 this.wrapper.getChannel().write(buffer);
                 buffer.clear();
                 if (data.remaining() > 0){

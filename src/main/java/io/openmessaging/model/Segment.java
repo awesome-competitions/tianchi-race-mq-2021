@@ -9,11 +9,14 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Segment {
+
+    private int qid;
 
     private long start;
 
@@ -27,16 +30,33 @@ public class Segment {
 
     private int idx;
 
+    private long vos;
+
     public Segment(long start, long end, long pos, long cap) {
         this.start = start;
         this.end = end;
         this.pos = pos;
         this.aos = pos;
+        this.vos = vos;
+        this.cap = cap;
+    }
+
+    public Segment(int qid, long start, long end, long pos, long cap) {
+        this.qid = qid;
+        this.start = start;
+        this.end = end;
+        this.pos = pos;
+        this.aos = pos;
+        this.vos = vos;
         this.cap = cap;
     }
 
     public boolean writable(int len){
-        return cap - (aos - pos) >= len;
+        return cap - (vos - pos) >= len;
+    }
+
+    public void preWrite(ByteBuffer buffer){
+        vos += buffer.capacity();
     }
 
     public void write(FileWrapper fw, ByteBuffer buffer) throws IOException {
@@ -86,6 +106,10 @@ public class Segment {
 
     public void setIdx(int idx) {
         this.idx = idx;
+    }
+
+    public int getQid() {
+        return qid;
     }
 
     public List<ByteBuffer> load(FileWrapper fw, boolean direct) {
@@ -144,14 +168,15 @@ public class Segment {
     }
 
     @Override
-    public String toString() {
-        return "Segment{" +
-                "start=" + start +
-                ", end=" + end +
-                ", pos=" + pos +
-                ", aos=" + aos +
-                ", cap=" + cap +
-                ", idx=" + idx +
-                '}';
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Segment segment = (Segment) o;
+        return pos == segment.pos;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(pos);
     }
 }
