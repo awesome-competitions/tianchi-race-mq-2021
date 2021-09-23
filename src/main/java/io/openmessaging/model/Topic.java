@@ -157,31 +157,31 @@ public class Topic{
         Group group = getGroup(queueId);
         long offset = queue.getAndIncrementOffset();
 
-//        ByteBuffer dataBuffer = ByteBuffer.allocate(2 + data.capacity())
-//                .putShort((short) data.capacity())
-//                .put(data);
-//        data.flip();
-//        dataBuffer.flip();
-
         ByteBuffer aofBuffer = ByteBuffer.allocate(5 + data.capacity())
                 .put((byte) id)
                 .putShort((short) queueId)
                 .putShort((short) data.capacity())
                 .put(data);
         aofBuffer.flip();
-
-//        Segment head = queue.getHead();
-//        if (head == null || ! head.writable(dataBuffer.capacity())){
-//            head = new Segment(queueId, offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
-//            queue.addSegment(head);
-//        }
-//
-//        head.setEnd(offset);
-//        head.preWrite(dataBuffer);
-//        buffers.computeIfAbsent(head, k -> new ArrayList<>()).add(dataBuffer);
-//
-//        cache.write(this, queue, group, head, data);
+        data.flip();
         aof.write(aofBuffer);
+
+        ByteBuffer dataBuffer = ByteBuffer.allocate(2 + data.capacity())
+                .putShort((short) data.capacity())
+                .put(data);
+        data.flip();
+        dataBuffer.flip();
+
+        Segment head = queue.getHead();
+        if (head == null || ! head.writable(dataBuffer.capacity())){
+            head = new Segment(queueId, offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
+            queue.addSegment(head);
+        }
+
+        head.setEnd(offset);
+        head.write(group.getDb(), dataBuffer);
+//        buffers.computeIfAbsent(head, k -> new ArrayList<>()).add(dataBuffer);
+        cache.write(this, queue, group, head, data);
         return offset;
     }
 

@@ -62,6 +62,7 @@ public class Segment {
     public void write(FileWrapper fw, ByteBuffer buffer) throws IOException {
         fw.write(aos, buffer);
         aos += buffer.capacity();
+        vos = aos;
     }
 
     public long getStart() {
