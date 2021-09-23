@@ -157,17 +157,17 @@ public class Topic{
         Group group = getGroup(queueId);
         long offset = queue.getAndIncrementOffset();
 
-        ByteBuffer dataBuffer = ByteBuffer.allocate(2 + data.capacity())
-                .putShort((short) data.capacity())
-                .put(data);
-        data.flip();
-        dataBuffer.flip();
+//        ByteBuffer dataBuffer = ByteBuffer.allocate(2 + data.capacity())
+//                .putShort((short) data.capacity())
+//                .put(data);
+//        data.flip();
+//        dataBuffer.flip();
 
-        ByteBuffer aofBuffer = ByteBuffer.allocate(3 + dataBuffer.capacity())
+        ByteBuffer aofBuffer = ByteBuffer.allocate(5 + data.capacity())
                 .put((byte) id)
                 .putShort((short) queueId)
-                .put(dataBuffer);
-        dataBuffer.flip();
+                .putShort((short) data.capacity())
+                .put(data);
         aofBuffer.flip();
 
 //        Segment head = queue.getHead();
