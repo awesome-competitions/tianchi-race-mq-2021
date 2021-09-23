@@ -53,7 +53,7 @@ public class MessageQueueImpl extends MessageQueue {
         }
         new Thread(()->{
             try {
-                Thread.sleep(1000 * 60 * 10);
+                Thread.sleep(1000 * 60 * 20);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -100,10 +100,10 @@ public class MessageQueueImpl extends MessageQueue {
             if (count % 100000 == 0){
                 LOGGER.info("write count {}, size {}, topic size{}", count, size, topics.size());
             }
-            if (count > 10000000){
-                LOGGER.info("stop count {}, size {}", count, size);
-                throw new RuntimeException("stop");
-            }
+//            if (count > 10000000){
+//                LOGGER.info("stop count {}, size {}", count, size);
+//                throw new RuntimeException("stop");
+//            }
             return getTopic(topic).write(queueId, data);
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
