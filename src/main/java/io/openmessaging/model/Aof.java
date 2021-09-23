@@ -87,10 +87,11 @@ public class Aof {
         }
         this.count = 0;
         this.size = 0;
+        buffer.flip();
         if (buffer.remaining() > 0){
             this.wrapper.getChannel().write(buffer);
-            buffer.clear();
         }
+        buffer.clear();
         this.wrapper.getChannel().force(false);
         this.cond.signalAll();
     }
