@@ -1,6 +1,8 @@
 package io.openmessaging.model;
 
 import io.openmessaging.consts.Const;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -35,6 +37,8 @@ public class Aof {
     private final AtomicInteger version;
 
     private ByteBuffer buffer;
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(Aof.class);
 
     public Aof(FileWrapper wrapper, Config config) {
         this.wrapper = wrapper;
@@ -72,6 +76,7 @@ public class Aof {
             }
             long nanos = this.cond.awaitNanos(TimeUnit.SECONDS.toNanos(10));
             if (nanos <= 0){
+                LOGGER.info("blocked count: {}, size: {}", count, size);
                 next(v);
             }
         } catch (InterruptedException e) {
