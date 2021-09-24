@@ -19,6 +19,7 @@ public class Dram extends Storage {
     public Dram(boolean direct) {
         this.idx = -1;
         this.direct = direct;
+        this.data = new ArrayList<>();
     }
 
     @Override
@@ -29,6 +30,11 @@ public class Dram extends Storage {
         int startIndex = (int) (startOffset - beginOffset);
         int endIndex = (int) (endOffset - beginOffset);
         return data.subList(startIndex, endIndex + 1);
+    }
+
+    @Override
+    public List<ByteBuffer> load() {
+        return data;
     }
 
     @Override

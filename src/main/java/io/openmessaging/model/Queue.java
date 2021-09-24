@@ -1,5 +1,6 @@
 package io.openmessaging.model;
 
+import io.openmessaging.cache.Cache;
 import io.openmessaging.cache.PMem;
 import io.openmessaging.cache.Storage;
 
@@ -25,6 +26,8 @@ public class Queue {
     private ReadWriteLock lock;
 
     private Storage storage;
+
+    private long readOffset;
 
     public Queue(int id) {
         this.id = id;
@@ -87,8 +90,27 @@ public class Queue {
         return last;
     }
 
-    public void setLast(Segment last) {
-        this.last = last;
+    public Segment getLast(){
+        return last;
+    }
+
+    public long getReadOffset() {
+        return readOffset;
+    }
+
+    public void setReadOffset(long readOffset) {
+        this.readOffset = readOffset;
+    }
+
+    public List<Segment> getSegments() {
+        return segments;
+    }
+
+    public void setLast(Cache cache, Segment newLast) {
+        if (last != null && last.getIdx() != newLast.getIdx()){
+            cache.clearSegment(last);
+        }
+        this.last = newLast;
     }
 
     public Segment getSegment(long offset){

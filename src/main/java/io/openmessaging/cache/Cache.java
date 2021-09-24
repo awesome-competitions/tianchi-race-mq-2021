@@ -1,9 +1,11 @@
 package io.openmessaging.cache;
 
+import com.intel.pmem.llpl.AnyMemoryBlock;
 import com.intel.pmem.llpl.Heap;
 import io.openmessaging.consts.Const;
 import io.openmessaging.model.*;
 import io.openmessaging.model.Queue;
+import io.openmessaging.model.Readable;
 import io.openmessaging.utils.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,15 +20,17 @@ public class Cache {
 
     private Heap heap;
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(Cache.class);
-
-    private final Lru<Integer, Queue> lru;
+    private final Lru<Segment> lru;
 
     private final long pageSize;
 
     private final LinkedBlockingQueue<Storage> pools;
 
-    public Cache(String path, long heapSize, int lruSize, long pageSize){
+    private Group group;
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(Cache.class);
+
+    public Cache(String path, long heapSize, int lruSize, long pageSize, Group group){
         if (Objects.nonNull(path)){
             this.heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
         }
@@ -34,45 +38,65 @@ public class Cache {
             lruSize = 1000;
         }
         this.pageSize = pageSize;
+        this.group = group;
         this.pools = new LinkedBlockingQueue<>();
-        this.lru = new Lru<>(lruSize - 500, v -> {
-            Storage storage = v.getStorage();
-            if (storage != null){
-                v.setStorage(null);
-                pools.add(storage);
+        this.lru = new Lru<>(lruSize - 500, k -> {
+            try{
+                k.lock();
+                Storage storage = k.getStorage();
+                if (storage != null && ! (storage instanceof SSD)){
+                    Storage ssd = new SSD(group.getAndIncrementOffset() * pageSize, pageSize, group.getDb());
+                    ssd.reset(0, storage.load(), k.getStart());
+                    k.setStorage(ssd);
+                    pools.add(storage);
+                }
+            }finally {
+                k.unlock();
             }
         });
-        final int lruSizeFinal = lruSize;
-        new Thread(()->{
-            for (int i = 0; i < lruSizeFinal; i ++){
+        int finalLruSize = lruSize;
+        Thread thread = new Thread(()->{
+            for (int i = 0; i < finalLruSize; i ++){
                 pools.add(applyPMem(false));
             }
-        }).start();
-
+        });
+        thread.setDaemon(true);
+        thread.start();
     }
 
-    public void write(Topic topic, Queue queue, Group group, Segment segment, ByteBuffer data) throws InterruptedException {
-        Storage storage = queue.getStorage();
-        if (storage != null && storage.getIdx() == segment.getIdx()){
-            byte[] bytes = new byte[data.capacity()];
-            data.get(bytes);
-            storage.write(ByteBuffer.wrap(bytes));
+    public Segment applySegment(Topic topic, Queue queue, long offset) throws InterruptedException {
+        Segment segment = new Segment(topic.getId(), queue.getId(), offset, offset, pageSize);
+        queue.addSegment(segment);
+        Storage storage = pools.take();
+        storage.reset(segment.getIdx(), new ArrayList<>(), offset);
+        segment.setStorage(storage);
+        return lru.add(segment);
+    }
+
+    public void write(Segment segment, ByteBuffer byteBuffer){
+        try{
+            segment.lock();
+            segment.write(byteBuffer);
+            lru.add(segment);
+        }finally {
+            segment.unlock();
         }
-//        Storage storage = loadStorage(topic, queue, group, segment);
-//        storage.write(bytes);
     }
 
-    public Storage loadStorage(Topic topic, Queue queue, Group group, Segment segment) throws InterruptedException {
-        lru.computeIfAbsent(topic.getId() * 10000 + queue.getId(), k -> queue);
-        Storage storage = queue.getStorage();
-        if (storage == null || storage.getIdx() != segment.getIdx()){
-            if (storage == null){
-                storage = pools.take();
-                queue.setStorage(storage);
+    public List<ByteBuffer> read(Readable readable) throws InterruptedException {
+        Segment segment = readable.getSegment();
+        try{
+            segment.lock();
+            if (segment.getStorage() instanceof SSD){
+                Storage other = pools.take();
+                other.reset(segment.getIdx(), segment.getStorage().load(), segment.getStart());
+                segment.setStorage(other);
+                lru.add(segment);
             }
-            storage.reset(segment.getIdx(), segment.load(group.getDb(), storage.isDirect()), segment.getStart());
+            return readable.getSegment().read(readable.getStartOffset(), readable.getEndOffset());
+        }finally {
+            segment.unlock();
         }
-        return storage;
     }
 
     public Storage applyPMem(boolean direct){
@@ -84,5 +108,19 @@ public class Cache {
 
     public Storage applyDram(boolean direct){
         return new Dram(direct);
+    }
+
+    public void clearSegments(List<Segment> segments, Segment last){
+        for (int i = 0; i < last.getIdx(); i ++){
+            clearSegment(segments.get(i));
+        }
+    }
+
+    public void clearSegment(Segment segment){
+        Storage storage = segment.getStorage();
+        if (! (storage instanceof SSD)){
+            lru.remove(segment);
+            pools.add(storage);
+        }
     }
 }

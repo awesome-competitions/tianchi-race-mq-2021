@@ -9,23 +9,26 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class Lru<K,V>{
+public class Lru<K>{
 
-    private HashMap<K, V> map;
+    private HashMap<K, Object> map;
 
     private int limit;
 
     private ReentrantLock lock;
 
-    public Lru(int core, Consumer<V> consumer){
+    private Consumer<K> consumer;
+
+    public Lru(int core, Consumer<K> consumer){
         this.limit = core;
         this.lock = new ReentrantLock();
-        map = new LinkedHashMap<K, V>(core,0.75f, true){
+        this.consumer = consumer;
+        map = new LinkedHashMap<K, Object>(core,0.75f, true){
             @Override
-            protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+            protected boolean removeEldestEntry(Map.Entry<K, Object> eldest) {
                 boolean removed = size() > limit;
                 if (removed){
-                    consumer.accept(eldest.getValue());
+                    consumer.accept(eldest.getKey());
                 }
                 return removed;
             }
@@ -33,10 +36,21 @@ public class Lru<K,V>{
         };
     }
 
-    public V computeIfAbsent(K k, Function<? super K, ? extends V> mappingFunction){
+    public K add(K k){
         try{
             lock.lock();
-            return map.computeIfAbsent(k, mappingFunction);
+            map.put(k, null);
+            return k;
+        }finally {
+            lock.unlock();
+        }
+    }
+
+    public K remove(K k){
+        try{
+            lock.lock();
+            map.remove(k);
+            return k;
         }finally {
             lock.unlock();
         }

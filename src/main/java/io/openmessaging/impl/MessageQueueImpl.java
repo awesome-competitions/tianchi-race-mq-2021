@@ -21,7 +21,7 @@ public class MessageQueueImpl extends MessageQueue {
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageQueueImpl.class);
 
     private final Config config;
-    private final Cache cache;
+    private Cache cache;
     private Aof aof;
     private final Map<String, Topic> topics;
     private static final Map<Integer, ByteBuffer> EMPTY = new HashMap<>();
@@ -44,21 +44,24 @@ public class MessageQueueImpl extends MessageQueue {
         LOGGER.info("start");
         this.config = config;
         this.topics = new ConcurrentHashMap<>();
-        this.cache = new Cache(config.getHeapDir(), config.getHeapSize(), config.getLruSize(), config.getPageSize());
         this.id = new AtomicInteger(1);
         try {
+            Group group = new Group(new FileWrapper(new RandomAccessFile(config.getDataDir() + "tmp.db", "rw")), null);
+            this.cache = new Cache(config.getHeapDir(), config.getHeapSize(), config.getLruSize(), config.getPageSize(), group);
             this.aof = new Aof(new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof.log", "rw")), config);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        new Thread(()->{
+        Thread thread = new Thread(()->{
             try {
                 Thread.sleep(1000 * 60 * 20);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
             System.exit(-1);
-        }).start();
+        });
+        thread.setDaemon(true);
+        thread.start();
     }
 
     public void cleanDB(){

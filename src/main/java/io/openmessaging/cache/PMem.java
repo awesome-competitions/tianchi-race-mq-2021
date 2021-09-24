@@ -28,19 +28,6 @@ public class PMem extends Storage {
         reset(-1, buffers, beginOffset);
     }
 
-    short getShort(long pos){
-        byte[] bytes = new byte[2];
-        block.copyToArray(pos, bytes, 0, 2);
-        return (short)((bytes[0] << 8) | (bytes[1] & 0xff));
-    }
-
-    byte[] shortToBytes(int s) {
-        byte[] bytes = new byte[2];
-        bytes[0] = (byte) (s >> 8 & 0xFF);
-        bytes[1] = (byte) (s & 0xFF);
-        return bytes;
-    }
-
     @Override
     public List<ByteBuffer> read(long startOffset, long endOffset) {
         if (CollectionUtils.isEmpty(positions)){
@@ -49,15 +36,36 @@ public class PMem extends Storage {
         int startIndex = (int) (startOffset - beginOffset);
         int endIndex = (int) (endOffset - beginOffset);
         List<ByteBuffer> buffers = new ArrayList<>();
-        long pos = positions.get(startIndex);
+        long startPos = 0;
+        for (int i = 0; i < startIndex; i ++){
+            startPos += positions.get(i);
+        }
         while (startIndex <= endIndex && startIndex < positions.size()){
-            int size = getShort(pos);
-            pos += 2;
-            byte[] bytes = new byte[size];
-            block.copyToArray(pos, bytes, 0, bytes.length);
-            pos += size;
+            Long size = positions.get(startIndex);
+            byte[] bytes = new byte[size.intValue()];
+            block.copyToArray(startPos, bytes, 0, bytes.length);
             buffers.add(ByteBuffer.wrap(bytes));
             startIndex ++;
+            startPos += bytes.length;
+        }
+        return buffers;
+    }
+
+    @Override
+    public List<ByteBuffer> load() {
+        if (CollectionUtils.isEmpty(positions)){
+            return null;
+        }
+        int startIndex = 0;
+        long startPos = 0;
+        List<ByteBuffer> buffers = new ArrayList<>();
+        while (startIndex < positions.size()){
+            Long size = positions.get(startIndex);
+            byte[] bytes = new byte[size.intValue()];
+            block.copyToArray(startPos, bytes, 0, bytes.length);
+            buffers.add(ByteBuffer.wrap(bytes));
+            startIndex ++;
+            startPos += bytes.length;
         }
         return buffers;
     }
@@ -66,9 +74,7 @@ public class PMem extends Storage {
     public void write(ByteBuffer byteBuffer) {
         byte[] bytes = new byte[byteBuffer.capacity()];
         byteBuffer.get(bytes);
-        positions.add(position);
-        block.copyFromArray(shortToBytes(bytes.length), 0, position, 2);
-        position += 2;
+        positions.add((long) bytes.length);
         block.copyFromArray(bytes, 0, position, bytes.length);
         position += bytes.length;
     }
@@ -83,10 +89,8 @@ public class PMem extends Storage {
         positions.clear();
         if (CollectionUtils.isNotEmpty(buffers)) {
             for (ByteBuffer buffer : buffers) {
-                positions.add(newPos);
-                block.copyFromArray(shortToBytes(buffer.capacity()), 0, newPos, 2);
-                newPos += 2;
                 block.copyFromArray(buffer.array(), 0, newPos, buffer.capacity());
+                positions.add((long) buffer.capacity());
                 newPos += buffer.capacity();
             }
         }

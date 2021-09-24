@@ -14,6 +14,8 @@ public abstract class Storage {
 
     public abstract List<ByteBuffer> read(long startOffset, long endOffset);
 
+    public abstract List<ByteBuffer> load();
+
     public abstract void write(ByteBuffer byteBuffer);
 
     public abstract void reset(int idx, List<ByteBuffer> buffers, long beginOffset);

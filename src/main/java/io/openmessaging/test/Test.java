@@ -4,7 +4,9 @@ import io.openmessaging.MessageQueue;
 import io.openmessaging.consts.Const;
 import io.openmessaging.impl.MessageQueueImpl;
 import io.openmessaging.model.Config;
+import io.openmessaging.utils.ArrayUtils;
 
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
@@ -12,12 +14,24 @@ import java.util.function.Supplier;
 
 public class Test {
 
-    private final static int BATCH = 100;
-    private final static int QUEUE_SIZE = 2;
+    private final static int BATCH = 10000 * 10;
+    private final static int QUEUE_SIZE = 3;
+    private final static String DIR = "D:\\test\\nio\\";
+    private final static String HEAP_DIR = null;
+    private final static long HEAP_SIZE = 0;
+
+    public void cleanDB(){
+        File root = new File(DIR);
+        if (root.exists() && root.isDirectory()){
+            if (ArrayUtils.isEmpty(root.listFiles())) return;
+            for (File file: Objects.requireNonNull(root.listFiles())){
+                if (file.exists() && ! file.isDirectory() && file.delete()){ }
+            }
+        }
+    }
 
     public static void main(String[] args) throws InterruptedException {
-        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config("D:\\test\\nio\\", null, 1, 30, 2 * Const.K, 100, 1, 1));
-        mMapMessageQueue.cleanDB();
+        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config(DIR, HEAP_DIR, HEAP_SIZE, 5000, 2 * Const.K, 100, 1, 1));
         List<Supplier<?>> suppliers = new ArrayList<>();
 
         for (int i = 1; i <= QUEUE_SIZE; i ++){
@@ -38,7 +52,7 @@ public class Test {
 
     public static Supplier<?> test(MessageQueue mq, String topic, Integer queueId){
         return ()->{
-            String[] inputs = new String[BATCH/100];
+            String[] inputs = new String[BATCH/1];
             for (int i = 0; i < inputs.length; i ++){
                 inputs[i] = randomString((int) (Math.random() * 1000) + 1);
 //                inputs[i] = randomString(1);

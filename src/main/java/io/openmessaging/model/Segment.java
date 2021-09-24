@@ -12,9 +12,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Segment {
+
+    private int tid;
 
     private int qid;
 
@@ -30,39 +33,17 @@ public class Segment {
 
     private int idx;
 
-    private long vos;
+    private Storage storage;
 
-    public Segment(long start, long end, long pos, long cap) {
-        this.start = start;
-        this.end = end;
-        this.pos = pos;
-        this.aos = pos;
-        this.vos = vos;
-        this.cap = cap;
-    }
+    private ReentrantLock lock;
 
-    public Segment(int qid, long start, long end, long pos, long cap) {
+    public Segment(int tid, int qid, long start, long end, long cap) {
+        this.tid = tid;
         this.qid = qid;
         this.start = start;
         this.end = end;
-        this.pos = pos;
-        this.aos = pos;
-        this.vos = vos;
         this.cap = cap;
-    }
-
-    public boolean writable(int len){
-        return cap - (vos - pos) >= len;
-    }
-
-    public void preWrite(ByteBuffer buffer){
-        vos += buffer.capacity();
-    }
-
-    public void write(FileWrapper fw, ByteBuffer buffer) throws IOException {
-        fw.write(aos, buffer);
-        aos += buffer.capacity();
-        vos = aos;
+        this.lock = new ReentrantLock();
     }
 
     public long getStart() {
@@ -101,6 +82,14 @@ public class Segment {
         this.cap = cap;
     }
 
+    public void lock() {
+        lock.lock();
+    }
+
+    public void unlock(){
+        lock.unlock();
+    }
+
     public int getIdx() {
         return idx;
     }
@@ -113,59 +102,25 @@ public class Segment {
         return qid;
     }
 
-    public List<ByteBuffer> load(FileWrapper fw, boolean direct) {
-        List<ByteBuffer> data = null;
-        try {
-
-            long allocateSize = cap;
-            if (aos > pos){
-                allocateSize = aos - pos;
-            }
-            ByteBuffer byteBuffer = ByteBuffer.allocate((int) allocateSize);
-            fw.read(pos, byteBuffer);
-            byteBuffer.flip();
-
-            short size;
-            data = new ArrayList<>();
-            while (byteBuffer.remaining() > 2 && (size = byteBuffer.getShort()) > 0){
-                byte[] bytes = new byte[size];
-                byteBuffer.get(bytes);
-                if (direct){
-                    ByteBuffer directBuffer = ByteBuffer.allocateDirect(bytes.length);
-                    directBuffer.put(bytes);
-                    directBuffer.flip();
-                    data.add(directBuffer);
-                    continue;
-                }
-                data.add(ByteBuffer.wrap(bytes));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return data;
+    public Storage getStorage() {
+        return storage;
     }
 
-    public void reset(FileWrapper fw) {
-        MappedByteBuffer mmb = null;
-        try {
-            mmb = fw.getChannel().map(FileChannel.MapMode.READ_ONLY, pos, cap);
-            short size;
-            int count = 0;
-            while (mmb.remaining() > 2 && (size = mmb.getShort()) > 0){
-                mmb.position(mmb.position() + size);
-                count ++;
-            }
-            if (mmb.position() > 2){
-                this.aos = this.pos + mmb.position() - 2;
-                this.end = this.start + count - 1;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }finally {
-            if (mmb != null){
-                BufferUtils.clean(mmb);
-            }
-        }
+    public void setStorage(Storage storage) {
+        this.storage = storage;
+    }
+
+    public boolean writable(int len){
+        return cap - pos >= len;
+    }
+
+    public void write(ByteBuffer byteBuffer){
+        storage.write(byteBuffer);
+        pos += byteBuffer.capacity();
+    }
+
+    public List<ByteBuffer> read(long startOffset, long endOffset){
+        return storage.read(startOffset, endOffset);
     }
 
     @Override
@@ -173,11 +128,11 @@ public class Segment {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Segment segment = (Segment) o;
-        return pos == segment.pos;
+        return tid == segment.tid && qid == segment.qid && idx == segment.idx;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(pos);
+        return Objects.hash(tid, qid, idx);
     }
 }

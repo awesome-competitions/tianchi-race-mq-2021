@@ -115,7 +115,6 @@ public class Topic{
 
     public List<ByteBuffer> read(int queueId, long offset, int num) throws IOException, InterruptedException {
         Queue queue = getQueue(queueId);
-        Group group = getGroup(queue.getId());
         Segment segment = queue.getLast(offset);
         if (segment == null){
             return null;
@@ -141,20 +140,22 @@ public class Topic{
 
         List<ByteBuffer> buffers = new ArrayList<>(num);
         for (Readable readable : readableList) {
-            Storage storage = cache.loadStorage(this, queue, group, readable.getSegment());
-            List<ByteBuffer> data = storage.read(readable.getStartOffset(), readable.getEndOffset());
+            List<ByteBuffer> data = cache.read(readable);
             if (CollectionUtils.isEmpty(data)){
                 break;
             }
             buffers.addAll(data);
-            queue.setLast(readable.getSegment());
+            queue.setLast(cache, readable.getSegment());
         }
+        if (queue.getReadOffset() == 0 && offset != 0){
+            cache.clearSegments(queue.getSegments(), queue.getLast());
+        }
+        queue.setReadOffset(offset + buffers.size());
         return buffers;
     }
 
     public long write(int queueId, ByteBuffer data) throws IOException, InterruptedException {
         Queue queue = getQueue(queueId);
-        Group group = getGroup(queueId);
         long offset = queue.getAndIncrementOffset();
 
         ByteBuffer aofBuffer = ByteBuffer.allocate(5 + data.capacity())
@@ -166,22 +167,12 @@ public class Topic{
         data.flip();
         aof.write(aofBuffer);
 
-        ByteBuffer dataBuffer = ByteBuffer.allocate(2 + data.capacity())
-                .putShort((short) data.capacity())
-                .put(data);
-        data.flip();
-        dataBuffer.flip();
-
         Segment head = queue.getHead();
-        if (head == null || ! head.writable(dataBuffer.capacity())){
-            head = new Segment(queueId, offset, offset, (long) group.getAndIncrementOffset() * config.getPageSize(), config.getPageSize());
-            queue.addSegment(head);
+        if (head == null || ! head.writable(data.capacity())){
+            head = cache.applySegment(this, queue, offset);
         }
-
         head.setEnd(offset);
-        head.write(group.getDb(), dataBuffer);
-//        buffers.computeIfAbsent(head, k -> new ArrayList<>()).add(dataBuffer);
-        cache.write(this, queue, group, head, data);
+        cache.write(head, data);
         return offset;
     }
 

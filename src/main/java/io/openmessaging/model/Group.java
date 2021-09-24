@@ -35,29 +35,5 @@ public class Group {
         return idx;
     }
 
-    public void initQueues(Topic topic) throws IOException {
-        ByteBuffer index = ByteBuffer.allocate(18);
 
-        Set<Short> queueIds = new HashSet<>();
-        while (idx.read(index) > 0){
-            pageOffset.incrementAndGet();
-            index.flip();
-
-            short queueId = index.getShort();
-            long start = index.getLong();
-            long pos = index.getLong();
-            queueIds.add(queueId);
-            Queue queue = topic.getQueue(queueId);
-            queue.addSegment(new Segment(start, start, pos, topic.getPageSize()));
-
-            index.clear();
-        }
-
-        if (CollectionUtils.isNotEmpty(queueIds)){
-            for (short queueId: queueIds){
-                Queue queue = topic.getQueue(queueId);
-                queue.getHead().reset(db);
-            }
-        }
-    }
 }
