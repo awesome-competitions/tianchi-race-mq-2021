@@ -165,21 +165,22 @@ public class Topic{
         Queue queue = getQueue(queueId);
         long offset = queue.getAndIncrementOffset();
 
-//        Segment head = queue.getHead();
-//        if (head == null || ! head.writable(data.capacity())){
-//            head = cache.applySegment(this, queue, offset);
-//        }
-//        head.setEnd(offset);
-//        cache.write(head, data);
-//        data.flip();
+        Segment head = queue.getHead();
+        if (head == null || ! head.writable(data.capacity())){
+            head = cache.applySegment(this, queue, offset);
+        }
+        head.setEnd(offset);
+        cache.write(head, data);
+        data.flip();
 
-        ByteBuffer head = ByteBuffer.allocateDirect(5)
+        ByteBuffer aofBuffer = ByteBuffer.allocateDirect(5)
                 .put((byte) id)
                 .putShort((short) queueId)
-                .putShort((short) data.capacity());
-        head.flip();
+                .putShort((short) data.capacity())
+                .put(data);
+        aofBuffer.flip();
         try {
-            this.aof.getWrapper().getChannel().write(new ByteBuffer[]{head, data});
+            this.aof.getWrapper().getChannel().write(aofBuffer);
             cyclicBarrier.await(100, TimeUnit.SECONDS);
         } catch (BrokenBarrierException | TimeoutException e) {
             e.printStackTrace();

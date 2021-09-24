@@ -34,7 +34,7 @@ public class Cache {
 
     public Cache(String path, long heapSize, int lruSize, long pageSize, Group group){
         if (Objects.nonNull(path)){
-//            this.heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
+            this.heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
         }
         if (lruSize < 1000){
             lruSize = 1000;
@@ -42,7 +42,7 @@ public class Cache {
         this.pageSize = pageSize;
         this.group = group;
         this.pools = new LinkedBlockingQueue<>();
-        this.lru = new Lru<>(lruSize - 500, k -> {
+        this.lru = new Lru<>(lruSize - 1000, k -> {
             try{
                 k.lock();
                 Storage storage = k.getStorage();
@@ -65,28 +65,15 @@ public class Cache {
             }
             ready = true;
             LOGGER.info("pmem is ready");
-//            while (true){
-//                try {
-//                    Thread.sleep(10 * 1000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//                LOGGER.info("pools size {}, lru size {}", pools.size(), lru.size());
-//            }
         });
         thread.setDaemon(true);
-//        thread.start();
+        thread.start();
     }
 
     public Segment applySegment(Topic topic, Queue queue, long offset) throws InterruptedException {
         Segment segment = new Segment(queue, topic.getId(), queue.getId(), offset, offset, pageSize);
         queue.addSegment(segment);
-        Storage storage = null;
-//        if (ready){
-            storage = pools.take();
-//        }else{
-//            storage = new SSD(group.getAndIncrementOffset() * pageSize, pageSize, group.getDb());
-//        }
+        Storage storage = pools.take();
         storage.reset(segment.getIdx(), new ArrayList<>(), offset);
         segment.setStorage(storage);
         return lru.add(segment);

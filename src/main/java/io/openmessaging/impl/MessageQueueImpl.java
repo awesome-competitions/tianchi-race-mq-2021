@@ -33,8 +33,8 @@ public class MessageQueueImpl extends MessageQueue {
                 "/essd/",
                 "/pmem/nico",
                 Const.G * 59,
-                (int) ((Const.G * 51) / (Const.K * 128)),
-                Const.K * 128,
+                (int) ((Const.G * 40) / (Const.K * 64)),
+                Const.K * 64,
                 1,
                 40,
                 Const.K * 320)
@@ -62,7 +62,7 @@ public class MessageQueueImpl extends MessageQueue {
         });
         Thread thread = new Thread(()->{
             try {
-                Thread.sleep(1000 * 60 * 1);
+                Thread.sleep(1000 * 60 * 4);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
