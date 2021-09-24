@@ -168,7 +168,7 @@ public class Topic{
 //        cache.write(head, data);
 //        data.flip();
 
-        ByteBuffer aofBuffer = ByteBuffer.allocate(5 + data.capacity())
+        ByteBuffer aofBuffer = ByteBuffer.allocateDirect(5 + data.capacity())
                 .put((byte) id)
                 .putShort((short) queueId)
                 .putShort((short) data.capacity())

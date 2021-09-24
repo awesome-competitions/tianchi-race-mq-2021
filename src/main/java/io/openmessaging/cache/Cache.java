@@ -34,7 +34,7 @@ public class Cache {
 
     public Cache(String path, long heapSize, int lruSize, long pageSize, Group group){
         if (Objects.nonNull(path)){
-            this.heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
+//            this.heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
         }
         if (lruSize < 1000){
             lruSize = 1000;
