@@ -82,11 +82,11 @@ public class Cache {
         Segment segment = new Segment(queue, topic.getId(), queue.getId(), offset, offset, pageSize);
         queue.addSegment(segment);
         Storage storage = null;
-        if (ready){
+//        if (ready){
             storage = pools.take();
-        }else{
-            storage = new SSD(group.getAndIncrementOffset() * pageSize, pageSize, group.getDb());
-        }
+//        }else{
+//            storage = new SSD(group.getAndIncrementOffset() * pageSize, pageSize, group.getDb());
+//        }
         storage.reset(segment.getIdx(), new ArrayList<>(), offset);
         segment.setStorage(storage);
         return lru.add(segment);
