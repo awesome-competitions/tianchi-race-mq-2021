@@ -45,9 +45,11 @@ public class Cache {
                 k.lock();
                 Storage storage = k.getStorage();
                 if (storage != null && ! (storage instanceof SSD)){
-                    Storage ssd = new SSD(group.getAndIncrementOffset() * pageSize, pageSize, group.getDb());
-                    ssd.reset(0, storage.load(), k.getStart());
-                    k.setStorage(ssd);
+                    if (k.getEnd() >= k.getQueue().getReadOffset()){
+                        Storage ssd = new SSD(group.getAndIncrementOffset() * pageSize, pageSize, group.getDb());
+                        ssd.reset(0, storage.load(), k.getStart());
+                        k.setStorage(ssd);
+                    }
                     pools.add(storage);
                 }
             }finally {
@@ -65,7 +67,7 @@ public class Cache {
     }
 
     public Segment applySegment(Topic topic, Queue queue, long offset) throws InterruptedException {
-        Segment segment = new Segment(topic.getId(), queue.getId(), offset, offset, pageSize);
+        Segment segment = new Segment(queue, topic.getId(), queue.getId(), offset, offset, pageSize);
         queue.addSegment(segment);
         Storage storage = pools.take();
         storage.reset(segment.getIdx(), new ArrayList<>(), offset);

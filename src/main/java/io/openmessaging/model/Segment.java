@@ -17,6 +17,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Segment {
 
+    private Queue queue;
+
     private int tid;
 
     private int qid;
@@ -37,7 +39,8 @@ public class Segment {
 
     private ReentrantLock lock;
 
-    public Segment(int tid, int qid, long start, long end, long cap) {
+    public Segment(Queue queue, int tid, int qid, long start, long end, long cap) {
+        this.queue = queue;
         this.tid = tid;
         this.qid = qid;
         this.start = start;
@@ -104,6 +107,10 @@ public class Segment {
 
     public Storage getStorage() {
         return storage;
+    }
+
+    public Queue getQueue() {
+        return queue;
     }
 
     public void setStorage(Storage storage) {
