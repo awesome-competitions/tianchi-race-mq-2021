@@ -36,7 +36,7 @@ public class MessageQueueImpl extends MessageQueue {
                 (int) ((Const.G * 51) / (Const.K * 128)),
                 Const.K * 128,
                 1,
-                5,
+                2,
                 Const.K * 320)
         );
     }
