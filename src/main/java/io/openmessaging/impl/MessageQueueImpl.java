@@ -26,6 +26,7 @@ public class MessageQueueImpl extends MessageQueue {
     private final Map<String, Topic> topics;
     private static final Map<Integer, ByteBuffer> EMPTY = new HashMap<>();
     private final AtomicInteger id;
+    private CyclicBarrier cyclicBarrier;
 
     public MessageQueueImpl() {
         this(new Config(
@@ -52,6 +53,13 @@ public class MessageQueueImpl extends MessageQueue {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        this.cyclicBarrier = new CyclicBarrier(config.getMaxCount(), ()->{
+            try {
+                this.aof.getWrapper().getChannel().force(false);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
         Thread thread = new Thread(()->{
             try {
                 Thread.sleep(1000 * 60 * 2);
@@ -145,7 +153,7 @@ public class MessageQueueImpl extends MessageQueue {
         return topics.computeIfAbsent(name, k -> {
             try {
                 int id = Integer.parseInt(name.substring(5));
-                return new Topic(name, id, config, cache, aof);
+                return new Topic(name, id, config, cache, aof, cyclicBarrier);
             } catch (IOException e) {
                 e.printStackTrace();
             }

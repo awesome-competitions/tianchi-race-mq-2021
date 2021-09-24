@@ -34,7 +34,7 @@ public class Topic{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Topic.class);
 
-    public Topic(String name, Integer id, Config config, Cache cache, Aof aof) throws IOException {
+    public Topic(String name, Integer id, Config config, Cache cache, Aof aof, CyclicBarrier cyclicBarrier) throws IOException {
         this.name = name;
         this.id = id;
         this.config = config;
@@ -44,13 +44,7 @@ public class Topic{
         this.lock = new ReentrantLock();
         this.aof = aof;
         this.buffers = new ConcurrentHashMap<>();
-        this.cyclicBarrier = new CyclicBarrier(config.getMaxCount(), ()->{
-            try {
-                this.aof.getWrapper().getChannel().force(false);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
+        this.cyclicBarrier = cyclicBarrier;
 //        this.tempBuffer = ByteBuffer.allocate((int) (Const.K * 128));
 //        new Thread(()->{
 //            try{
