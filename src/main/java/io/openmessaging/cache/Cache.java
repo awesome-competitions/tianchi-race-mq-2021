@@ -28,6 +28,8 @@ public class Cache {
 
     private Group group;
 
+    private volatile boolean ready;
+
     private final static Logger LOGGER = LoggerFactory.getLogger(Cache.class);
 
     public Cache(String path, long heapSize, int lruSize, long pageSize, Group group){
@@ -61,13 +63,15 @@ public class Cache {
             for (int i = 0; i < finalLruSize; i ++){
                 pools.add(applyPMem(false));
             }
+            ready = true;
+            LOGGER.info("pmem is ready");
             while (true){
                 try {
                     Thread.sleep(10 * 1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                System.out.println(pools.size() + ":" + lru.size());
+                LOGGER.info("pools size {}, lru size {}", pools.size(), lru.size());
             }
         });
         thread.setDaemon(true);
@@ -77,7 +81,12 @@ public class Cache {
     public Segment applySegment(Topic topic, Queue queue, long offset) throws InterruptedException {
         Segment segment = new Segment(queue, topic.getId(), queue.getId(), offset, offset, pageSize);
         queue.addSegment(segment);
-        Storage storage = pools.take();
+        Storage storage = null;
+        if (ready){
+            storage = pools.take();
+        }else{
+            storage = new SSD(group.getAndIncrementOffset() * pageSize, pageSize, group.getDb());
+        }
         storage.reset(segment.getIdx(), new ArrayList<>(), offset);
         segment.setStorage(storage);
         return lru.add(segment);
