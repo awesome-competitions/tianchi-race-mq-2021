@@ -24,7 +24,7 @@ public class Topic{
     private final int id;
     private final Config config;
     private final Group[] groups;
-    private final Map<Integer, Queue> queues;
+    private final Queue[] queues;
     private final Cache cache;
     private final ReentrantLock lock;
     private final Aof aof;
@@ -38,7 +38,7 @@ public class Topic{
         this.name = name;
         this.id = id;
         this.config = config;
-        this.queues = new HashMap<>();
+        this.queues = new Queue[5001];
         this.groups = new Group[config.getGroupSize()];
         this.cache = cache;
         this.lock = new ReentrantLock();
@@ -112,7 +112,12 @@ public class Topic{
     }
 
     public Queue getQueue(int queueId){
-        return queues.computeIfAbsent(queueId, Queue::new);
+        Queue queue = queues[queueId];
+        if (queue == null){
+            queue = new Queue(queueId);
+            queues[queueId] = queue;
+        }
+        return queue;
     }
 
     public List<ByteBuffer> read(int queueId, long offset, int num) throws IOException, InterruptedException {
@@ -168,14 +173,13 @@ public class Topic{
 //        cache.write(head, data);
 //        data.flip();
 
-        ByteBuffer aofBuffer = ByteBuffer.allocateDirect(5 + data.capacity())
+        ByteBuffer head = ByteBuffer.allocateDirect(5)
                 .put((byte) id)
                 .putShort((short) queueId)
-                .putShort((short) data.capacity())
-                .put(data);
-        aofBuffer.flip();
+                .putShort((short) data.capacity());
+        head.flip();
         try {
-            this.aof.getWrapper().getChannel().write(aofBuffer);
+            this.aof.getWrapper().getChannel().write(new ByteBuffer[]{head, data});
             cyclicBarrier.await(100, TimeUnit.SECONDS);
         } catch (BrokenBarrierException | TimeoutException e) {
             e.printStackTrace();
