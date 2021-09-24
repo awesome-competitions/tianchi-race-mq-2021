@@ -173,14 +173,13 @@ public class Topic{
         cache.write(head, data);
         data.flip();
 
-        ByteBuffer aofBuffer = ByteBuffer.allocateDirect(5)
+        ByteBuffer header = ByteBuffer.allocateDirect(5)
                 .put((byte) id)
                 .putShort((short) queueId)
-                .putShort((short) data.capacity())
-                .put(data);
-        aofBuffer.flip();
+                .putShort((short) data.capacity());
+        header.flip();
         try {
-            this.aof.getWrapper().getChannel().write(aofBuffer);
+            this.aof.getWrapper().getChannel().write(new ByteBuffer[]{header, data});
             cyclicBarrier.await(100, TimeUnit.SECONDS);
         } catch (BrokenBarrierException | TimeoutException e) {
             e.printStackTrace();
