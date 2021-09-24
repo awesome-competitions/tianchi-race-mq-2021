@@ -75,7 +75,7 @@ public class Cache {
 //            }
         });
         thread.setDaemon(true);
-        thread.start();
+//        thread.start();
     }
 
     public Segment applySegment(Topic topic, Queue queue, long offset) throws InterruptedException {

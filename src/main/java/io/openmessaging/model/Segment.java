@@ -122,7 +122,7 @@ public class Segment {
     }
 
     public void write(ByteBuffer byteBuffer){
-//        storage.write(byteBuffer);
+        storage.write(byteBuffer);
         pos += byteBuffer.capacity();
     }
 
