@@ -36,7 +36,7 @@ public class MessageQueueImpl extends MessageQueue {
                 (int) ((Const.G * 51) / (Const.K * 128)),
                 Const.K * 128,
                 1,
-                40,
+                5,
                 Const.K * 320)
         );
     }
@@ -106,7 +106,7 @@ public class MessageQueueImpl extends MessageQueue {
 //            if ("topic78".equals(topic) && queueId == 1369){
 //                LOGGER.info(" offset {}, queueId {}, data{}", offset ++, queueId, data);
 //            }
-            LOGGER.info("{}, {}, {}", Thread.currentThread().getId(), topic, queueId);
+//            LOGGER.info("{}, {}, {}", Thread.currentThread().getId(), topic, queueId);
             ++count;
             size += data.capacity();
             if (count % 100000 == 0){

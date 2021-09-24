@@ -168,18 +168,19 @@ public class Topic{
 //        cache.write(head, data);
 //        data.flip();
 
-//        ByteBuffer aofBuffer = ByteBuffer.allocate(5 + data.capacity())
-//                .put((byte) id)
-//                .putShort((short) queueId)
-//                .putShort((short) data.capacity())
-//                .put(data);
-//        aofBuffer.flip();
-//        try {
-//            this.aof.getWrapper().getChannel().write(aofBuffer);
-//            cyclicBarrier.await(100, TimeUnit.SECONDS);
-//        } catch (BrokenBarrierException | TimeoutException e) {
-//            this.aof.getWrapper().getChannel().force(false);
-//        }
+        ByteBuffer aofBuffer = ByteBuffer.allocate(5 + data.capacity())
+                .put((byte) id)
+                .putShort((short) queueId)
+                .putShort((short) data.capacity())
+                .put(data);
+        aofBuffer.flip();
+        try {
+            this.aof.getWrapper().getChannel().write(aofBuffer);
+            cyclicBarrier.await(100, TimeUnit.SECONDS);
+        } catch (BrokenBarrierException | TimeoutException e) {
+            e.printStackTrace();
+            this.aof.getWrapper().getChannel().force(false);
+        }
         return offset;
     }
 
