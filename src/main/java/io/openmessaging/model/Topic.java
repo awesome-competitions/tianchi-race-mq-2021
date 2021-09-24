@@ -174,13 +174,8 @@ public class Topic{
                 .putShort((short) data.capacity())
                 .put(data);
         aofBuffer.flip();
-        try {
-            this.aof.getWrapper().getChannel().write(aofBuffer);
-            cyclicBarrier.await(100, TimeUnit.SECONDS);
-        } catch (BrokenBarrierException | TimeoutException e) {
-            e.printStackTrace();
-            this.aof.getWrapper().getChannel().force(false);
-        }
+        aof.write(aofBuffer);
+
         return offset;
     }
 

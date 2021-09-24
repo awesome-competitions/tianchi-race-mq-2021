@@ -28,24 +28,21 @@ public class Aof {
 
     private final int maxCount;
 
-    private final long maxSize;
-
     private int count;
-
-    private long size;
 
     private final AtomicInteger version;
 
-    private ByteBuffer buffer;
+    private final List<ByteBuffer> buffers;
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Aof.class);
+
+    private final static ByteBuffer[] EMPTY = new ByteBuffer[0];
 
     public Aof(FileWrapper wrapper, Config config) {
         this.wrapper = wrapper;
         this.maxCount = config.getMaxCount();
-        this.maxSize = config.getMaxSize();
         this.version = new AtomicInteger();
-        this.buffer = ByteBuffer.allocate((int) (Const.K * 128));
+        this.buffers = new ArrayList<>();
     }
 
     public FileWrapper getWrapper() {
@@ -57,50 +54,33 @@ public class Aof {
             lock.lock();
             int v = this.version.get();
             count ++;
-            size += data.capacity();
-
-            if (buffer.remaining() >= data.capacity()){
-                buffer.put(data);
-            }else{
-                data.limit(buffer.remaining());
-                buffer.put(data);
-                data.limit(data.capacity());
-            }
-            if (buffer.remaining() == 0){
-                buffer.flip();
-                this.wrapper.getChannel().write(buffer);
-                buffer.clear();
-                if (data.remaining() > 0){
-                    buffer.put(data);
-                }
-            }
-            if (maxSize <= size || count == maxCount){
-                next(v);
+            buffers.add(data);
+            if (count == maxCount){
+                next(-1);
                 return;
             }
             long nanos = this.cond.awaitNanos(TimeUnit.SECONDS.toNanos(10));
             if (nanos <= 0){
-                LOGGER.info("blocked count: {}, size: {}", count, size);
+                LOGGER.info("blocked count: {}", count);
                 next(v);
+                return;
             }
+            lock.unlock();
         } catch (InterruptedException e) {
             e.printStackTrace();
-        } finally {
             lock.unlock();
         }
     }
 
     private void next(int v) throws IOException, InterruptedException {
-        if (! version.compareAndSet(v, v + 1)){
+        if (v >= 0 && ! version.compareAndSet(v, v + 1)){
             return;
         }
         this.count = 0;
-        this.size = 0;
-        buffer.flip();
-        if (buffer.remaining() > 0){
-            this.wrapper.getChannel().write(buffer);
-        }
-        buffer.clear();
+        ByteBuffer[] arr = buffers.toArray(EMPTY);
+        buffers.clear();
+        lock.unlock();
+        this.wrapper.getChannel().write(arr);
         this.wrapper.getChannel().force(false);
         this.cond.signalAll();
     }
