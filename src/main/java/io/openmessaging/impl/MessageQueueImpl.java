@@ -106,6 +106,7 @@ public class MessageQueueImpl extends MessageQueue {
 //            if ("topic78".equals(topic) && queueId == 1369){
 //                LOGGER.info(" offset {}, queueId {}, data{}", offset ++, queueId, data);
 //            }
+            LOGGER.info("{}, {}, {}", Thread.currentThread().getId(), topic, queueId);
             ++count;
             size += data.capacity();
             if (count % 100000 == 0){
