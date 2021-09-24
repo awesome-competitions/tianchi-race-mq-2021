@@ -183,7 +183,7 @@ public class Topic{
 //        aof.write(aofBuffer);
         try {
             this.aof.getWrapper().getChannel().write(aofBuffer);
-            cyclicBarrier.await(10, TimeUnit.SECONDS);
+            cyclicBarrier.await(100, TimeUnit.SECONDS);
         } catch (BrokenBarrierException | TimeoutException e) {
             this.aof.getWrapper().getChannel().force(false);
         }
