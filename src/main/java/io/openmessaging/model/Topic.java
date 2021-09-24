@@ -158,21 +158,21 @@ public class Topic{
         Queue queue = getQueue(queueId);
         long offset = queue.getAndIncrementOffset();
 
-        ByteBuffer aofBuffer = ByteBuffer.allocate(5 + data.capacity())
-                .put((byte) id)
-                .putShort((short) queueId)
-                .putShort((short) data.capacity())
-                .put(data);
-        aofBuffer.flip();
-        data.flip();
-        aof.write(aofBuffer);
-
         Segment head = queue.getHead();
         if (head == null || ! head.writable(data.capacity())){
             head = cache.applySegment(this, queue, offset);
         }
         head.setEnd(offset);
         cache.write(head, data);
+        data.flip();
+
+        ByteBuffer aofBuffer = ByteBuffer.allocate(5 + data.capacity())
+                .put((byte) id)
+                .putShort((short) queueId)
+                .putShort((short) data.capacity())
+                .put(data);
+        aofBuffer.flip();
+        aof.write(aofBuffer);
         return offset;
     }
 
