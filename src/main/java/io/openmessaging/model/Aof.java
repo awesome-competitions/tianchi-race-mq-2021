@@ -48,6 +48,10 @@ public class Aof {
         this.buffer = ByteBuffer.allocate((int) (Const.K * 128));
     }
 
+    public FileWrapper getWrapper() {
+        return wrapper;
+    }
+
     public void write(ByteBuffer data) throws IOException {
         try {
             lock.lock();

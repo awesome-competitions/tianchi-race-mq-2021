@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Topic{
@@ -30,6 +30,7 @@ public class Topic{
     private final Aof aof;
     private final Map<Segment, List<ByteBuffer>> buffers;
     private ByteBuffer tempBuffer;
+    private CyclicBarrier cyclicBarrier;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Topic.class);
 
@@ -43,6 +44,13 @@ public class Topic{
         this.lock = new ReentrantLock();
         this.aof = aof;
         this.buffers = new ConcurrentHashMap<>();
+        this.cyclicBarrier = new CyclicBarrier(config.getMaxCount(), ()->{
+            try {
+                this.aof.getWrapper().getChannel().force(false);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
 //        this.tempBuffer = ByteBuffer.allocate((int) (Const.K * 128));
 //        new Thread(()->{
 //            try{
@@ -172,7 +180,13 @@ public class Topic{
                 .putShort((short) data.capacity())
                 .put(data);
         aofBuffer.flip();
-        aof.write(aofBuffer);
+//        aof.write(aofBuffer);
+        try {
+            this.aof.getWrapper().getChannel().write(aofBuffer);
+            cyclicBarrier.await(10, TimeUnit.SECONDS);
+        } catch (BrokenBarrierException | TimeoutException e) {
+            this.aof.getWrapper().getChannel().force(false);
+        }
         return offset;
     }
 
