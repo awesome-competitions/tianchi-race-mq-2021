@@ -15,11 +15,11 @@ import java.util.function.Supplier;
 public class Test {
 
     private final static int BATCH = 10000;
-    private final static int QUEUE_SIZE = 5;
-    private final static int TOPIC_SIZE = 5;
-    private final static String DIR = "D:\\test\\nio\\";
-    private final static String HEAP_DIR = null;
-    private final static long HEAP_SIZE = 0;
+    private final static int QUEUE_SIZE = 3;
+    private final static int TOPIC_SIZE = 3;
+    private final static String DIR = "/data/app/";
+    private final static String HEAP_DIR = "/mnt/mem/nico3";
+    private final static long HEAP_SIZE = 1024 * 1024 * 256;
 
     public static void cleanDB(){
         File root = new File(DIR);
@@ -33,7 +33,7 @@ public class Test {
 
     public static void main(String[] args) throws InterruptedException {
         cleanDB();
-        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config(DIR, HEAP_DIR, HEAP_SIZE, 2000, 2 * Const.K, 1, 1, 1));
+        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config(DIR, HEAP_DIR, HEAP_SIZE, 1000, 2 * Const.K, 1, 1, 1));
         List<Supplier<?>> suppliers = new ArrayList<>();
 
         for (int j = 1; j <= TOPIC_SIZE; j ++){
@@ -55,7 +55,7 @@ public class Test {
         return ()->{
             String[] inputs = new String[BATCH/1];
             for (int i = 0; i < inputs.length; i ++){
-                inputs[i] = randomString((int) (Math.random() * 1000) + 1);
+                inputs[i] = randomString(2000);
 //                inputs[i] = randomString(1);
             }
             long start = System.currentTimeMillis();

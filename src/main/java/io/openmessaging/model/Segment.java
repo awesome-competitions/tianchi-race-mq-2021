@@ -142,4 +142,15 @@ public class Segment {
     public int hashCode() {
         return Objects.hash(tid, qid, idx);
     }
+
+    @Override
+    public String toString() {
+        return "Segment{" +
+                "idx=" + idx +
+                ", start=" + start +
+                ", end=" + end +
+                ", pos=" + pos +
+                ", cap=" + cap +
+                '}';
+    }
 }

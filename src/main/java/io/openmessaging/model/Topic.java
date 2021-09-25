@@ -156,7 +156,7 @@ public class Topic{
                 queue.setLast(cache, readable.getSegment());
             }catch (IndexOutOfBoundsException e){
                 Segment head = readable.getSegment();
-                LOGGER.info("err read topic {}, queue {}, segment {}, pos {}, cap {}, offset {}, stroage: {}", this.id, queueId, head.getIdx(), head.getPos(), head.getCap(), offset, head.getStorage());
+                LOGGER.info("err read topic {}, queue {}, segment {}, pos {}, cap {}, offset {}, stroage: {}", this.id, queueId, head, head.getPos(), head.getCap(), offset, head.getStorage());
                 throw e;
             }
         }
@@ -170,7 +170,6 @@ public class Topic{
     public long write(int queueId, ByteBuffer data) throws IOException, InterruptedException {
         Queue queue = getQueue(queueId);
         long offset = queue.getAndIncrementOffset();
-
         Segment head = queue.getHead();
         if (head == null || ! head.writable(data.capacity())){
             head = cache.applySegment(this, queue, offset);
