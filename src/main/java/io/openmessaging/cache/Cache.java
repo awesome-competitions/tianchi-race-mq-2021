@@ -67,14 +67,14 @@ public class Cache {
             }
             ready = true;
             LOGGER.info("pmem is ready");
-            while (true){
-                try {
-                    Thread.sleep(2 * 1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                System.out.println(lru.size() + ":" + pools.size());
-            }
+//            while (true){
+//                try {
+//                    Thread.sleep(2 * 1000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                System.out.println(lru.size() + ":" + pools.size());
+//            }
         });
         thread.setDaemon(true);
         thread.start();
