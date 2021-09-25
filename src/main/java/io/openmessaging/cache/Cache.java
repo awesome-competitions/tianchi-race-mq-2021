@@ -32,6 +32,14 @@ public class Cache {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Cache.class);
 
+    private int lruToSDDTimes;
+
+    private int lruReadFromSSDTimes;
+
+    private int lruWriteFromSSDTimes;
+
+    private int lruWeedOutTimes;
+
     public Cache(String path, long heapSize, int lruSize, long pageSize, Group group){
         if (Objects.nonNull(path)){
             this.heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
@@ -44,6 +52,7 @@ public class Cache {
         this.pools = new LinkedBlockingQueue<>();
         this.lru = new Lru<>(lruSize - 500, k -> {
             try{
+                lruWeedOutTimes ++;
                 k.lock();
                 Storage storage = k.getStorage();
                 if (storage != null && ! (storage instanceof SSD)){
@@ -51,6 +60,7 @@ public class Cache {
                         Storage ssd = new SSD(group.getAndIncrementOffset() * pageSize, pageSize, group.getDb());
                         ssd.reset(0, storage.load(), k.getStart());
                         k.setStorage(ssd);
+                        lruToSDDTimes ++;
                     }else{
                         k.setStorage(null);
                     }
@@ -67,14 +77,14 @@ public class Cache {
             }
             ready = true;
             LOGGER.info("pmem is ready");
-//            while (true){
-//                try {
-//                    Thread.sleep(2 * 1000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//                System.out.println(lru.size() + ":" + pools.size());
-//            }
+            while (true){
+                try {
+                    Thread.sleep(30 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                LOGGER.info("lruWeedOutTimes {}, lruToSDDTimes {}, lruReadFromSSDTimes {}, lruWriteFromSSDTimes {}", lruWeedOutTimes, lruToSDDTimes, lruReadFromSSDTimes, lruWriteFromSSDTimes);
+            }
         });
         thread.setDaemon(true);
         thread.start();
@@ -96,6 +106,7 @@ public class Cache {
                 Storage other = pools.take();
                 other.reset(segment.getIdx(), segment.getStorage().load(), segment.getStart());
                 segment.setStorage(other);
+                lruWeedOutTimes ++;
             }
             segment.write(byteBuffer);
         } catch (InterruptedException e) {
@@ -114,6 +125,7 @@ public class Cache {
                 Storage other = pools.take();
                 other.reset(segment.getIdx(), segment.getStorage().load(), segment.getStart());
                 segment.setStorage(other);
+                lruReadFromSSDTimes ++;
             }
             return readable.getSegment().read(readable.getStartOffset(), readable.getEndOffset());
         }finally {
