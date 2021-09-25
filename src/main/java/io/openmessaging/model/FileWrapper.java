@@ -47,8 +47,10 @@ public class FileWrapper {
         channel.write(src.toArray(new ByteBuffer[]{}));
     }
 
-    public synchronized void write(ByteBuffer[] buffers) throws IOException {
+    public synchronized long write(ByteBuffer[] buffers) throws IOException {
+        long pos = channel.position();
         channel.write(buffers);
+        return pos;
     }
 
     public synchronized int read(long position, ByteBuffer dst) throws IOException {

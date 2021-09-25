@@ -1,6 +1,7 @@
 package io.openmessaging.cache;
 
 import com.intel.pmem.llpl.AnyMemoryBlock;
+import io.openmessaging.model.Aof;
 import io.openmessaging.model.FileWrapper;
 import io.openmessaging.utils.CollectionUtils;
 
@@ -38,7 +39,10 @@ public class SSD extends Storage {
 
     @Override
     public List<ByteBuffer> load() {
-        ByteBuffer buffer = ByteBuffer.allocate((int) (aos - pos));
+        if (cap == 0){
+            return new ArrayList<>();
+        }
+        ByteBuffer buffer = ByteBuffer.allocate((int) cap);
         try {
             fw.read(pos, buffer);
         } catch (IOException e) {
@@ -70,7 +74,7 @@ public class SSD extends Storage {
 
     @Override
     public void reset(int idx, List<ByteBuffer> buffers, long beginOffset) {
-        aos = pos;
+        cap = 0;
         this.idx = idx;
         if (positions == null){
             positions = new ArrayList<>();
@@ -79,10 +83,11 @@ public class SSD extends Storage {
         if (CollectionUtils.isNotEmpty(buffers)) {
             for (ByteBuffer buffer: buffers) {
                 positions.add((long) buffer.capacity());
-                aos += buffer.capacity();
+                cap += buffer.capacity();
             }
             try {
-                fw.write(pos, buffers);
+                this.pos = fw.write(buffers.toArray(Aof.EMPTY));
+                this.aos = pos + cap;
             } catch (IOException e) {
                 e.printStackTrace();
             }

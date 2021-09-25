@@ -57,8 +57,8 @@ public class Cache {
                 Storage storage = k.getStorage();
                 if (storage != null && ! (storage instanceof SSD)){
                     if (k.getQueue().getHead().getIdx() == k.getIdx() || k.getEnd() >= k.getQueue().getReadOffset()){
-                        Storage ssd = new SSD(group.getAndIncrementOffset() * pageSize, pageSize, group.getDb());
-                        ssd.reset(0, storage.load(), k.getStart());
+                        Storage ssd = new SSD(0, 0, group.getDb());
+                        ssd.reset(k.getIdx(), storage.load(), k.getStart());
                         k.setStorage(ssd);
                         lruToSDDTimes ++;
                     }else{

@@ -167,25 +167,25 @@ public class Topic{
     public long write(int queueId, ByteBuffer data) throws IOException, InterruptedException {
         Queue queue = getQueue(queueId);
         long offset = queue.getAndIncrementOffset();
-//        Segment head = queue.getHead();
-//        if (head == null || ! head.writable(data.capacity())){
-//            head = cache.applySegment(this, queue, offset);
-//        }
-//        head.setEnd(offset);
-//        try{
-//            cache.write(head, data);
-//        }catch (IndexOutOfBoundsException e){
-//            LOGGER.info("err write topic {}, queue {}, segment {}, pos {}, cap {}, len {}, stroage: {}", this.id, queueId, head, head.getPos(), head.getCap(), data.capacity(), head.getStorage());
-//            throw e;
-//        }
-//        data.flip();
-//        ByteBuffer header = ByteBuffer.allocateDirect(5)
-//                .put((byte) id)
-//                .putShort((short) queueId)
-//                .putShort((short) data.capacity());
-//        header.flip();
-//
-//        aof.getBuffers().add(header);
+        Segment head = queue.getHead();
+        if (head == null || ! head.writable(data.capacity())){
+            head = cache.applySegment(this, queue, offset);
+        }
+        head.setEnd(offset);
+        try{
+            cache.write(head, data);
+        }catch (IndexOutOfBoundsException e){
+            LOGGER.info("err write topic {}, queue {}, segment {}, pos {}, cap {}, len {}, stroage: {}", this.id, queueId, head, head.getPos(), head.getCap(), data.capacity(), head.getStorage());
+            throw e;
+        }
+        data.flip();
+        ByteBuffer header = ByteBuffer.allocateDirect(5)
+                .put((byte) id)
+                .putShort((short) queueId)
+                .putShort((short) data.capacity());
+        header.flip();
+
+        aof.getBuffers().add(header);
         aof.getBuffers().add(data);
         try {
             cyclicBarrier.await(10, TimeUnit.SECONDS);
