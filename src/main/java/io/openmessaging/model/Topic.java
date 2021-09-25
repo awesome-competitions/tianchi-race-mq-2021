@@ -179,13 +179,13 @@ public class Topic{
 //            throw e;
 //        }
 //        data.flip();
-        ByteBuffer header = ByteBuffer.allocateDirect(5)
-                .put((byte) id)
-                .putShort((short) queueId)
-                .putShort((short) data.capacity());
-        header.flip();
-
-        aof.getBuffers().add(header);
+//        ByteBuffer header = ByteBuffer.allocateDirect(5)
+//                .put((byte) id)
+//                .putShort((short) queueId)
+//                .putShort((short) data.capacity());
+//        header.flip();
+//
+//        aof.getBuffers().add(header);
         aof.getBuffers().add(data);
         try {
             cyclicBarrier.await(10, TimeUnit.SECONDS);
