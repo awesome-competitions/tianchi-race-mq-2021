@@ -16,20 +16,23 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class DefaultMessageQueueImpl extends MessageQueue{
 
-//    private final MessageQueue queue = new MessageQueueImpl();
-    private final MessageQueue queue = null;
+    private final MessageQueue queue = new MessageQueueImpl();
+//    private final MessageQueue queue = null;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMessageQueueImpl.class);
 
     public DefaultMessageQueueImpl(){
-        try {
-            test();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            test();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     @Override
@@ -54,6 +57,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         for (int i = 0; i < buffer.capacity(); i ++){
             buffer.put((byte) 1);
         }
+
         long start = System.currentTimeMillis();
         for (int i = 0; i < count; i ++){
             for (int j = 0; j < 80; j ++){

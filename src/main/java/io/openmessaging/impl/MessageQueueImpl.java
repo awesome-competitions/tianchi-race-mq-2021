@@ -47,8 +47,8 @@ public class MessageQueueImpl extends MessageQueue {
         this.topics = new ConcurrentHashMap<>();
         this.id = new AtomicInteger(1);
         try {
-            Group group = new Group(new FileWrapper(new RandomAccessFile(config.getDataDir() + "tmp.db", "rw")), null);
-            this.cache = new Cache(config.getHeapDir(), config.getHeapSize(), config.getLruSize(), config.getPageSize(), group);
+//            Group group = new Group(new FileWrapper(new RandomAccessFile(config.getDataDir() + "tmp.db", "rw")), null);
+//            this.cache = new Cache(config.getHeapDir(), config.getHeapSize(), config.getLruSize(), config.getPageSize(), group);
             this.aof = new Aof(new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof.log", "rw")), config);
         } catch (IOException e) {
             e.printStackTrace();
@@ -62,7 +62,7 @@ public class MessageQueueImpl extends MessageQueue {
         });
         Thread thread = new Thread(()->{
             try {
-                Thread.sleep(1000 * 60 * 20);
+                Thread.sleep(1000 * 60 * 4);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
