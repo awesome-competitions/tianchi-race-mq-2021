@@ -62,7 +62,7 @@ public class MessageQueueImpl extends MessageQueue {
         });
         Thread thread = new Thread(()->{
             try {
-                Thread.sleep(1000 * 60 * 15);
+                Thread.sleep(1000 * 60 * 20);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -125,9 +125,14 @@ public class MessageQueueImpl extends MessageQueue {
 
     int readCount = 0;
     int times = 0;
+    boolean read;
     @Override
     public Map<Integer, ByteBuffer> getRange(String name, int queueId, long offset, int fetchNum) {
         try {
+            if (!read){
+                read = true;
+                LOGGER.info("start read");
+            }
 //            readCount += fetchNum;
 //            if (readCount > 200000){
 //                int time = ++times;
