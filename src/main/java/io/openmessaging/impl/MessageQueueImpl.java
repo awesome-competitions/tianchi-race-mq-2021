@@ -54,15 +54,15 @@ public class MessageQueueImpl extends MessageQueue {
             e.printStackTrace();
         }
         this.cyclicBarrier = new CyclicBarrier(config.getMaxCount(), ()->{
-//            try {
-//                this.aof.getWrapper().getChannel().force(false);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
+            try {
+                this.aof.getWrapper().getChannel().force(false);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         });
         Thread thread = new Thread(()->{
             try {
-                Thread.sleep(1000 * 60 * 5);
+                Thread.sleep(1000 * 60 * 8);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
