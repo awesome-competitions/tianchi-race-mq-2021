@@ -47,7 +47,6 @@ public class Cache {
                 k.lock();
                 Storage storage = k.getStorage();
                 if (storage != null && ! (storage instanceof SSD)){
-//                    System.out.println(k.getEnd() >= k.getQueue().getReadOffset());
                     if (k.getEnd() >= k.getQueue().getReadOffset()){
                         Storage ssd = new SSD(group.getAndIncrementOffset() * pageSize, pageSize, group.getDb());
                         ssd.reset(0, storage.load(), k.getStart());
@@ -68,14 +67,14 @@ public class Cache {
             }
             ready = true;
             LOGGER.info("pmem is ready");
-//            while (true){
-//                try {
-//                    Thread.sleep(2 * 1000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//                System.out.println(lru.size() + ":" + pools.size());
-//            }
+            while (true){
+                try {
+                    Thread.sleep(2 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println(lru.size() + ":" + pools.size());
+            }
         });
         thread.setDaemon(true);
         thread.start();
@@ -103,6 +102,7 @@ public class Cache {
             e.printStackTrace();
         } finally {
             segment.unlock();
+            lru.add(segment);
         }
     }
 
@@ -111,7 +111,6 @@ public class Cache {
         try{
             segment.lock();
             if (segment.getStorage() instanceof SSD){
-                List<ByteBuffer> buffers = segment.getStorage().load();
                 Storage other = pools.take();
                 other.reset(segment.getIdx(), segment.getStorage().load(), segment.getStart());
                 segment.setStorage(other);

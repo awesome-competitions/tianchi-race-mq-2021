@@ -33,10 +33,10 @@ public class MessageQueueImpl extends MessageQueue {
                 "/essd/",
                 "/pmem/nico",
                 Const.G * 59,
-                (int) ((Const.G * 40) / (Const.K * 64)),
+                (int) ((Const.G * 51) / (Const.K * 64)),
                 Const.K * 64,
                 1,
-                30,
+                40,
                 Const.K * 320)
         );
     }
@@ -54,15 +54,15 @@ public class MessageQueueImpl extends MessageQueue {
             e.printStackTrace();
         }
         this.cyclicBarrier = new CyclicBarrier(config.getMaxCount(), ()->{
-            try {
-                this.aof.getWrapper().getChannel().force(false);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+//            try {
+//                this.aof.getWrapper().getChannel().force(false);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
         });
         Thread thread = new Thread(()->{
             try {
-                Thread.sleep(1000 * 60 * 15);
+                Thread.sleep(1000 * 60 * 5);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

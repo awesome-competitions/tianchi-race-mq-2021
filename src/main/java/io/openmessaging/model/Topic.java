@@ -186,7 +186,7 @@ public class Topic{
         header.flip();
         try {
             this.aof.getWrapper().getChannel().write(new ByteBuffer[]{header, data});
-            cyclicBarrier.await(100, TimeUnit.SECONDS);
+            cyclicBarrier.await(10, TimeUnit.SECONDS);
         } catch (BrokenBarrierException | TimeoutException e) {
             e.printStackTrace();
             this.aof.getWrapper().getChannel().force(false);
