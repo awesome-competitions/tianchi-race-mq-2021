@@ -153,15 +153,12 @@ public class Topic{
                     break;
                 }
                 buffers.addAll(data);
-                queue.setLast(cache, readable.getSegment());
+                queue.setLast(readable.getSegment());
             }catch (IndexOutOfBoundsException e){
                 Segment head = readable.getSegment();
                 LOGGER.info("err read topic {}, queue {}, segment {}, pos {}, cap {}, offset {}, stroage: {}", this.id, queueId, head, head.getPos(), head.getCap(), offset, head.getStorage());
                 throw e;
             }
-        }
-        if (queue.getReadOffset() == 0 && offset != 0){
-            cache.clearSegments(queue.getSegments(), queue.getLast());
         }
         queue.setReadOffset(offset + buffers.size());
         return buffers;

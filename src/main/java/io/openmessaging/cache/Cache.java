@@ -47,11 +47,14 @@ public class Cache {
                 k.lock();
                 Storage storage = k.getStorage();
                 if (storage != null && ! (storage instanceof SSD)){
-//                    if (k.getEnd() >= k.getQueue().getReadOffset()){
+//                    System.out.println(k.getEnd() >= k.getQueue().getReadOffset());
+                    if (k.getEnd() >= k.getQueue().getReadOffset()){
                         Storage ssd = new SSD(group.getAndIncrementOffset() * pageSize, pageSize, group.getDb());
                         ssd.reset(0, storage.load(), k.getStart());
                         k.setStorage(ssd);
-//                    }
+                    }else{
+                        k.setStorage(null);
+                    }
                     pools.add(storage);
                 }
             }finally {
@@ -100,7 +103,6 @@ public class Cache {
             e.printStackTrace();
         } finally {
             segment.unlock();
-            lru.add(segment);
         }
     }
 
@@ -109,6 +111,7 @@ public class Cache {
         try{
             segment.lock();
             if (segment.getStorage() instanceof SSD){
+                List<ByteBuffer> buffers = segment.getStorage().load();
                 Storage other = pools.take();
                 other.reset(segment.getIdx(), segment.getStorage().load(), segment.getStart());
                 segment.setStorage(other);
@@ -117,7 +120,6 @@ public class Cache {
         }finally {
             segment.unlock();
             lru.add(segment);
-
         }
     }
 
@@ -132,17 +134,17 @@ public class Cache {
         return new Dram(direct);
     }
 
-    public void clearSegments(List<Segment> segments, Segment last){
-        for (int i = 0; i < last.getIdx(); i ++){
-            clearSegment(segments.get(i));
-        }
-    }
+//    public void clearSegments(List<Segment> segments, Segment last){
+//        for (int i = 0; i < last.getIdx(); i ++){
+//            clearSegment(segments.get(i));
+//        }
+//    }
 
-    public void clearSegment(Segment segment){
-        Storage storage = segment.getStorage();
-        if (! (storage instanceof SSD)){
-            lru.remove(segment);
-            pools.add(storage);
-        }
-    }
+//    public void clearSegment(Segment segment){
+//        Storage storage = segment.getStorage();
+//        if (! (storage instanceof SSD)){
+//            lru.remove(segment);
+//            pools.add(storage);
+//        }
+//    }
 }

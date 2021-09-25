@@ -106,10 +106,7 @@ public class Queue {
         return segments;
     }
 
-    public void setLast(Cache cache, Segment newLast) {
-        if (last != null && last.getIdx() != newLast.getIdx()){
-            cache.clearSegment(last);
-        }
+    public void setLast(Segment newLast) {
         this.last = newLast;
     }
 

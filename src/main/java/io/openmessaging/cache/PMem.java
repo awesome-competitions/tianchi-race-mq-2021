@@ -6,6 +6,7 @@ import io.openmessaging.utils.CollectionUtils;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class PMem extends Storage {
 

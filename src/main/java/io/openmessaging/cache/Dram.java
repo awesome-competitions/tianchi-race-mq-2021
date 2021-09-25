@@ -7,6 +7,7 @@ import io.openmessaging.utils.CollectionUtils;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class Dram extends Storage {
 
@@ -29,7 +30,7 @@ public class Dram extends Storage {
         }
         int startIndex = (int) (startOffset - beginOffset);
         int endIndex = (int) (endOffset - beginOffset);
-        return data.subList(startIndex, endIndex + 1);
+        return new ArrayList<>(data.subList(startIndex, endIndex + 1));
     }
 
     @Override
