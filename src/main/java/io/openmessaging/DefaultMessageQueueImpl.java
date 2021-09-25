@@ -19,17 +19,17 @@ import java.util.Map;
 
 public class DefaultMessageQueueImpl extends MessageQueue{
 
-    private final MessageQueue queue = new MessageQueueImpl();
-//    private final MessageQueue queue = null;
+//    private final MessageQueue queue = new MessageQueueImpl();
+    private final MessageQueue queue = null;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMessageQueueImpl.class);
 
     public DefaultMessageQueueImpl(){
-//        try {
-//            test();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            test();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -47,7 +47,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         RandomAccessFile randomAccessFile = new RandomAccessFile("/essd/aof.log", "rw");
         FileChannel channel = randomAccessFile.getChannel();
 
-        int batch = (int) (Const.K * 1024);
+        int batch = (int) (Const.K * 512);
         int count = (int) (Const.G * 10 / batch);
 
         ByteBuffer buffer = ByteBuffer.allocate(batch);
