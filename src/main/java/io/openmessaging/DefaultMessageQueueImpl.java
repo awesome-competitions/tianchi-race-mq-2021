@@ -47,19 +47,20 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         RandomAccessFile randomAccessFile = new RandomAccessFile("/essd/aof.log", "rw");
         FileChannel channel = randomAccessFile.getChannel();
 
-        int batch = (int) (Const.K * 511);
+        int batch = (int) (Const.K * 6.2);
         int count = (int) (Const.G * 10 / batch);
 
         ByteBuffer buffer = ByteBuffer.allocate(batch);
         for (int i = 0; i < buffer.capacity(); i ++){
             buffer.put((byte) 1);
         }
-        buffer.flip();
         long start = System.currentTimeMillis();
         for (int i = 0; i < count; i ++){
-            channel.write(buffer);
+            for (int j = 0; j < 80; j ++){
+                buffer.flip();
+                channel.write(buffer);
+            }
             channel.force(false);
-            buffer.flip();
         }
         long end = System.currentTimeMillis();
         LOGGER.info("time {}", end - start);
