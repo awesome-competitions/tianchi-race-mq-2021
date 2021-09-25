@@ -17,8 +17,11 @@ public class Test {
     private final static int BATCH = 10000;
     private final static int QUEUE_SIZE = 3;
     private final static int TOPIC_SIZE = 3;
-    private final static String DIR = "/data/app/";
-    private final static String HEAP_DIR = "/mnt/mem/nico3";
+//    private final static String DIR = "/data/app/";
+//    private final static String HEAP_DIR = "/mnt/mem/nico3";
+//    private final static long HEAP_SIZE = 1024 * 1024 * 256;
+    private final static String DIR = "D://test//nio//";
+    private final static String HEAP_DIR = null;
     private final static long HEAP_SIZE = 1024 * 1024 * 256;
 
     public static void cleanDB(){
