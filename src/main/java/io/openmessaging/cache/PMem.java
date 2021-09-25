@@ -110,4 +110,15 @@ public class PMem extends Storage {
             this.block = null;
         }
     }
+
+    @Override
+    public String toString() {
+        return "PMem{" +
+                "block=" + block +
+                ", positions=" + positions +
+                ", beginOffset=" + beginOffset +
+                ", position=" + position +
+                ", idx=" + idx +
+                '}';
+    }
 }

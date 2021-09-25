@@ -93,11 +93,11 @@ public class Cache {
         Segment segment = readable.getSegment();
         try{
             segment.lock();
+            lru.add(segment);
             if (segment.getStorage() instanceof SSD){
                 Storage other = pools.take();
                 other.reset(segment.getIdx(), segment.getStorage().load(), segment.getStart());
                 segment.setStorage(other);
-                lru.add(segment);
             }
             return readable.getSegment().read(readable.getStartOffset(), readable.getEndOffset());
         }finally {
