@@ -62,7 +62,7 @@ public class MessageQueueImpl extends MessageQueue {
         });
         Thread thread = new Thread(()->{
             try {
-                Thread.sleep(1000 * 60 * 8);
+                Thread.sleep(1000 * 60 * 15);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
