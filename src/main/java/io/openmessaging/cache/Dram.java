@@ -39,7 +39,7 @@ public class Dram extends Storage {
 
     @Override
     public void write(ByteBuffer byteBuffer) {
-        data.add(byteBuffer);
+        data.add(ByteBuffer.wrap(byteBuffer.array()));
     }
 
     @Override

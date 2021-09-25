@@ -14,13 +14,14 @@ import java.util.function.Supplier;
 
 public class Test {
 
-    private final static int BATCH = 10000 * 10;
-    private final static int QUEUE_SIZE = 3;
+    private final static int BATCH = 10000;
+    private final static int QUEUE_SIZE = 5;
+    private final static int TOPIC_SIZE = 5;
     private final static String DIR = "D:\\test\\nio\\";
     private final static String HEAP_DIR = null;
     private final static long HEAP_SIZE = 0;
 
-    public void cleanDB(){
+    public static void cleanDB(){
         File root = new File(DIR);
         if (root.exists() && root.isDirectory()){
             if (ArrayUtils.isEmpty(root.listFiles())) return;
@@ -31,15 +32,15 @@ public class Test {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config(DIR, HEAP_DIR, HEAP_SIZE, 5000, 2 * Const.K, 100, 1, 1));
+        cleanDB();
+        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config(DIR, HEAP_DIR, HEAP_SIZE, 2000, 2 * Const.K, 1, 1, 1));
         List<Supplier<?>> suppliers = new ArrayList<>();
 
-        for (int i = 1; i <= QUEUE_SIZE; i ++){
-            suppliers.add(test(mMapMessageQueue, "topic1", i));
+        for (int j = 1; j <= TOPIC_SIZE; j ++){
+            for (int i = 1; i <= QUEUE_SIZE; i ++){
+                suppliers.add(test(mMapMessageQueue, "topic" + j, i));
+            }
         }
-//        for (int i = 1; i <= QUEUE_SIZE; i ++){
-//            suppliers.add(test(mMapMessageQueue, "test2", i));
-//        }
 
         final CountDownLatch cdl = new CountDownLatch(suppliers.size());
         ExecutorService POOLS = Executors.newFixedThreadPool(suppliers.size());

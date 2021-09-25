@@ -182,9 +182,7 @@ public class Topic{
             LOGGER.info("err write topic {}, queue {}, segment {}, pos {}, cap {}, len {}, stroage: {}", this.id, queueId, head.getIdx(), head.getPos(), head.getCap(), data.capacity(), head.getStorage());
             throw e;
         }
-
         data.flip();
-
         ByteBuffer header = ByteBuffer.allocateDirect(5)
                 .put((byte) id)
                 .putShort((short) queueId)
