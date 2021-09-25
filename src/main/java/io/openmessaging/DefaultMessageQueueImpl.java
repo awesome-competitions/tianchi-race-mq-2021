@@ -48,7 +48,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         FileChannel channel = randomAccessFile.getChannel();
 
         int batch = (int) (Const.K * 6.2);
-        int count = (int) (Const.G * 10 / batch);
+        int count = (int) (Const.G * 10 / Const.K / 512);
 
         ByteBuffer buffer = ByteBuffer.allocate(batch);
         for (int i = 0; i < buffer.capacity(); i ++){
