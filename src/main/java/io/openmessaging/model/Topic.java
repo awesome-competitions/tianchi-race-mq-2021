@@ -147,12 +147,18 @@ public class Topic{
 
         List<ByteBuffer> buffers = new ArrayList<>(num);
         for (Readable readable : readableList) {
-            List<ByteBuffer> data = cache.read(readable);
-            if (CollectionUtils.isEmpty(data)){
-                break;
+            try{
+                List<ByteBuffer> data = cache.read(readable);
+                if (CollectionUtils.isEmpty(data)){
+                    break;
+                }
+                buffers.addAll(data);
+                queue.setLast(cache, readable.getSegment());
+            }catch (IndexOutOfBoundsException e){
+                Segment head = readable.getSegment();
+                LOGGER.info("err read topic {}, queue {}, segment {}, pos {}, cap {}, offset {}, stroage: {}", this.id, queueId, head.getIdx(), head.getPos(), head.getCap(), offset, head.getStorage());
+                throw e;
             }
-            buffers.addAll(data);
-            queue.setLast(cache, readable.getSegment());
         }
         if (queue.getReadOffset() == 0 && offset != 0){
             cache.clearSegments(queue.getSegments(), queue.getLast());
@@ -173,7 +179,7 @@ public class Topic{
         try{
             cache.write(head, data);
         }catch (IndexOutOfBoundsException e){
-            LOGGER.info("err topic {}, queue {}, segment {}, pos {}, cap {}, len {}, stroage: {}", this.id, queueId, head.getIdx(), head.getPos(), head.getCap(), data.capacity(), head.getStorage());
+            LOGGER.info("err write topic {}, queue {}, segment {}, pos {}, cap {}, len {}, stroage: {}", this.id, queueId, head.getIdx(), head.getPos(), head.getCap(), data.capacity(), head.getStorage());
             throw e;
         }
 
