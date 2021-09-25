@@ -178,7 +178,7 @@ public class Topic{
         try{
             cache.write(head, data);
         }catch (IndexOutOfBoundsException e){
-            LOGGER.info("err write topic {}, queue {}, segment {}, pos {}, cap {}, len {}, stroage: {}", this.id, queueId, head.getIdx(), head.getPos(), head.getCap(), data.capacity(), head.getStorage());
+            LOGGER.info("err write topic {}, queue {}, segment {}, pos {}, cap {}, len {}, stroage: {}", this.id, queueId, head, head.getPos(), head.getCap(), data.capacity(), head.getStorage());
             throw e;
         }
         data.flip();
