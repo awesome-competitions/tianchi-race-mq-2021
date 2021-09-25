@@ -184,8 +184,10 @@ public class Topic{
                 .putShort((short) queueId)
                 .putShort((short) data.capacity());
         header.flip();
+
+        aof.getBuffers().add(header);
+        aof.getBuffers().add(data);
         try {
-            this.aof.getWrapper().write(new ByteBuffer[]{header, data});
             cyclicBarrier.await(10, TimeUnit.SECONDS);
         } catch (BrokenBarrierException | TimeoutException e) {
             e.printStackTrace();

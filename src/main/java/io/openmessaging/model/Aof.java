@@ -36,7 +36,7 @@ public class Aof {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Aof.class);
 
-    private final static ByteBuffer[] EMPTY = new ByteBuffer[0];
+    public final static ByteBuffer[] EMPTY = new ByteBuffer[0];
 
     public Aof(FileWrapper wrapper, Config config) {
         this.wrapper = wrapper;
@@ -85,4 +85,7 @@ public class Aof {
         this.cond.signalAll();
     }
 
+    public List<ByteBuffer> getBuffers() {
+        return buffers;
+    }
 }
