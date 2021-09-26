@@ -185,8 +185,7 @@ public class Topic{
                 .putShort((short) data.capacity());
         header.flip();
 
-        aof.getBuffers().add(header);
-        aof.getBuffers().add(data);
+        aof.addBuffers(header, data);
         try {
             cyclicBarrier.await(10, TimeUnit.SECONDS);
         } catch (BrokenBarrierException | TimeoutException e) {

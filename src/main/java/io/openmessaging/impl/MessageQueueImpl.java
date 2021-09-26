@@ -55,9 +55,11 @@ public class MessageQueueImpl extends MessageQueue {
         }
         this.cyclicBarrier = new CyclicBarrier(config.getMaxCount(), ()->{
             try {
-                this.aof.getWrapper().write(this.aof.getBuffers().toArray(Aof.EMPTY));
-                this.aof.getWrapper().getChannel().force(false);
-                this.aof.getBuffers().clear();
+                ByteBuffer[] buffers = this.aof.getAndClear();
+                if (buffers.length > 0){
+                    System.out.println(this.aof.getWrapper().write(this.aof.getAndClear()));
+//                    this.aof.getWrapper().getChannel().force(false);
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }

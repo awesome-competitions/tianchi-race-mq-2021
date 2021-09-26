@@ -12,6 +12,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class FileWrapper {
 
@@ -22,6 +23,10 @@ public class FileWrapper {
     };
 
     private final FileChannel channel;
+
+    private long position;
+
+    private ReentrantLock lock = new ReentrantLock();
 
     public FileWrapper(RandomAccessFile file) throws IOException {
         this.channel = file.getChannel();
@@ -38,24 +43,22 @@ public class FileWrapper {
     }
 
     public synchronized void write(long position, ByteBuffer src) throws IOException {
-        position(position);
-        channel.write(src);
-    }
-
-    public synchronized void write(long position, List<ByteBuffer> src) throws IOException {
-        position(position);
-        channel.write(src.toArray(new ByteBuffer[]{}));
+        channel.write(src, position);
     }
 
     public synchronized long write(ByteBuffer[] buffers) throws IOException {
-        long pos = channel.position();
-        channel.write(buffers);
-        return pos;
+        try{
+            lock.lock();
+            long pos = channel.position();
+            channel.write(buffers);
+            return pos;
+        }finally {
+            lock.unlock();
+        }
     }
 
     public synchronized int read(long position, ByteBuffer dst) throws IOException {
-        position(position);
-        return channel.read(dst);
+        return channel.read(dst, position);
     }
 
     public synchronized int read(ByteBuffer dst) throws IOException {

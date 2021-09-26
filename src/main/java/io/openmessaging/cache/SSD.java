@@ -63,13 +63,7 @@ public class SSD extends Storage {
 
     @Override
     public void write(ByteBuffer byteBuffer) {
-        try {
-            fw.write(aos, byteBuffer);
-            positions.add((long) byteBuffer.capacity());
-            aos += byteBuffer.capacity();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        throw new UnsupportedOperationException("ssd unsupport read");
     }
 
     @Override

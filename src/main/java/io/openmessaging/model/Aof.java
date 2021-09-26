@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
@@ -87,5 +88,25 @@ public class Aof {
 
     public List<ByteBuffer> getBuffers() {
         return buffers;
+    }
+
+    public void addBuffers(ByteBuffer... buffers){
+        try{
+            lock.lock();
+            this.buffers.addAll(Arrays.asList(buffers));
+        }finally {
+            lock.unlock();
+        }
+    }
+
+    public ByteBuffer[] getAndClear(){
+        try{
+            lock.lock();
+            ByteBuffer[] arr = this.buffers.toArray(EMPTY);
+            this.buffers.clear();
+            return arr;
+        }finally {
+            lock.unlock();
+        }
     }
 }
