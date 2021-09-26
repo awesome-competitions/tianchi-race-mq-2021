@@ -190,7 +190,7 @@ public class Topic{
             cyclicBarrier.await(10, TimeUnit.SECONDS);
         } catch (BrokenBarrierException | TimeoutException e) {
             e.printStackTrace();
-            this.aof.getWrapper().getChannel().force(false);
+            aof.getRunnable().run();
         }
         return offset;
     }

@@ -39,15 +39,22 @@ public class Aof {
 
     public final static ByteBuffer[] EMPTY = new ByteBuffer[0];
 
-    public Aof(FileWrapper wrapper, Config config) {
+    public Runnable runnable;
+
+    public Aof(FileWrapper wrapper, Config config, Runnable runnable) {
         this.wrapper = wrapper;
         this.maxCount = config.getMaxCount();
         this.version = new AtomicInteger();
         this.buffers = new ArrayList<>();
+        this.runnable = runnable;
     }
 
     public FileWrapper getWrapper() {
         return wrapper;
+    }
+
+    public Runnable getRunnable() {
+        return runnable;
     }
 
     public void write(ByteBuffer data) throws IOException {

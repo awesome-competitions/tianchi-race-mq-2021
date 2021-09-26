@@ -33,8 +33,8 @@ public class MessageQueueImpl extends MessageQueue {
                 "/essd/",
                 "/pmem/nico",
                 Const.G * 59,
-                (int) ((Const.G * 51) / (Const.K * 96)),
-                Const.K * 96,
+                (int) ((Const.G * 51) / (Const.K * 256)),
+                Const.K * 256,
                 1,
                 40,
                 Const.K * 320)
@@ -49,21 +49,21 @@ public class MessageQueueImpl extends MessageQueue {
         try {
             Group group = new Group(new FileWrapper(new RandomAccessFile(config.getDataDir() + "tmp.db", "rw")), null);
             this.cache = new Cache(config.getHeapDir(), config.getHeapSize(), config.getLruSize(), config.getPageSize(), group);
-            this.aof = new Aof(new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof.log", "rw")), config);
+            this.aof = new Aof(new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof.log", "rw")), config, ()->{
+                try {
+                    ByteBuffer[] buffers = this.aof.getAndClear();
+                    if (buffers.length > 0){
+                        this.aof.getWrapper().write(buffers);
+                        this.aof.getWrapper().getChannel().force(false);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
         } catch (IOException e) {
             e.printStackTrace();
         }
-        this.cyclicBarrier = new CyclicBarrier(config.getMaxCount(), ()->{
-            try {
-                ByteBuffer[] buffers = this.aof.getAndClear();
-                if (buffers.length > 0){
-                    this.aof.getWrapper().write(buffers);
-                    this.aof.getWrapper().getChannel().force(false);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
+        this.cyclicBarrier = new CyclicBarrier(config.getMaxCount(), aof.getRunnable());
         Thread thread = new Thread(()->{
             try {
                 Thread.sleep(1000 * 60 * 15);
