@@ -77,7 +77,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         long heapSize = Const.G * 20;
         Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
 
-        long blockSize = Const.K * 60;
+        long blockSize = Const.K * 600;
         long n = Const.G * 10 / blockSize;
 
         long start = System.currentTimeMillis();
