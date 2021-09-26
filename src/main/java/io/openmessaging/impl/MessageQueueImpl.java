@@ -33,8 +33,8 @@ public class MessageQueueImpl extends MessageQueue {
                 "/essd/",
                 "/pmem/nico",
                 Const.G * 59,
-                (int) ((Const.G * 51) / (Const.K * 512)),
-                Const.K * 512,
+                (int) ((Const.G * 51) / (Const.K * 256)),
+                Const.K * 256,
                 1,
                 40,
                 Const.K * 320)
@@ -66,7 +66,7 @@ public class MessageQueueImpl extends MessageQueue {
         this.cyclicBarrier = new CyclicBarrier(config.getMaxCount(), aof.getRunnable());
         Thread thread = new Thread(()->{
             try {
-                Thread.sleep(1000 * 60 * 15);
+                Thread.sleep(1000 * 60 * 20);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
