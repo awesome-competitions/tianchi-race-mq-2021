@@ -24,10 +24,6 @@ public class FileWrapper {
 
     private final FileChannel channel;
 
-    private long position;
-
-    private ReentrantLock lock = new ReentrantLock();
-
     public FileWrapper(RandomAccessFile file) throws IOException {
         this.channel = file.getChannel();
     }
@@ -47,14 +43,9 @@ public class FileWrapper {
     }
 
     public synchronized long write(ByteBuffer[] buffers) throws IOException {
-        try{
-            lock.lock();
-            long pos = channel.position();
-            channel.write(buffers);
-            return pos;
-        }finally {
-            lock.unlock();
-        }
+        long pos = channel.position();
+        channel.write(buffers);
+        return pos;
     }
 
     public synchronized int read(long position, ByteBuffer dst) throws IOException {

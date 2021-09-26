@@ -57,8 +57,8 @@ public class MessageQueueImpl extends MessageQueue {
             try {
                 ByteBuffer[] buffers = this.aof.getAndClear();
                 if (buffers.length > 0){
-                    System.out.println(this.aof.getWrapper().write(this.aof.getAndClear()));
-//                    this.aof.getWrapper().getChannel().force(false);
+                    this.aof.getWrapper().write(buffers);
+                    this.aof.getWrapper().getChannel().force(false);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
