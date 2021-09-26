@@ -1,6 +1,7 @@
 package io.openmessaging;
 
 import com.intel.pmem.llpl.Accessor;
+import com.intel.pmem.llpl.AnyMemoryBlock;
 import com.intel.pmem.llpl.Heap;
 import com.intel.pmem.llpl.MemoryBlock;
 import io.openmessaging.consts.Const;
@@ -15,6 +16,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -22,17 +25,17 @@ import java.util.concurrent.Executors;
 
 public class DefaultMessageQueueImpl extends MessageQueue{
 
-    private final MessageQueue queue = new MessageQueueImpl();
-//    private final MessageQueue queue = null;
+//    private final MessageQueue queue = new MessageQueueImpl();
+    private final MessageQueue queue = null;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMessageQueueImpl.class);
 
     public DefaultMessageQueueImpl(){
-//        try {
-//            test();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            test();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -47,42 +50,46 @@ public class DefaultMessageQueueImpl extends MessageQueue{
     }
 
     public void test() throws IOException {
-        RandomAccessFile randomAccessFile = new RandomAccessFile("/essd/aof.log", "rw");
-        FileChannel channel = randomAccessFile.getChannel();
-
-        int batch = (int) (Const.K * 6.2);
-        int count = (int) (Const.G * 10 / Const.K / 512);
-
-        ByteBuffer buffer = ByteBuffer.allocate(batch);
-        for (int i = 0; i < buffer.capacity(); i ++){
-            buffer.put((byte) 1);
-        }
-
-        long start = System.currentTimeMillis();
-        for (int i = 0; i < count; i ++){
-            for (int j = 0; j < 80; j ++){
-                buffer.flip();
-                channel.write(buffer);
-            }
-            channel.force(false);
-        }
-        long end = System.currentTimeMillis();
-        LOGGER.info("time {}", end - start);
-        throw new RuntimeException("ex");
-
-//        int n = 5;
-//        long size = n * Const.G;
-//        MemoryBlock block = heap.allocateMemoryBlock(size);
-//        byte[] bytes = new byte[1024 * 1024 * 16];
+//        RandomAccessFile randomAccessFile = new RandomAccessFile("/essd/aof.log", "rw");
+//        FileChannel channel = randomAccessFile.getChannel();
+//
+//        int batch = (int) (Const.K * 6.2);
+//        int count = (int) (Const.G * 10 / Const.K / 512);
+//
+//        ByteBuffer buffer = ByteBuffer.allocate(batch);
+//        for (int i = 0; i < buffer.capacity(); i ++){
+//            buffer.put((byte) 1);
+//        }
 //
 //        long start = System.currentTimeMillis();
-//        for (int i = 0; i < n * 64; i ++){
-//            block.copyFromArray(bytes, 0, i * Const.M * 16, bytes.length);
-//        }
-//        for (int i = 0; i < n * 64; i ++){
-//            block.copyToArray(i * Const.M * 16, bytes, 0, bytes.length);
+//        for (int i = 0; i < count; i ++){
+//            for (int j = 0; j < 80; j ++){
+//                buffer.flip();
+//                channel.write(buffer);
+//            }
+//            channel.force(false);
 //        }
 //        long end = System.currentTimeMillis();
-//        System.out.println((end - start));
+//        LOGGER.info("time {}", end - start);
+//        throw new RuntimeException("ex");
+
+        String path = "/pmem/nico";
+        long heapSize = Const.G * 10;
+        Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
+
+        long blockSize = Const.K * 6;
+        long n = heapSize / blockSize;
+
+        long start = System.currentTimeMillis();
+        List<AnyMemoryBlock> blocks = new ArrayList<>();
+        for (int i = 0; i < n; i ++){
+            blocks.add(heap.allocateMemoryBlock(blockSize));
+        }
+        for (AnyMemoryBlock block: blocks){
+            block.freeMemory();
+        }
+        long end = System.currentTimeMillis();
+        System.out.println((end - start));
+        throw new RuntimeException("ex");
     }
 }
