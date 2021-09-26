@@ -66,7 +66,7 @@ public class MessageQueueImpl extends MessageQueue {
         this.cyclicBarrier = new CyclicBarrier(config.getMaxCount(), aof.getRunnable());
         Thread thread = new Thread(()->{
             try {
-                Thread.sleep(1000 * 60 * 30);
+                Thread.sleep(1000 * 60 * 20);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
