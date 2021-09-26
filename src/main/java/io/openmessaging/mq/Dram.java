@@ -2,12 +2,14 @@ package io.openmessaging.mq;
 
 import java.nio.ByteBuffer;
 
-public class Dram extends Storage{
+public class Dram extends Data {
 
     private ByteBuffer buffer;
 
     public Dram(ByteBuffer buffer) {
-        this.buffer = buffer;
+        this.buffer = ByteBuffer.allocate(buffer.capacity());
+        this.buffer.put(buffer);
+        this.buffer.flip();
     }
 
     @Override

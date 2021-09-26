@@ -1,11 +1,24 @@
 package io.openmessaging.mq;
 
-import com.intel.pmem.llpl.AnyMemoryBlock;
+import java.nio.ByteBuffer;
 
-public class Data {
+public abstract class Data {
 
-    private long offset;
+    protected long offset;
 
-    private Storage storage;
+    public abstract ByteBuffer get();
 
+    public abstract void set(ByteBuffer buffer);
+
+    public abstract void clear();
+
+    public abstract int size();
+
+    public long getOffset() {
+        return offset;
+    }
+
+    public void setOffset(long offset) {
+        this.offset = offset;
+    }
 }

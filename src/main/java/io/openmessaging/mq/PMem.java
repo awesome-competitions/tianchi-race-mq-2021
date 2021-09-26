@@ -4,7 +4,7 @@ import com.intel.pmem.llpl.AnyMemoryBlock;
 
 import java.nio.ByteBuffer;
 
-public class PMem extends Storage{
+public class PMem extends Data {
 
     private final AnyMemoryBlock block;
 
