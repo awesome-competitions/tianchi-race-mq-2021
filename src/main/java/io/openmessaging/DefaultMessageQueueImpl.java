@@ -74,11 +74,11 @@ public class DefaultMessageQueueImpl extends MessageQueue{
 //        throw new RuntimeException("ex");
 
         String path = "/pmem/nico";
-        long heapSize = Const.G * 10;
+        long heapSize = Const.G * 20;
         Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
 
         long blockSize = Const.K * 6;
-        long n = heapSize / blockSize;
+        long n = Const.G * 10 / blockSize;
 
         long start = System.currentTimeMillis();
         List<AnyMemoryBlock> blocks = new ArrayList<>();
