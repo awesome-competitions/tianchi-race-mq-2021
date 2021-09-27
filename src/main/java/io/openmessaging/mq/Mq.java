@@ -92,7 +92,7 @@ public class Mq extends MessageQueue{
 
 
     Data applyBlock( ByteBuffer buffer){
-        AnyMemoryBlock block = heap.allocateMemoryBlock(buffer.capacity());
+        AnyMemoryBlock block = heap.allocateCompactMemoryBlock(buffer.capacity());
         byte[] bytes = new byte[buffer.capacity()];
         buffer.get(bytes);
         block.copyFromArray(bytes, 0, 0, bytes.length);
@@ -195,16 +195,16 @@ public class Mq extends MessageQueue{
 
     public long _append(String topic, int queueId, ByteBuffer buffer) throws IOException {
         long offset = nextOffset(topic, queueId);
-//        Data data = applyData(buffer);
-//        data.setKey(new Key(topic, queueId, offset));
-//        append(data);
+        Data data = applyData(buffer);
+        data.setKey(new Key(topic, queueId, offset));
+        append(data);
 
         ByteBuffer header = ByteBuffer.allocateDirect(topic.getBytes().length + 4)
                 .put(topic.getBytes())
                 .putShort((short) queueId)
                 .putShort((short) buffer.capacity());
         header.flip();
-//        buffer.flip();
+        buffer.flip();
         barrier.write(header, buffer);
         barrier.await(10, TimeUnit.SECONDS);
         return offset;
