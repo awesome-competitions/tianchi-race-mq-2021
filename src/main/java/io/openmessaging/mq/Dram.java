@@ -24,7 +24,7 @@ public class Dram extends Data {
 
     @Override
     public void clear() {
-        this.buffer.clear();
+        this.buffer = null;
     }
 
     @Override

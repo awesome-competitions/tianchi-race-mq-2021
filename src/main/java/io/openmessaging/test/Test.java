@@ -3,11 +3,13 @@ package io.openmessaging.test;
 import io.openmessaging.MessageQueue;
 import io.openmessaging.consts.Const;
 import io.openmessaging.impl.MessageQueueImpl;
-import io.openmessaging.model.Config;
 import io.openmessaging.model.Topic;
+import io.openmessaging.mq.Config;
+import io.openmessaging.mq.Mq;
 import io.openmessaging.utils.ArrayUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -16,15 +18,20 @@ import java.util.function.Supplier;
 
 public class Test {
 
-    private final static int BATCH = 1000;
-    private final static int QUEUE_SIZE = 2;
+    private final static int BATCH = 1024;
+    private final static int QUEUE_SIZE = 1;
     private final static int TOPIC_SIZE = 100;
 //    private final static String DIR = "/data/app/";
 //    private final static String HEAP_DIR = "/mnt/mem/nico3";
 //    private final static long HEAP_SIZE = 1024 * 1024 * 256;
+//    private final static long CACHE_MAX_SIZE = 1024 * 90;
+//    private final static long CACHE_CLEAR_SIZE = 1024 * 90 / 10;
     private final static String DIR = "D://test//nio//";
     private final static String HEAP_DIR = null;
     private final static long HEAP_SIZE = 1024 * 1024 * 256;
+    private final static long CACHE_MAX_SIZE = 1024 * 90;
+    private final static long CACHE_CLEAR_SIZE = 1024 * 90 / 10;
+
 
     public static void cleanDB(){
         File root = new File(DIR);
@@ -36,9 +43,9 @@ public class Test {
         }
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, FileNotFoundException {
         cleanDB();
-        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config(DIR, HEAP_DIR, HEAP_SIZE, 1000, 2, 1, 1, 1));
+        MessageQueue mMapMessageQueue = new Mq(new Config(DIR, HEAP_DIR, HEAP_SIZE, 1, CACHE_MAX_SIZE, CACHE_CLEAR_SIZE));
         List<Supplier<?>> suppliers = new ArrayList<>();
 
         for (int j = 1; j <= TOPIC_SIZE; j ++){
@@ -54,9 +61,10 @@ public class Test {
         }
         cdl.await();
         POOLS.shutdown();
+        System.out.println(mMapMessageQueue);
     }
 
-    public static Supplier<?> test(MessageQueueImpl mq, String topic, Integer queueId){
+    public static Supplier<?> test(MessageQueue mq, String topic, Integer queueId){
         return ()->{
             String[] inputs = new String[BATCH/1];
             for (int i = 0; i < inputs.length; i ++){
@@ -80,12 +88,6 @@ public class Test {
                     }
                 }catch (Exception e){
                     System.out.println(i);
-                    try {
-                        Topic t = mq.getTopic(topic);
-                        t.read(queueId, i, 1);
-                    } catch (IOException | InterruptedException ioException) {
-                        ioException.printStackTrace();
-                    }
                     throw e;
                 }
             }

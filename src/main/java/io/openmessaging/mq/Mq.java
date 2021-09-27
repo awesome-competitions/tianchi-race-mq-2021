@@ -14,10 +14,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class Mq {
+public class Mq extends MessageQueue{
 
     private Heap heap;
 
@@ -113,8 +112,8 @@ public class Mq {
                     capacity += data.size();
                     buffers.add(data.get());
                     sizes.add(data.size());
-                    data.clear();
                     this.size.addAndGet(- data.size());
+                    data.clear();
                 }
                 long position = tpf.write(buffers.toArray(Barrier.EMPTY));
                 SSD ssd = new SSD(startOffset, endOffset, position, capacity, sizes);
@@ -130,22 +129,47 @@ public class Mq {
         return offsets.computeIfAbsent(topic, k -> new HashMap<>()).computeIfAbsent(queueId, k -> new AtomicLong(-1)).addAndGet(1);
     }
 
-    public long append(String topic, int queueId, ByteBuffer buffer) throws IOException {
+    public long append(String topic, int queueId, ByteBuffer buffer) {
+        try {
+            return _append(topic, queueId, buffer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public Map<Integer, ByteBuffer> getRange(String topic, int queueId, long offset, int fetchNum) {
+        try {
+            return _getRange(topic, queueId, offset, fetchNum);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new HashMap<>();
+    }
+
+    public long _append(String topic, int queueId, ByteBuffer buffer) throws IOException {
         long offset = nextOffset(topic, queueId);
         Data data = applyData(buffer);
         data.setKey(new Key(topic, queueId, offset));
         append(data);
+
+        ByteBuffer header = ByteBuffer.allocateDirect(topic.getBytes().length + 4)
+                .put(topic.getBytes())
+                .putShort((short) queueId)
+                .putShort((short) buffer.capacity());
+        header.flip();
+        buffer.flip();
         barrier.write(buffer);
         barrier.await(10, TimeUnit.SECONDS);
         return offset;
     }
 
-    public Map<Integer, ByteBuffer> getRange(String topic, int queueId, long offset, int fetchNum) throws IOException {
+    public Map<Integer, ByteBuffer> _getRange(String topic, int queueId, long offset, int fetchNum) throws IOException {
         lock.readLock().lock();
         long startOffset = offset;
         long endOffset = startOffset + fetchNum - 1;
         Map<Integer, ByteBuffer> results = new HashMap<>();
-        for (;startOffset >= endOffset; startOffset++){
+        for (;startOffset <= endOffset; startOffset++){
             Data data = records.remove(new Key(topic, queueId, startOffset));
             if (data == null){
                 break;
@@ -161,13 +185,17 @@ public class Mq {
                 data = list.get(0);
             }
             results.put((int) (startOffset - offset), data.get());
-            data.clear();
             this.size.addAndGet(- data.size());
+            data.clear();
         }
         lock.readLock().unlock();
         return results;
     }
 
-
-
+    @Override
+    public String toString() {
+        return "Mq{" +
+                "size=" + size +
+                '}';
+    }
 }

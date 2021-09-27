@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
@@ -32,7 +33,7 @@ public class Barrier {
             if (array.length > 0){
                 try {
                     aof.write(array);
-                    aof.force();
+//                    aof.force();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

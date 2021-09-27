@@ -4,12 +4,21 @@ import io.openmessaging.consts.Const;
 
 public class Config {
 
-    private String dataDir;
-    private String heapDir;
-    private long heapSize;
-    private int maxCount;
-    private long cacheMaxSize;
-    private long cacheClearSize;
+    private final String dataDir;
+    private final String heapDir;
+    private final long heapSize;
+    private final int maxCount;
+    private final long cacheMaxSize;
+    private final long cacheClearSize;
+
+    public Config(String dataDir, String heapDir, long heapSize, int maxCount, long cacheMaxSize, long cacheClearSize) {
+        this.dataDir = dataDir;
+        this.heapDir = heapDir;
+        this.heapSize = heapSize;
+        this.maxCount = maxCount;
+        this.cacheMaxSize = cacheMaxSize;
+        this.cacheClearSize = cacheClearSize;
+    }
 
     public long getCacheMaxSize() {
         return cacheMaxSize;
