@@ -6,8 +6,9 @@ import com.intel.pmem.llpl.Heap;
 import com.intel.pmem.llpl.MemoryBlock;
 import io.openmessaging.consts.Const;
 import io.openmessaging.impl.MessageQueueImpl;
-import io.openmessaging.model.Config;
 import io.openmessaging.model.FileWrapper;
+import io.openmessaging.mq.Config;
+import io.openmessaging.mq.Mq;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,15 +23,24 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class DefaultMessageQueueImpl extends MessageQueue{
 
-    private final MessageQueue queue = new MessageQueueImpl();
+    private final MessageQueue queue = new Mq(new Config(
+            "/essd/",
+            "/pmem/nico",
+            Const.G * 59,
+            40,
+            Const.G * 50,
+            Const.M * 256,
+            Const.MINUTE * 4 + Const.SECOND * 2
+    ));
 //    private final MessageQueue queue = null;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMessageQueueImpl.class);
 
-    public DefaultMessageQueueImpl(){
+    public DefaultMessageQueueImpl() throws FileNotFoundException {
 //        try {
 //            test();
 //        } catch (IOException e) {

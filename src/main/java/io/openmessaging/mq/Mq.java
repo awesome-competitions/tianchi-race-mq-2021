@@ -3,6 +3,9 @@ package io.openmessaging.mq;
 import com.intel.pmem.llpl.AnyMemoryBlock;
 import com.intel.pmem.llpl.Heap;
 import io.openmessaging.MessageQueue;
+import io.openmessaging.consts.Const;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -38,6 +41,12 @@ public class Mq extends MessageQueue{
 
     private final ReadWriteLock lock;
 
+    private long toSSDTimes;
+
+    private long fromSSDTimes;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
+
     public Mq(Config config) throws FileNotFoundException {
         this.config = config;
         this.records = new ConcurrentHashMap<>();
@@ -51,7 +60,36 @@ public class Mq extends MessageQueue{
         if (config.getHeapDir() != null){
             this.heap = Heap.exists(config.getHeapDir()) ? Heap.openHeap(config.getHeapDir()) : Heap.createHeap(config.getHeapDir(), config.getHeapSize());
         }
+        if (config.getLiveTime() > 0){
+            startKiller();
+        }
+        startMonitor();
     }
+
+    void startKiller(){
+        new Thread(()->{
+            try {
+                Thread.sleep(config.getLiveTime());
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    void startMonitor(){
+        Thread monitor = new Thread(()->{
+            try {
+                Thread.sleep(Const.SECOND * 30);
+                LOGGER.info("current cache size {}, records size {}, to ssd times {}, from ssd times {}", size, records.size(), toSSDTimes, fromSSDTimes);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+        monitor.setDaemon(true);
+        monitor.start();
+    }
+
 
     Data applyBlock( ByteBuffer buffer){
         AnyMemoryBlock block = heap.allocateMemoryBlock(buffer.capacity());
@@ -115,6 +153,7 @@ public class Mq extends MessageQueue{
                     this.size.addAndGet(- data.size());
                     data.clear();
                 }
+                toSSDTimes ++;
                 long position = tpf.write(buffers.toArray(Barrier.EMPTY));
                 SSD ssd = new SSD(startOffset, endOffset, position, capacity, sizes);
                 ssd.setKey(new Key(topic, queueId, -1L));
@@ -129,8 +168,15 @@ public class Mq extends MessageQueue{
         return offsets.computeIfAbsent(topic, k -> new HashMap<>()).computeIfAbsent(queueId, k -> new AtomicLong(-1)).addAndGet(1);
     }
 
+    long s = 0;
+    int c = 0;
     public long append(String topic, int queueId, ByteBuffer buffer) {
         try {
+            ++c;
+            s += buffer.capacity();
+            if (c % 100000 == 0){
+                LOGGER.info("append count {}, size {}", c, s);
+            }
             return _append(topic, queueId, buffer);
         } catch (IOException e) {
             e.printStackTrace();
@@ -176,6 +222,7 @@ public class Mq extends MessageQueue{
             }
             if (data instanceof SSD){
                 SSD ssd = (SSD) data;
+                fromSSDTimes ++;
                 List<Data> list = ssd.load(startOffset, heap, tpf);
                 long tempOffset = startOffset;
                 for (Data d: list){
