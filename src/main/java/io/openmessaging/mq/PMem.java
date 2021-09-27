@@ -12,14 +12,8 @@ public class PMem extends Data {
 
     private final int size;
 
-    private static final ExecutorService executors = Executors.newFixedThreadPool(200);
-
-    public PMem(Heap heap, byte[] bytes) {
-        this.future = executors.submit(()->{
-            AnyMemoryBlock block = heap.allocateCompactMemoryBlock(heap.size());
-            block.copyFromArray(bytes, 0, 0, bytes.length);
-            return block;
-        });
+    public PMem(Future<AnyMemoryBlock> future, byte[] bytes) {
+        this.future = future;
         this.size = bytes.length;
     }
 

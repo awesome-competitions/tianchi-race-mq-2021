@@ -12,9 +12,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -46,6 +44,8 @@ public class Mq extends MessageQueue{
     private long fromSSDTimes;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
+
+    private static final ThreadPoolExecutor POOLS = (ThreadPoolExecutor) Executors.newFixedThreadPool(200);
 
     public Mq(Config config) throws FileNotFoundException {
         this.config = config;
@@ -81,8 +81,9 @@ public class Mq extends MessageQueue{
         Thread monitor = new Thread(()->{
             while (true){
                 try {
-                    Thread.sleep(Const.SECOND * 30);
-                    LOGGER.info("current cache size {}, records size {}, to ssd times {}, from ssd times {}", size, records.size(), toSSDTimes, fromSSDTimes);
+                    Thread.sleep(Const.SECOND * 5);
+                    LOGGER.info("performance >> current cache size {}, records size {}, to ssd times {}, from ssd times {}", size, records.size(), toSSDTimes, fromSSDTimes);
+                    LOGGER.info("thread pool >> active count {}/{}", POOLS.getActiveCount(), POOLS.getPoolSize());
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -96,7 +97,11 @@ public class Mq extends MessageQueue{
     Data applyBlock(ByteBuffer buffer){
         byte[] bytes = new byte[buffer.capacity()];
         buffer.get(bytes);
-        return new PMem(heap, bytes);
+        return new PMem(POOLS.submit(()->{
+            AnyMemoryBlock block = heap.allocateCompactMemoryBlock(heap.size());
+            block.copyFromArray(bytes, 0, 0, bytes.length);
+            return block;
+        }), bytes);
     }
 
     Data applyData(ByteBuffer buffer){
@@ -107,19 +112,20 @@ public class Mq extends MessageQueue{
         keys.add(data.getKey());
         records.put(data.getKey(), data);
         size.addAndGet(data.size());
-        new Thread(()->{
+        if (size.get() > config.getCacheMaxSize()){
+            lock.writeLock().lock();
             if (size.get() > config.getCacheMaxSize()){
-                lock.writeLock().lock();
-                if (size.get() > config.getCacheMaxSize()){
-                    try {
-                        clear();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                try {
+                    long start = System.currentTimeMillis();
+                    clear();
+                    long end = System.currentTimeMillis();
+                    LOGGER.info("clear spend {} ms", end - start);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                lock.writeLock().unlock();
             }
-        }).start();
+            lock.writeLock().unlock();
+        }
     }
 
     void clear() throws IOException {
@@ -156,12 +162,12 @@ public class Mq extends MessageQueue{
                     capacity += data.size();
                     buffers.add(data.get());
                     sizes.add(data.size());
-                    this.size.addAndGet(- data.size());
                     data.clear();
+                    this.size.addAndGet(- data.size());
                 }
                 toSSDTimes ++;
                 long position = tpf.write(buffers.toArray(Barrier.EMPTY));
-                SSD ssd = new SSD(startOffset, endOffset, position, capacity, sizes);
+                SSD ssd = new SSD(startOffset, position, capacity, sizes);
                 ssd.setKey(new Key(topic, queueId, -1L));
                 for (long i = startOffset; i <= endOffset; i ++){
                     records.put(new Key(topic, queueId, i), ssd);
@@ -212,7 +218,7 @@ public class Mq extends MessageQueue{
         header.flip();
         buffer.flip();
         barrier.write(header, buffer);
-        barrier.await(10, TimeUnit.SECONDS);
+        barrier.await(30, TimeUnit.SECONDS);
         return offset;
     }
 
@@ -229,17 +235,20 @@ public class Mq extends MessageQueue{
             if (data instanceof SSD){
                 SSD ssd = (SSD) data;
                 fromSSDTimes ++;
-                List<Data> list = ssd.load(startOffset, heap, tpf);
+                List<ByteBuffer> buffers = ssd.load(startOffset, tpf);
                 long tempOffset = startOffset;
-                for (Data d: list){
-                    records.put(new Key(topic, queueId, tempOffset), d);
+                for (ByteBuffer buffer: buffers){
+                    Data record = applyData(buffer);
+                    if (tempOffset == offset){
+                        data = record;
+                    }
+                    records.put(new Key(topic, queueId, tempOffset), record);
                     tempOffset ++;
                 }
-                data = list.get(0);
             }
             results.put((int) (startOffset - offset), data.get());
-            this.size.addAndGet(- data.size());
             data.clear();
+            this.size.addAndGet(- data.size());
         }
         lock.readLock().unlock();
         return results;

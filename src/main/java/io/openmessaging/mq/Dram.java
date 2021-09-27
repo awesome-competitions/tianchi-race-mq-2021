@@ -6,10 +6,13 @@ public class Dram extends Data {
 
     private ByteBuffer buffer;
 
+    private final long size;
+
     public Dram(ByteBuffer buffer) {
         this.buffer = ByteBuffer.allocate(buffer.capacity());
         this.buffer.put(buffer);
         this.buffer.flip();
+        this.size = buffer.capacity();
     }
 
     @Override
@@ -29,6 +32,6 @@ public class Dram extends Data {
 
     @Override
     public long size() {
-        return buffer.capacity();
+        return size;
     }
 }

@@ -10,19 +10,16 @@ import java.util.List;
 
 public class SSD extends Data{
 
-    private long start;
+    private final long start;
 
-    private long end;
+    private final long position;
 
-    private long position;
+    private final long capacity;
 
-    private long capacity;
+    private final List<Long> sizes;
 
-    private List<Long> sizes;
-
-    public SSD(long start, long end, long position, long capacity, List<Long> blocks) {
+    public SSD(long start, long position, long capacity, List<Long> blocks) {
         this.start = start;
-        this.end = end;
         this.position = position;
         this.capacity = capacity;
         this.sizes = blocks;
@@ -48,11 +45,11 @@ public class SSD extends Data{
         return capacity;
     }
 
-    public List<Data> load(long startOffset, Heap heap, FileWrapper fw) throws IOException {
+    public List<ByteBuffer> load(long startOffset, FileWrapper fw) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate((int) capacity);
         fw.read(position, buffer);
         buffer.flip();
-        List<Data> list = new ArrayList<>();
+        List<ByteBuffer> list = new ArrayList<>();
         for (int i = 0; i < sizes.size(); i ++){
             int cap = sizes.get(i).intValue();
             long offset = start + i;
@@ -62,9 +59,7 @@ public class SSD extends Data{
             }
             byte[] bytes = new byte[cap];
             buffer.get(bytes);
-            Data data = heap == null ? new Dram(ByteBuffer.wrap(bytes)) : new PMem(heap, bytes);
-            data.setKey(new Key(key.getTopic(), key.getQueueId(), start + i));
-            list.add(data);
+            list.add(ByteBuffer.wrap(bytes));
         }
         return list;
     }
