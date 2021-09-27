@@ -10,6 +10,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
@@ -20,7 +21,11 @@ public class Mq {
 
     private final Config config;
 
-    private final Map<String, Topic> topics;
+    private final Map<Key, Data> records;
+
+    private final LinkedBlockingQueue<Key> keys;
+
+    private final Map<String, Map<Integer, AtomicLong>> offsets;
 
     private final Barrier barrier;
 
@@ -28,19 +33,23 @@ public class Mq {
 
     private final FileWrapper tpf;
 
+    private final AtomicLong size;
+
+    private final ReentrantLock lock;
+
     public Mq(Config config) throws FileNotFoundException {
         this.config = config;
-        this.topics = new ConcurrentHashMap<>();
+        this.records = new ConcurrentHashMap<>();
+        this.offsets = new ConcurrentHashMap<>();
+        this.keys = new LinkedBlockingQueue<>();
         this.aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof", "rw"));
         this.tpf = new FileWrapper(new RandomAccessFile(config.getDataDir() + "tpf", "rw"));
         this.barrier = new Barrier(config.getMaxCount(), this.aof);
+        this.size = new AtomicLong();
+        this.lock = new ReentrantLock();
         if (config.getHeapDir() != null){
             this.heap = Heap.exists(config.getHeapDir()) ? Heap.openHeap(config.getHeapDir()) : Heap.createHeap(config.getHeapDir(), config.getHeapSize());
         }
-    }
-
-    Topic getTopic(String name){
-       return topics.computeIfAbsent(name, k -> new Topic());
     }
 
     Data applyBlock( ByteBuffer buffer){
@@ -55,66 +64,78 @@ public class Mq {
         return heap == null ? new Dram(buffer) : applyBlock(buffer);
     }
 
-    void clear(Topic topic) throws IOException {
-        long count = 0;
-        long capacity = 0;
-        boolean finished = false;
-        Map<Integer, List<Data>> outs = new HashMap<>();
-        for (Map.Entry<Integer, Queue> entry: topic.getQueues().entrySet()){
-            List<Data> list = outs.computeIfAbsent(entry.getKey(), k->new ArrayList<>());
-            Queue queue = entry.getValue();
-            Iterator<Data> iter = queue.getRecords().iterator();
-            while (iter.hasNext() && ! finished){
-                Data record = iter.next();
-                capacity += record.size();
-                count ++;
-                list.add(record);
-                iter.remove();
-                if (capacity >= config.getTopicShrinkSize()){
-                    finished = true;
+    void append(Data data) throws IOException {
+        keys.add(data.getKey());
+        records.put(data.getKey(), data);
+        size.addAndGet(data.size());
+        if (size.get() > config.getCacheMaxSize()){
+            try {
+                lock.isLocked();
+                lock.lock();
+                if (size.get() > config.getCacheMaxSize()){
+                    clear();
                 }
-            }
-            if (finished){
-                break;
+            }finally {
+                lock.unlock();
             }
         }
-        topic.increment(capacity);
-        for (Map.Entry<Integer, List<Data>> out: outs.entrySet()){
-            Queue queue = topic.getQueue(out.getKey());
-            List<Data> list = out.getValue();
-            if (list.size() > 0){
-                capacity = 0;
-                count = list.size();
-                long startOffset = queue.getStartOffset();
-                long endOffset = startOffset + count - 1;
+    }
+
+    void clear() throws IOException {
+        long size = 0;
+        Map<String, Map<Integer, List<Data>>> clears = new HashMap<>();
+        while(size < config.getCacheClearSize()){
+            Key key = keys.poll();
+            if (key == null){
+                break;
+            }
+            Data data = records.remove(key);
+            if (data == null) {
+                continue;
+            }
+            size += data.size();
+            clears.computeIfAbsent(key.getTopic(), k -> new HashMap<>())
+                .computeIfAbsent(key.getQueueId(), k -> new ArrayList<>())
+                .add(data);
+        }
+
+        for (Map.Entry<String, Map<Integer, List<Data>>> clear: clears.entrySet()){
+            String topic = clear.getKey();
+            for (Map.Entry<Integer, List<Data>> entry: clear.getValue().entrySet()){
+                int queueId = entry.getKey();
+                List<Data> list = entry.getValue();
+
+                long startOffset = list.get(0).getKey().getOffset();
+                long endOffset = list.get(list.size() - 1).getKey().getOffset();
+
                 List<ByteBuffer> buffers = new ArrayList<>(list.size());
+                long capacity = 0;
+                List<Long > sizes = new ArrayList<>();
                 for (Data data: list){
                     capacity += data.size();
                     buffers.add(data.get());
+                    sizes.add(data.size());
                     data.clear();
                 }
-                long position = this.tpf.write(buffers.toArray(Barrier.EMPTY));
-                Block block = new Block(startOffset, endOffset, position, capacity);
-                queue.getBlocks().add(block);
+                long position = tpf.write(buffers.toArray(Barrier.EMPTY));
+                SSD ssd = new SSD(startOffset, endOffset, position, capacity, sizes);
+                ssd.setKey(new Key(topic, queueId, -1L));
+                for (long i = startOffset; i <= endOffset; i ++){
+                    records.put(new Key(topic, queueId, i), ssd);
+                }
             }
         }
-
     }
 
-    long append(Topic topic, Queue queue, Data data) throws IOException {
-        long offset = queue.append(data);
-        topic.increment(data.size());
-        topic.refresh(queue);
-        if (topic.getSize() > config.getTopicMaxSize()){
-            clear(topic);
-        }
-        return offset;
+    long nextOffset(String topic, int queueId){
+        return offsets.computeIfAbsent(topic, k -> new HashMap<>()).computeIfAbsent(queueId, k -> new AtomicLong(-1)).addAndGet(1);
     }
 
-    public long append(String name, int queueId, ByteBuffer buffer) throws IOException {
-        Topic topic = getTopic(name);
-        Queue queue = topic.getQueue(queueId);
-        long offset = append(topic, queue, applyData(buffer));
+    public long append(String topic, int queueId, ByteBuffer buffer) throws IOException {
+        long offset = nextOffset(topic, queueId);
+        Data data = applyData(buffer);
+        data.setKey(new Key(topic, queueId, offset));
+        append(data);
 
         barrier.write(buffer);
         barrier.await(10, TimeUnit.SECONDS);

@@ -24,7 +24,8 @@ public class Queue {
 
     public long append(Data record){
         this.records.add(record);
-        return ++offset;
+        record.setOffset(++offset);
+        return record.getOffset();
     }
 
     public List<Data> getRecords() {

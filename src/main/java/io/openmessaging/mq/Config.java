@@ -7,16 +7,16 @@ public class Config {
     private String dataDir;
     private String heapDir;
     private long heapSize;
-    private long topicMaxSize;
-    private long topicShrinkSize;
     private int maxCount;
+    private long cacheMaxSize;
+    private long cacheClearSize;
 
-    public long getTopicMaxSize() {
-        return topicMaxSize;
+    public long getCacheMaxSize() {
+        return cacheMaxSize;
     }
 
-    public long getTopicShrinkSize() {
-        return topicShrinkSize;
+    public long getCacheClearSize() {
+        return cacheClearSize;
     }
 
     public String getDataDir() {

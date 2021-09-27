@@ -28,7 +28,7 @@ public class Dram extends Data {
     }
 
     @Override
-    public int size() {
+    public long size() {
         return buffer.capacity();
     }
 }

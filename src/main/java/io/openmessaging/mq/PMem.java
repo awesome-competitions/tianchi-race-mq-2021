@@ -32,7 +32,7 @@ public class PMem extends Data {
     }
 
     @Override
-    public int size() {
+    public long size() {
         return (int) block.size();
     }
 }

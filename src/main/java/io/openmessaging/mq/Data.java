@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 
 public abstract class Data {
 
-    protected long offset;
+    protected Key key;
 
     public abstract ByteBuffer get();
 
@@ -12,13 +12,13 @@ public abstract class Data {
 
     public abstract void clear();
 
-    public abstract int size();
+    public abstract long size();
 
-    public long getOffset() {
-        return offset;
+    public Key getKey() {
+        return key;
     }
 
-    public void setOffset(long offset) {
-        this.offset = offset;
+    public void setKey(Key key) {
+        this.key = key;
     }
 }
