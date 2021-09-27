@@ -98,7 +98,7 @@ public class Mq extends MessageQueue{
         byte[] bytes = new byte[buffer.capacity()];
         buffer.get(bytes);
         return new PMem(POOLS.submit(()->{
-            AnyMemoryBlock block = heap.allocateCompactMemoryBlock(heap.size());
+            AnyMemoryBlock block = heap.allocateCompactMemoryBlock(bytes.length);
             block.copyFromArray(bytes, 0, 0, bytes.length);
             return block;
         }), bytes);
@@ -260,4 +260,5 @@ public class Mq extends MessageQueue{
                 "size=" + size +
                 '}';
     }
+
 }
