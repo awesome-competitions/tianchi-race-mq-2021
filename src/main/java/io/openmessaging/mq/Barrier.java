@@ -27,7 +27,7 @@ public class Barrier {
             if (array.length > 0){
                 try {
                     aof.write(array);
-                    aof.force();
+//                    aof.force();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

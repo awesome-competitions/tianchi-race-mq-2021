@@ -1,43 +1,75 @@
 package io.openmessaging.mq;
 
-import com.intel.pmem.llpl.AnyMemoryBlock;
-import com.intel.pmem.llpl.Heap;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class SSD extends Data{
 
-    private final long start;
+    private final FileWrapper fw;
 
-    private final long position;
-
-    private final long capacity;
-
-    private final List<Long> sizes;
-
-    public SSD(long start, long position, long capacity, List<Long> blocks) {
+    public SSD(long start, long end, long position, int capacity, FileWrapper fw, List<Integer> records) {
+        super(capacity);
+        this.fw = fw;
         this.start = start;
+        this.end = end;
         this.position = position;
-        this.capacity = capacity;
-        this.sizes = blocks;
+        this.records = new ArrayList<>(records);
     }
 
     @Override
-    public ByteBuffer get() {
-        throw new UnsupportedOperationException("ssd unsupported get");
+    public boolean writable(int size) {
+        return false;
     }
 
     @Override
-    public void set(ByteBuffer buffer) {
-        throw new UnsupportedOperationException("ssd unsupported set");
+    public void write(ByteBuffer buffer) {
+        throw new UnsupportedOperationException("ssd unsupported write");
     }
 
     @Override
-    public void clear() {
+    public List<ByteBuffer> read(long offset, int num) {
+        if (offset > end){
+            return null;
+        }
+        long startIndex = Math.max(offset, start) - start;
+        long endIndex = Math.min(offset + num - 1, end) - start;
+        long startPos = position;
+        long capacity = 0;
+        for (int i = 0; i < startIndex; i ++){
+            startPos += records.get(i);
+        }
+        for (int i = (int) startIndex; i <= endIndex; i ++){
+            capacity += records.get(i);
+        }
+        ByteBuffer data = ByteBuffer.allocate((int) capacity);
+        try {
+            fw.read(startPos, data);
+            data.flip();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        List<ByteBuffer> buffers = new ArrayList<>();
+        while(startIndex <= endIndex){
+            byte[] bytes = new byte[records.get((int) startIndex)];
+            data.get(bytes);
+            buffers.add(ByteBuffer.wrap(bytes));
+            startIndex ++;
+        }
+        return buffers;
+    }
 
+    @Override
+    public ByteBuffer load() {
+        ByteBuffer buffer = ByteBuffer.allocate(capacity);
+        try {
+            fw.read(position, buffer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return buffer;
     }
 
     @Override
@@ -45,23 +77,8 @@ public class SSD extends Data{
         return capacity;
     }
 
-    public List<ByteBuffer> load(long startOffset, FileWrapper fw) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocate((int) capacity);
-        fw.read(position, buffer);
-        buffer.flip();
-        List<ByteBuffer> list = new ArrayList<>();
-        for (int i = 0; i < sizes.size(); i ++){
-            int cap = sizes.get(i).intValue();
-            long offset = start + i;
-            if (offset < startOffset){
-                buffer.position(buffer.position() + cap);
-                continue;
-            }
-            byte[] bytes = new byte[cap];
-            buffer.get(bytes);
-            list.add(ByteBuffer.wrap(bytes));
-        }
-        return list;
+    @Override
+    public void reset(long start, long end, long position, ByteBuffer buffer, List<Integer> records) {
+        throw new UnsupportedOperationException("ssd unsupported reset");
     }
-
 }

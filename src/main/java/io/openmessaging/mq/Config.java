@@ -8,21 +8,21 @@ public class Config {
     private final String heapDir;
     private final long heapSize;
     private final int maxCount;
-    private final long cacheMaxSize;
-    private final long cacheClearSize;
+    private final int activeSize;
+    private final int readerSize;
     private final long liveTime;
 
-    public Config(String dataDir, String heapDir, long heapSize, int maxCount, long cacheMaxSize, long cacheClearSize) {
-        this(dataDir, heapDir, heapSize, maxCount, cacheMaxSize, cacheClearSize, 0);
+    public Config(String dataDir, String heapDir, long heapSize, int maxCount, int activeSize, int readerSize) {
+        this(dataDir, heapDir, heapSize, maxCount, activeSize, readerSize, 0);
     }
 
-    public Config(String dataDir, String heapDir, long heapSize, int maxCount, long cacheMaxSize, long cacheClearSize, long liveTime) {
+    public Config(String dataDir, String heapDir, long heapSize, int maxCount, int activeSize, int readerSize, long liveTime) {
         this.dataDir = dataDir;
         this.heapDir = heapDir;
         this.heapSize = heapSize;
         this.maxCount = maxCount;
-        this.cacheMaxSize = cacheMaxSize;
-        this.cacheClearSize = cacheClearSize;
+        this.activeSize = activeSize;
+        this.readerSize = readerSize;
         this.liveTime = liveTime;
     }
 
@@ -30,12 +30,12 @@ public class Config {
         return liveTime;
     }
 
-    public long getCacheMaxSize() {
-        return cacheMaxSize;
+    public int getActiveSize() {
+        return activeSize;
     }
 
-    public long getCacheClearSize() {
-        return cacheClearSize;
+    public int getReaderSize() {
+        return readerSize;
     }
 
     public String getDataDir() {

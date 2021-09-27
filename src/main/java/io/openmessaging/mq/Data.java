@@ -1,24 +1,55 @@
 package io.openmessaging.mq;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class Data {
 
-    protected Key key;
+    protected final int capacity;
 
-    public abstract ByteBuffer get();
+    protected long start;
 
-    public abstract void set(ByteBuffer buffer);
+    protected long end;
 
-    public abstract void clear();
+    protected long position;
+
+    protected List<Integer> records;
+
+    public Data(int capacity) {
+        this.capacity = capacity;
+        this.records = new ArrayList<>();
+    }
+
+    public abstract boolean writable(int size);
+
+    public abstract void write(ByteBuffer buffer);
+
+    public abstract List<ByteBuffer> read(long offset, int num);
+
+    public abstract ByteBuffer load();
 
     public abstract long size();
 
-    public Key getKey() {
-        return key;
+    public abstract void reset(long start, long end, long position, ByteBuffer buffer, List<Integer> records);
+
+    public int getCapacity() {
+        return capacity;
     }
 
-    public void setKey(Key key) {
-        this.key = key;
+    public long getStart() {
+        return start;
+    }
+
+    public long getPosition() {
+        return position;
+    }
+
+    public List<Integer> getRecords() {
+        return records;
+    }
+
+    public long getEnd() {
+        return end;
     }
 }
