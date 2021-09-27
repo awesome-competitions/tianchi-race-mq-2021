@@ -69,7 +69,7 @@ public class SSD extends Data{
             }else{
                 AnyMemoryBlock block = heap.allocateMemoryBlock(bytes.length);
                 block.copyFromArray(bytes, 0, 0, bytes.length);
-                data = new PMem(block);
+                data = new PMem(block, bytes.length);
             }
             data.setKey(new Key(key.getTopic(), key.getQueueId(), start + i));
             list.add(data);

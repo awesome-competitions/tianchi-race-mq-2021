@@ -8,8 +8,11 @@ public class PMem extends Data {
 
     private final AnyMemoryBlock block;
 
-    public PMem(AnyMemoryBlock block) {
+    private final int size;
+
+    public PMem(AnyMemoryBlock block, int size) {
         this.block = block;
+        this.size = size;
     }
 
     @Override
@@ -33,6 +36,6 @@ public class PMem extends Data {
 
     @Override
     public long size() {
-        return (int) block.size();
+        return size;
     }
 }
