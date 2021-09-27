@@ -48,14 +48,19 @@ public class SSD extends Data{
         return capacity;
     }
 
-    public List<Data> load(Heap heap, FileWrapper fw) throws IOException {
+    public List<Data> load(long startOffset, Heap heap, FileWrapper fw) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate((int) capacity);
         fw.read(position, buffer);
         buffer.flip();
         List<Data> list = new ArrayList<>();
         for (int i = 0; i < sizes.size(); i ++){
-            long cap = sizes.get(i);
-            byte[] bytes = new byte[(int) cap];
+            int cap = sizes.get(i).intValue();
+            long offset = start + i;
+            if (offset < startOffset){
+                buffer.position(buffer.position() + cap);
+                continue;
+            }
+            byte[] bytes = new byte[cap];
             buffer.get(bytes);
 
             Data data = null;

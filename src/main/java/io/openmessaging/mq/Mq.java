@@ -13,7 +13,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Mq {
 
@@ -35,7 +37,7 @@ public class Mq {
 
     private final AtomicLong size;
 
-    private final ReentrantLock lock;
+    private final ReadWriteLock lock;
 
     public Mq(Config config) throws FileNotFoundException {
         this.config = config;
@@ -46,7 +48,7 @@ public class Mq {
         this.tpf = new FileWrapper(new RandomAccessFile(config.getDataDir() + "tpf", "rw"));
         this.barrier = new Barrier(config.getMaxCount(), this.aof);
         this.size = new AtomicLong();
-        this.lock = new ReentrantLock();
+        this.lock = new ReentrantReadWriteLock();
         if (config.getHeapDir() != null){
             this.heap = Heap.exists(config.getHeapDir()) ? Heap.openHeap(config.getHeapDir()) : Heap.createHeap(config.getHeapDir(), config.getHeapSize());
         }
@@ -69,15 +71,11 @@ public class Mq {
         records.put(data.getKey(), data);
         size.addAndGet(data.size());
         if (size.get() > config.getCacheMaxSize()){
-            try {
-                lock.isLocked();
-                lock.lock();
-                if (size.get() > config.getCacheMaxSize()){
-                    clear();
-                }
-            }finally {
-                lock.unlock();
+            lock.writeLock().lock();
+            if (size.get() > config.getCacheMaxSize()){
+                clear();
             }
+            lock.writeLock().unlock();
         }
     }
 
@@ -136,14 +134,35 @@ public class Mq {
         Data data = applyData(buffer);
         data.setKey(new Key(topic, queueId, offset));
         append(data);
-
         barrier.write(buffer);
         barrier.await(10, TimeUnit.SECONDS);
         return offset;
     }
 
-    public Map<Integer, ByteBuffer> getRange(String topic, int queueId, long offset, int fetchNum) {
-        return null;
+    public Map<Integer, ByteBuffer> getRange(String topic, int queueId, long offset, int fetchNum) throws IOException {
+        lock.readLock().lock();
+        long startOffset = offset;
+        long endOffset = startOffset + fetchNum - 1;
+        Map<Integer, ByteBuffer> results = new HashMap<>();
+        for (;startOffset >= endOffset; startOffset++){
+            Data data = records.remove(new Key(topic, queueId, startOffset));
+            if (data == null){
+                break;
+            }
+            if (data instanceof SSD){
+                SSD ssd = (SSD) data;
+                List<Data> list = ssd.load(startOffset, heap, tpf);
+                long tempOffset = startOffset;
+                for (Data d: list){
+                    records.put(new Key(topic, queueId, tempOffset), d);
+                    tempOffset ++;
+                }
+                data = list.get(0);
+            }
+            results.put((int) (startOffset - offset), data.get());
+        }
+        lock.readLock().unlock();
+        return results;
     }
 
 
