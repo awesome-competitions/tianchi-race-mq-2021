@@ -12,7 +12,7 @@ public class PMem extends Data {
 
     private final int size;
 
-    private static final ExecutorService executors = Executors.newFixedThreadPool(100);
+    private static final ExecutorService executors = Executors.newFixedThreadPool(200);
 
     public PMem(Heap heap, byte[] bytes) {
         this.future = executors.submit(()->{
