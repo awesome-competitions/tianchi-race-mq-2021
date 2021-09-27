@@ -114,6 +114,7 @@ public class Mq {
                     buffers.add(data.get());
                     sizes.add(data.size());
                     data.clear();
+                    this.size.addAndGet(- data.size());
                 }
                 long position = tpf.write(buffers.toArray(Barrier.EMPTY));
                 SSD ssd = new SSD(startOffset, endOffset, position, capacity, sizes);
@@ -160,6 +161,8 @@ public class Mq {
                 data = list.get(0);
             }
             results.put((int) (startOffset - offset), data.get());
+            data.clear();
+            this.size.addAndGet(- data.size());
         }
         lock.readLock().unlock();
         return results;
