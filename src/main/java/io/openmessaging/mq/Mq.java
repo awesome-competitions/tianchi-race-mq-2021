@@ -103,17 +103,23 @@ public class Mq extends MessageQueue{
         return heap == null ? new Dram(buffer) : applyBlock(buffer);
     }
 
-    void append(Data data) throws IOException {
+    void append(Data data) {
         keys.add(data.getKey());
         records.put(data.getKey(), data);
         size.addAndGet(data.size());
-        if (size.get() > config.getCacheMaxSize()){
-            lock.writeLock().lock();
+        new Thread(()->{
             if (size.get() > config.getCacheMaxSize()){
-                clear();
+                lock.writeLock().lock();
+                if (size.get() > config.getCacheMaxSize()){
+                    try {
+                        clear();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                lock.writeLock().unlock();
             }
-            lock.writeLock().unlock();
-        }
+        }).start();
     }
 
     void clear() throws IOException {
