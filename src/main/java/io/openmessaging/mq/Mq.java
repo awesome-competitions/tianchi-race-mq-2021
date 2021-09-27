@@ -94,11 +94,9 @@ public class Mq extends MessageQueue{
 
 
     Data applyBlock(ByteBuffer buffer){
-        AnyMemoryBlock block = heap.allocateCompactMemoryBlock(buffer.capacity());
         byte[] bytes = new byte[buffer.capacity()];
         buffer.get(bytes);
-        block.copyFromArray(bytes, 0, 0, bytes.length);
-        return new PMem(block, buffer.capacity());
+        return new PMem(heap, bytes);
     }
 
     Data applyData(ByteBuffer buffer){

@@ -62,15 +62,7 @@ public class SSD extends Data{
             }
             byte[] bytes = new byte[cap];
             buffer.get(bytes);
-
-            Data data = null;
-            if (heap == null){
-                data = new Dram(ByteBuffer.wrap(bytes));
-            }else{
-                AnyMemoryBlock block = heap.allocateMemoryBlock(bytes.length);
-                block.copyFromArray(bytes, 0, 0, bytes.length);
-                data = new PMem(block, bytes.length);
-            }
+            Data data = heap == null ? new Dram(ByteBuffer.wrap(bytes)) : new PMem(heap, bytes);
             data.setKey(new Key(key.getTopic(), key.getQueueId(), start + i));
             list.add(data);
         }
