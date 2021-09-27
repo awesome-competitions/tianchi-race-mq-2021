@@ -79,11 +79,13 @@ public class Mq extends MessageQueue{
 
     void startMonitor(){
         Thread monitor = new Thread(()->{
-            try {
-                Thread.sleep(Const.SECOND * 30);
-                LOGGER.info("current cache size {}, records size {}, to ssd times {}, from ssd times {}", size, records.size(), toSSDTimes, fromSSDTimes);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            while (true){
+                try {
+                    Thread.sleep(Const.SECOND * 30);
+                    LOGGER.info("current cache size {}, records size {}, to ssd times {}, from ssd times {}", size, records.size(), toSSDTimes, fromSSDTimes);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         });
         monitor.setDaemon(true);
