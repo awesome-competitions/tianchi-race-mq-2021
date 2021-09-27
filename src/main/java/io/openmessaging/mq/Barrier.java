@@ -52,8 +52,8 @@ public class Barrier {
         return -1;
     }
 
-    public synchronized void write(ByteBuffer buffer){
-        this.buffers.add(buffer);
+    public synchronized void write(ByteBuffer... buffers){
+        this.buffers.addAll(Arrays.asList(buffers));
     }
 
     public synchronized ByteBuffer[] getAndClear(){
