@@ -1,9 +1,6 @@
 package io.openmessaging;
 
-import com.intel.pmem.llpl.Accessor;
-import com.intel.pmem.llpl.AnyMemoryBlock;
-import com.intel.pmem.llpl.Heap;
-import com.intel.pmem.llpl.MemoryBlock;
+import com.intel.pmem.llpl.*;
 import io.openmessaging.consts.Const;
 import io.openmessaging.impl.MessageQueueImpl;
 import io.openmessaging.model.FileWrapper;
@@ -86,7 +83,9 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         long heapSize = Const.G * 59;
         Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
         long start = System.currentTimeMillis();
-        heap.allocateMemoryBlock(Const.G * 40);
+        CompactAccessor accessor = heap.createCompactAccessor();
+        accessor.setInt(0, 1);
+        System.out.println(accessor.getInt(0));
         long end = System.currentTimeMillis();
         System.out.println((end - start));
         throw new RuntimeException("ex");
