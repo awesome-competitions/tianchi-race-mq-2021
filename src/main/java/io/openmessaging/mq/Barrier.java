@@ -12,6 +12,8 @@ import java.util.concurrent.TimeoutException;
 
 public class Barrier {
 
+    private long position;
+
     private final Runnable action;
 
     private final List<ByteBuffer> buffers;
@@ -27,7 +29,7 @@ public class Barrier {
             if (array.length > 0){
                 try {
                     aof.write(array);
-                    aof.force();
+//                    aof.force();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -45,8 +47,12 @@ public class Barrier {
         }
     }
 
-    public synchronized void write(ByteBuffer... buffers){
-        this.buffers.addAll(Arrays.asList(buffers));
+    public synchronized long write(ByteBuffer... buffers){
+        for (ByteBuffer buffer: buffers){
+            position += buffer.capacity();
+            this.buffers.add(buffer);
+        }
+        return position;
     }
 
     public synchronized ByteBuffer[] getAndClear(){

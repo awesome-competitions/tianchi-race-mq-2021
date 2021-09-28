@@ -3,6 +3,7 @@ package io.openmessaging.mq;
 import com.intel.pmem.llpl.AnyMemoryBlock;
 import com.intel.pmem.llpl.Heap;
 import io.openmessaging.MessageQueue;
+import io.openmessaging.consts.Const;
 import io.openmessaging.utils.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,24 +27,17 @@ public class Mq extends MessageQueue{
 
     private final FileWrapper aof;
 
-    private final FileWrapper tpf;
-
-    private final LinkedBlockingQueue<AnyMemoryBlock> blocks = new LinkedBlockingQueue<>();
-
     private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
 
     public Mq(Config config) throws FileNotFoundException {
         this.config = config;
         this.queues = new ConcurrentHashMap<>();
         this.aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof", "rw"));
-        this.tpf = new FileWrapper(new RandomAccessFile(config.getDataDir() + "tpf", "rw"));
         this.barrier = new Barrier(config.getMaxCount(), this.aof);
         if (config.getHeapDir() != null){
             this.heap = Heap.exists(config.getHeapDir()) ? Heap.openHeap(config.getHeapDir()) : Heap.createHeap(config.getHeapDir(), config.getHeapSize());
         }
         startKiller();
-        startProducer();
-        startForce();
         LOGGER.info("Start");
     }
 
@@ -60,41 +54,11 @@ public class Mq extends MessageQueue{
         }).start();
     }
 
-    void startProducer(){
-        Thread producer = new Thread(()->{
-            if (heap != null){
-                for (int i = 0; i < 20 * 10000; i ++){
-                    blocks.add(heap.allocateCompactMemoryBlock(config.getActiveSize()));
-                }
-            }
-        });
-        producer.setDaemon(true);
-        producer.start();
-    }
-
-    void startForce(){
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-            public void run() {
-                try {
-                    tpf.force();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, 0 , 1000);
-    }
-
     Data apply(int capacity){
         if (heap == null){
             return new Dram(capacity);
         }
-        try {
-            return new PMem(blocks.take(), capacity);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return new PMem(heap.allocateCompactMemoryBlock(capacity), capacity);
     }
 
     public Queue getQueue(String topic, int queueId){
@@ -114,16 +78,19 @@ public class Mq extends MessageQueue{
         if (Monitor.appendCount % 100000 == 0){
             LOGGER.info(Monitor.information());
         }
-        Queue queue = getQueue(topic, queueId);
-        queue.write(tpf, buffer);
-        buffer.flip();
 
-        ByteBuffer header = ByteBuffer.allocateDirect(topic.getBytes().length + 4)
+        ByteBuffer data = ByteBuffer.allocateDirect(topic.getBytes().length + 4 + buffer.capacity())
                 .put(topic.getBytes())
                 .putShort((short) queueId)
-                .putShort((short) buffer.capacity());
-        header.flip();
-        barrier.write(header, buffer);
+                .putShort((short) buffer.capacity())
+                .put(buffer);
+        data.flip();
+        buffer.flip();
+
+        long position = barrier.write(data);
+        Queue queue = getQueue(topic, queueId);
+        queue.write(aof, position - buffer.capacity(), buffer);
+
         barrier.await(30, TimeUnit.SECONDS);
         return queue.getOffset();
     }

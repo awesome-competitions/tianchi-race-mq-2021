@@ -14,64 +14,38 @@ public class Queue {
 
     private Data active;
 
-    private long readOffset;
-
-    private final Map<Long, Data> stables;
+    private final Map<Long, Data> records;
 
     public Queue() {
         this.offset = -1;
-        this.stables = new HashMap<>();
+        this.records = new HashMap<>();
     }
 
-    public long write(FileWrapper fw, ByteBuffer buffer){
+    public long write(FileWrapper fw, long position, ByteBuffer buffer){
         ++ offset;
-        if (! active.writable(buffer.capacity())){
-            try {
-                if (active.getEnd() >= readOffset){
-                    ByteBuffer data = active.load();
-                    Monitor.writeDistCount ++;
-                    long position = fw.write(data);
-                    Data stable = new SSD(active.getStart(), active.getEnd(), position, data.capacity(), fw, active.getRecords());
-                    for (long i = stable.getStart(); i <= active.getEnd(); i ++){
-                        stables.put(i, stable);
-                    }
-                }
-                this.active.reset(offset, offset, 0, null, null);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            this.active.reset(offset, offset, 0, null, null);
+        if (offset > 0){
+            records.put(offset - 1, new SSD(fw, active.getPosition(), active.getCapacity()));
         }
-        active.write(buffer);
+        active.set(buffer);
+        active.setPosition(position);
         return offset;
     }
 
     public List<ByteBuffer> read(long offset, int num){
-        if (offset > this.offset){
-            return null;
+        if (offset == this.offset){
+            return Collections.singletonList(active.get());
         }
-        int fetchedNum = num;
-        long startOffset = offset;
-        List<ByteBuffer> buffers = new ArrayList<>(num);
-        while (fetchedNum > 0 && startOffset <= this.offset){
-            List<ByteBuffer> data = null;
-            if (startOffset >= active.getStart()){
-                data = active.read(startOffset, fetchedNum);
-            }else{
-                Data reader = stables.get(startOffset);
-                if (reader != null){
-                    Monitor.readDistCount ++;
-                    data = reader.read(startOffset, fetchedNum);
-                }
-            }
-            if (data == null){
+        List<ByteBuffer> buffers = new ArrayList<>();
+        for (long i = offset; i < offset + num; i ++){
+            if (i == this.offset){
+                buffers.add(active.get());
                 break;
             }
-            buffers.addAll(data);
-            fetchedNum -= data.size();
-            startOffset += data.size();
+            Data data = records.get(offset);
+            if (data != null){
+                buffers.add(data.get());
+            }
         }
-        readOffset = offset + buffers.size();
         return buffers;
     }
 
