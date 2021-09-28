@@ -91,13 +91,6 @@ public class Mq extends MessageQueue{
         Queue queue = getQueue(topic, queueId);
         List<ByteBuffer> buffers = queue.read(offset, fetchNum);
 
-        if (topic.equals("topic84") && queueId == 1809 && offset == 231){
-            System.out.println(queue.getOffset());
-            System.out.println(queue.getRecords());
-            System.out.println(queue.getActive());
-            System.out.println(buffers);
-        }
-
         Map<Integer, ByteBuffer> results = new HashMap<>();
         if (CollectionUtils.isEmpty(buffers)){
             return results;
