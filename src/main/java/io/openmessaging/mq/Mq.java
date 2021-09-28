@@ -65,7 +65,7 @@ public class Mq extends MessageQueue{
         if (heap == null){
             return new Dram(capacity);
         }
-        return new PMem(heap.allocateCompactMemoryBlock(capacity), capacity);
+        return new PMem(heap.allocateMemoryBlock(capacity), capacity);
     }
 
     public Queue getQueue(String topic, int queueId){
