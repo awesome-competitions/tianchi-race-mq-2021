@@ -109,30 +109,17 @@ public class Mq extends MessageQueue{
         }
 
         Queue queue = getQueue(topic, queueId);
-        byte[] bytes = new byte[buffer.capacity()];
-        buffer.get(bytes);
+        queue.write(tpf(), buffer);
         buffer.flip();
 
-        CountDownLatch cdl = new CountDownLatch(2);
-        POOLS.execute(()-> {
-            queue.write(tpf(), buffer);
-            cdl.countDown();
-        });
-        POOLS.execute(()-> {
-            ByteBuffer header = ByteBuffer.allocateDirect(topic.getBytes().length + 4)
-                    .put(topic.getBytes())
-                    .putShort((short) queueId)
-                    .putShort((short) buffer.capacity());
-            header.flip();
-            barrier.write(header, ByteBuffer.wrap(bytes));
-            barrier.await(30, TimeUnit.SECONDS);
-            cdl.countDown();
-        });
-        try {
-            cdl.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        ByteBuffer header = ByteBuffer.allocateDirect(topic.getBytes().length + 4)
+                .put(topic.getBytes())
+                .putShort((short) queueId)
+                .putShort((short) buffer.capacity());
+        header.flip();
+        barrier.write(header, buffer);
+        barrier.await(30, TimeUnit.SECONDS);
+
         return queue.getOffset();
     }
 
