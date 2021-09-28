@@ -42,6 +42,7 @@ public class Mq extends MessageQueue{
         }
         startKiller();
         startProducer();
+        LOGGER.info("Start");
     }
 
     void startKiller(){
@@ -58,13 +59,13 @@ public class Mq extends MessageQueue{
     }
 
     void startProducer(){
-        Thread monitor = new Thread(()->{
+        Thread producer = new Thread(()->{
             for (int i = 0; i < 20 * 10000; i ++){
                 blocks.add(heap.allocateCompactMemoryBlock(config.getActiveSize()));
             }
         });
-        monitor.setDaemon(true);
-        monitor.start();
+        producer.setDaemon(true);
+        producer.start();
     }
 
     Data apply(int capacity){

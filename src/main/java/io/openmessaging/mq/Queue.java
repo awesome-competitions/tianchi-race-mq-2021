@@ -26,20 +26,20 @@ public class Queue {
     public long write(FileWrapper fw, ByteBuffer buffer){
         ++ offset;
         if (! active.writable(buffer.capacity())){
-//            try {
-//                if (active.getEnd() >= readOffset){
-//                    ByteBuffer data = active.load();
-//                    Monitor.writeDistCount ++;
-//                    long position = fw.write(data);
-//                    Data stable = new SSD(active.getStart(), active.getEnd(), position, data.capacity(), fw, active.getRecords());
-//                    for (long i = stable.getStart(); i <= active.getEnd(); i ++){
-//                        stables.put(i, stable);
-//                    }
-//                }
-//                this.active.reset(offset, offset, 0, null, null);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
+            try {
+                if (active.getEnd() >= readOffset){
+                    ByteBuffer data = active.load();
+                    Monitor.writeDistCount ++;
+                    long position = fw.write(data);
+                    Data stable = new SSD(active.getStart(), active.getEnd(), position, data.capacity(), fw, active.getRecords());
+                    for (long i = stable.getStart(); i <= active.getEnd(); i ++){
+                        stables.put(i, stable);
+                    }
+                }
+                this.active.reset(offset, offset, 0, null, null);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             this.active.reset(offset, offset, 0, null, null);
         }
         active.write(buffer);
