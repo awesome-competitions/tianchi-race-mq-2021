@@ -24,13 +24,11 @@ public class Test {
 //    private final static String DIR = "/data/app/";
 //    private final static String HEAP_DIR = "/mnt/mem/nico3";
 //    private final static long HEAP_SIZE = 1024 * 1024 * 256;
-//    private final static int ACTIVE_SIZE = 100;
-//    private final static int READER_SIZE = 1024 * 90 / 10;
+//    private final static long HEAP_USABLE_SIZE = 1024 * 1024 * 192;
     private final static String DIR = "D://test//nio//";
     private final static String HEAP_DIR = null;
     private final static long HEAP_SIZE = 1024 * 1024 * 256;
-    private final static int ACTIVE_SIZE = 1024 * 5;
-    private final static int READER_SIZE = 1024 * 90 / 10;
+    private final static long HEAP_USABLE_SIZE = 1024 * 1024 * 192;
 
 
     public static void cleanDB(){
@@ -45,7 +43,7 @@ public class Test {
 
     public static void main(String[] args) throws InterruptedException, FileNotFoundException {
         cleanDB();
-        MessageQueue mMapMessageQueue = new Mq(new Config(DIR, HEAP_DIR, HEAP_SIZE, 1, ACTIVE_SIZE, READER_SIZE));
+        MessageQueue mMapMessageQueue = new Mq(new Config(DIR, HEAP_DIR, HEAP_SIZE, HEAP_USABLE_SIZE, 1, 0));
         List<Supplier<?>> suppliers = new ArrayList<>();
 
         for (int j = 1; j <= TOPIC_SIZE; j ++){

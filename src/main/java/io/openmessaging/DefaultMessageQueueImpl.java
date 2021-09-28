@@ -31,9 +31,8 @@ public class DefaultMessageQueueImpl extends MessageQueue{
             "/essd/",
             "/pmem/nico",
             Const.G * 59,
+            Const.G * 54,
             40,
-            (int) Const.K * 256,
-            0,
             Const.MINUTE * 4 + Const.SECOND * 2
 //            0
     ));

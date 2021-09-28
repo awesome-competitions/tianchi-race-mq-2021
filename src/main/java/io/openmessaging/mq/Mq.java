@@ -17,8 +17,6 @@ import java.util.concurrent.*;
 
 public class Mq extends MessageQueue{
 
-    private Heap heap;
-
     private final Config config;
 
     private final Map<String, Map<Integer, Queue>> queues;
@@ -27,6 +25,8 @@ public class Mq extends MessageQueue{
 
     private final FileWrapper aof;
 
+    private final Cache cache;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
 
     public Mq(Config config) throws FileNotFoundException {
@@ -34,9 +34,7 @@ public class Mq extends MessageQueue{
         this.queues = new ConcurrentHashMap<>();
         this.aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof", "rw"));
         this.barrier = new Barrier(config.getMaxCount(), this.aof);
-        if (config.getHeapDir() != null){
-            this.heap = Heap.exists(config.getHeapDir()) ? Heap.openHeap(config.getHeapDir()) : Heap.createHeap(config.getHeapDir(), config.getHeapSize());
-        }
+        this.cache = new Cache(config);
         startKiller();
         LOGGER.info("Start");
     }
@@ -59,8 +57,8 @@ public class Mq extends MessageQueue{
     public Queue getQueue(String topic, int queueId){
         return queues.computeIfAbsent(topic, k ->  new ConcurrentHashMap<>())
                 .computeIfAbsent(queueId, k -> {
-                    Queue queue = new Queue();
-                    queue.setActive(apply(config.getActiveSize()));
+                    Queue queue = new Queue(cache, aof);
+                    queue.setActive(cache.apply((int) (Const.K * 17)));
                     Monitor.queueCount ++;
                     return queue;
                 });
@@ -84,7 +82,7 @@ public class Mq extends MessageQueue{
 
         long position = barrier.write(data);
         Queue queue = getQueue(topic, queueId);
-        queue.write(aof, position - buffer.capacity(), buffer);
+        queue.write(position - buffer.capacity(), buffer);
 
         barrier.await(30, TimeUnit.SECONDS);
         return queue.getOffset();

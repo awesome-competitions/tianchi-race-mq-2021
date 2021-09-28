@@ -16,35 +16,43 @@ public class Queue {
 
     private final Map<Long, Data> records;
 
-    public Queue() {
+    private final Cache cache;
+
+    private final FileWrapper fw;
+
+    public Queue(Cache cache, FileWrapper fw) {
+        this.cache = cache;
+        this.fw = fw;
         this.offset = -1;
         this.records = new HashMap<>();
     }
 
-    public long write(FileWrapper fw, long position, ByteBuffer buffer){
-        ++ offset;
-        if (offset > 0){
-            records.put(offset - 1, new SSD(fw, active.getPosition(), active.getCapacity()));
+    public long write(long position, ByteBuffer buffer){
+        if (! records.isEmpty()){
+            Data last = cache.apply(active.getCapacity());
+            if (last == null){
+                last = new SSD(fw, active.getPosition(), active.getCapacity());
+            }else{
+                last.set(active.get());
+            }
+            records.put(offset, last);
         }
+        ++ offset;
         active.set(buffer);
         active.setPosition(position);
+        records.put(offset, active);
         return offset;
     }
 
     public List<ByteBuffer> read(long offset, int num){
-        if (offset == this.offset){
-            return Collections.singletonList(active.get());
-        }
         List<ByteBuffer> buffers = new ArrayList<>();
         for (long i = offset; i < offset + num; i ++){
-            if (i == this.offset){
-                buffers.add(active.get());
+            Data data = records.get(offset);
+            if (data == null){
                 break;
             }
-            Data data = records.get(offset);
-            if (data != null){
-                buffers.add(data.get());
-            }
+            buffers.add(data.get());
+            cache.recycle(data);
         }
         return buffers;
     }

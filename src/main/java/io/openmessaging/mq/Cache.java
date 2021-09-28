@@ -8,25 +8,33 @@ public class Cache {
 
     private long used;
 
-    private long size;
-
-    private Config config;
+    private final Config config;
 
     public Cache(Config config){
         if (config.getHeapDir() != null){
             this.heap = Heap.exists(config.getHeapDir()) ? Heap.openHeap(config.getHeapDir()) : Heap.createHeap(config.getHeapDir(), config.getHeapSize());
         }
+        this.config = config;
     }
 
-    public Data apply(int capacity){
+    public synchronized Data apply(int capacity){
         if (heap == null){
             return new Dram(capacity);
         }
-        if (size - used > )
-
-        return new PMem(heap.allocateCompactMemoryBlock(capacity), capacity);
+        if (config.getHeapUsableSize() - used > capacity){
+            used += capacity;
+            Monitor.heapUsedSize = used;
+            return new PMem(heap.allocateCompactMemoryBlock(capacity), capacity);
+        }
+        return null;
     }
 
-
+    public synchronized void recycle(Data data){
+        if (heap != null){
+            data.clear();
+            used -= data.getCapacity();
+            Monitor.heapUsedSize = used;
+        }
+    }
 
 }

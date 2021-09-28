@@ -15,7 +15,6 @@ public class Dram extends Data {
         super(capacity);
     }
 
-
     @Override
     public ByteBuffer get() {
         return data;
