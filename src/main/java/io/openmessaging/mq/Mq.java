@@ -54,12 +54,7 @@ public class Mq extends MessageQueue{
         }).start();
     }
 
-    Data apply(int capacity){
-        if (heap == null){
-            return new Dram(capacity);
-        }
-        return new PMem(heap.allocateCompactMemoryBlock(capacity), capacity);
-    }
+
 
     public Queue getQueue(String topic, int queueId){
         return queues.computeIfAbsent(topic, k ->  new ConcurrentHashMap<>())
