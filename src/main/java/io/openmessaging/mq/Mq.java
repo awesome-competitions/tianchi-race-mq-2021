@@ -59,7 +59,7 @@ public class Mq extends MessageQueue{
 
     void startProducer(){
         Thread monitor = new Thread(()->{
-            for (int i = 0; i < 19 * 10000; i ++){
+            for (int i = 0; i < 18 * 10000; i ++){
                 blocks.add(heap.allocateCompactMemoryBlock(config.getActiveSize()));
             }
         });
