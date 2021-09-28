@@ -84,22 +84,18 @@ public class Mq extends MessageQueue{
                 .computeIfAbsent(queueId, k -> {
                     Queue queue = new Queue();
                     queue.setActive(apply(config.getActiveSize()));
-                    queueCount ++;
+                    Monitor.queueCount ++;
                     return queue;
                 });
     }
 
 
-    long size = 0;
-    int count = 0;
-    int queueCount = 0;
     public long append(String topic, int queueId, ByteBuffer buffer)  {
-        ++count;
-        size += buffer.capacity();
-        if (count % 100000 == 0){
-            LOGGER.info("append count {}, size {}, queueCount {}", count, size, queueCount);
+        Monitor.appendCount ++;
+        Monitor.appendSize += buffer.capacity();
+        if (Monitor.appendCount % 100000 == 0){
+            LOGGER.info(Monitor.information());
         }
-
         Queue queue = getQueue(topic, queueId);
         queue.write(tpf(), buffer);
         buffer.flip();
@@ -111,7 +107,6 @@ public class Mq extends MessageQueue{
         header.flip();
         barrier.write(header, buffer);
         barrier.await(30, TimeUnit.SECONDS);
-
         return queue.getOffset();
     }
 

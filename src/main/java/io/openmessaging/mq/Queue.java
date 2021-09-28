@@ -29,6 +29,7 @@ public class Queue {
             try {
                 if (active.getEnd() >= readOffset){
                     ByteBuffer data = active.load();
+                    Monitor.writeDistCount ++;
                     long position = fw.write(data);
                     Data stable = new SSD(active.getStart(), active.getEnd(), position, data.capacity(), fw, active.getRecords());
                     for (long i = stable.getStart(); i <= active.getEnd(); i ++){
@@ -58,6 +59,7 @@ public class Queue {
             }else{
                 Data reader = stables.get(startOffset);
                 if (reader != null){
+                    Monitor.readDistCount ++;
                     data = reader.read(startOffset, fetchedNum);
                 }
             }
