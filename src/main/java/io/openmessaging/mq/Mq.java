@@ -34,7 +34,7 @@ public class Mq extends MessageQueue{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
 
-    private static final ThreadPoolExecutor POOLS = (ThreadPoolExecutor) Executors.newFixedThreadPool(200);
+    private static final ThreadPoolExecutor POOLS = (ThreadPoolExecutor) Executors.newFixedThreadPool(500);
 
     public Mq(Config config) throws FileNotFoundException {
         this.config = config;
