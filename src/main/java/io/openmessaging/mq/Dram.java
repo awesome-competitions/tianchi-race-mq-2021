@@ -35,7 +35,7 @@ public class Dram extends Data {
 
     @Override
     public List<ByteBuffer> read(long offset, int num) {
-        if (offset > end){
+        if (CollectionUtils.isEmpty(records) || offset > end){
             return null;
         }
         long startIndex = Math.max(offset, start) - start;
