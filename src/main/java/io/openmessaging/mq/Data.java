@@ -33,4 +33,8 @@ public abstract class Data {
     public void setPosition(long position) {
         this.position = position;
     }
+
+    public void setCapacity(int capacity) {
+        this.capacity = capacity;
+    }
 }

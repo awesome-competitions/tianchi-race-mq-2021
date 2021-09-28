@@ -34,7 +34,7 @@ public class Cache {
     }
 
     public void recycle(Data data){
-        if (heap != null){
+        if (heap != null && data instanceof PMem){
             data.clear();
             used.addAndGet(- data.getCapacity());
             Monitor.heapUsedSize = used.longValue();

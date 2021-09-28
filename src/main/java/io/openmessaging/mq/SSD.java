@@ -25,6 +25,7 @@ public class SSD extends Data{
             e.printStackTrace();
         }
         data.flip();
+        Monitor.readDistCount ++;
         return data;
     }
 

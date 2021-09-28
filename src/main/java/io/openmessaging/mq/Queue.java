@@ -20,6 +20,8 @@ public class Queue {
 
     private final FileWrapper fw;
 
+    private boolean reading;
+
     public Queue(Cache cache, FileWrapper fw) {
         this.cache = cache;
         this.fw = fw;
@@ -28,24 +30,24 @@ public class Queue {
     }
 
     public long write(long position, ByteBuffer buffer){
+        if (! reading){
+            active.setPosition(position);
+            active.setCapacity(buffer.capacity());
+            records.put(++ offset, new SSD(fw, position, buffer.capacity()));
+            return offset;
+        }
         if (! records.isEmpty()){
-//            Data last = cache.apply(active.getCapacity());
-//            if (last == null){
-//                last = new SSD(fw, active.getPosition(), active.getCapacity());
-//            }else{
-//                last.set(active.get());
-//            }
             Data last = new SSD(fw, active.getPosition(), active.getCapacity());
             records.put(offset, last);
         }
-        ++ offset;
         active.set(buffer);
         active.setPosition(position);
-        records.put(offset, active);
+        records.put( ++ offset, active);
         return offset;
     }
 
     public List<ByteBuffer> read(long offset, int num){
+        reading = true;
         List<ByteBuffer> buffers = new ArrayList<>();
         for (long i = offset; i < offset + num; i ++){
             Data data = records.get(offset);
