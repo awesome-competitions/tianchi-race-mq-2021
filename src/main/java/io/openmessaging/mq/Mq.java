@@ -91,7 +91,7 @@ public class Mq extends MessageQueue{
         return queues.computeIfAbsent(topic, k ->  new ConcurrentHashMap<>())
                 .computeIfAbsent(queueId, k -> {
                     Queue queue = new Queue();
-                    queue.setActive(apply(config.getActiveSize()));
+//                    queue.setActive(apply(config.getActiveSize()));
                     queueCount ++;
                     return queue;
                 });
