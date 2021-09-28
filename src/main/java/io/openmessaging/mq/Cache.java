@@ -2,11 +2,13 @@ package io.openmessaging.mq;
 
 import com.intel.pmem.llpl.Heap;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class Cache {
 
     private Heap heap;
 
-    private long used;
+    private AtomicLong used;
 
     private final Config config;
 
@@ -17,23 +19,23 @@ public class Cache {
         this.config = config;
     }
 
-    public synchronized Data apply(int capacity){
+    public Data apply(int capacity){
         if (heap == null){
             return new Dram(capacity);
         }
-        if (config.getHeapUsableSize() - used > capacity){
-            used += capacity;
-            Monitor.heapUsedSize = used;
+        if (config.getHeapUsableSize() - used.longValue() > capacity){
+            used.addAndGet(capacity);
+            Monitor.heapUsedSize = used.longValue();
             return new PMem(heap.allocateCompactMemoryBlock(capacity), capacity);
         }
         return null;
     }
 
-    public synchronized void recycle(Data data){
+    public void recycle(Data data){
         if (heap != null){
             data.clear();
-            used -= data.getCapacity();
-            Monitor.heapUsedSize = used;
+            used.addAndGet(- data.getCapacity());
+            Monitor.heapUsedSize = used.longValue();
         }
     }
 

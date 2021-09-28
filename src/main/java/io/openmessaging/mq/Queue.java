@@ -28,21 +28,20 @@ public class Queue {
     }
 
     public long write(long position, ByteBuffer buffer){
-//        if (! records.isEmpty()){
-//            Data last = cache.apply(active.getCapacity());
-//            if (last == null){
-//                last = new SSD(fw, active.getPosition(), active.getCapacity());
-//            }else{
-//                last.set(active.get());
-//            }
-//            records.put(offset, last);
-//        }
-//        ++ offset;
-//        active.set(buffer);
-//        active.setPosition(position);
-//        records.put(offset, active);
-//        return offset;
-        return ++offset;
+        if (! records.isEmpty()){
+            Data last = cache.apply(active.getCapacity());
+            if (last == null){
+                last = new SSD(fw, active.getPosition(), active.getCapacity());
+            }else{
+                last.set(active.get());
+            }
+            records.put(offset, last);
+        }
+        ++ offset;
+        active.set(buffer);
+        active.setPosition(position);
+        records.put(offset, active);
+        return offset;
     }
 
     public List<ByteBuffer> read(long offset, int num){
