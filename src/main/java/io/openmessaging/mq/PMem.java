@@ -13,9 +13,9 @@ import java.util.concurrent.*;
 
 public class PMem extends Data {
 
-    private final Future<AnyMemoryBlock> block;
+    private final AnyMemoryBlock block;
 
-    public PMem(Future<AnyMemoryBlock> block, int capacity) {
+    public PMem(AnyMemoryBlock block, int capacity) {
         super(capacity);
         this.block = block;
     }
@@ -29,14 +29,10 @@ public class PMem extends Data {
     public void write(ByteBuffer buffer) {
         byte[] bytes = new byte[buffer.capacity()];
         buffer.get(bytes);
-        try {
-            block.get().copyFromArray(bytes, 0, position, bytes.length);
-            position += bytes.length;
-            records.add(bytes.length);
-            end = start + records.size() - 1;
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
+        block.copyFromArray(bytes, 0, position, bytes.length);
+        position += bytes.length;
+        records.add(bytes.length);
+        end = start + records.size() - 1;
     }
 
     @Override
@@ -55,11 +51,7 @@ public class PMem extends Data {
             capacity += records.get(i);
         }
         byte[] bytes = new byte[(int) capacity];
-        try {
-            block.get().copyToArray(startPos, bytes, 0, bytes.length);
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
+        block.copyToArray(startPos, bytes, 0, bytes.length);
         ByteBuffer data = ByteBuffer.wrap(bytes);
         List<ByteBuffer> buffers = new ArrayList<>();
         while(startIndex <= endIndex){
@@ -74,11 +66,7 @@ public class PMem extends Data {
     @Override
     public ByteBuffer load() {
         byte[] bytes = new byte[(int) position];
-        try {
-            block.get().copyToArray(0, bytes, 0, bytes.length);
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
+        block.copyToArray(0, bytes, 0, bytes.length);
         return ByteBuffer.wrap(bytes);
     }
 
@@ -90,13 +78,9 @@ public class PMem extends Data {
         this.records.clear();
         if (CollectionUtils.isNotEmpty(records)){
             this.records.addAll(records);
-            try {
-                byte[] bytes = new byte[buffer.capacity()];
-                buffer.get(bytes);
-                block.get().copyFromArray(bytes, 0, 0, bytes.length);
-            } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
-            }
+            byte[] bytes = new byte[buffer.capacity()];
+            buffer.get(bytes);
+            block.copyFromArray(bytes, 0, 0, bytes.length);
         }
     }
 

@@ -84,7 +84,7 @@ public class Mq extends MessageQueue{
         if (heap == null){
             return new Dram(capacity);
         }
-        return new PMem(POOLS.submit(() ->  heap.allocateCompactMemoryBlock(capacity)), capacity);
+        return new PMem(heap.allocateCompactMemoryBlock(capacity), capacity);
     }
 
     public Queue getQueue(String topic, int queueId){
@@ -107,18 +107,33 @@ public class Mq extends MessageQueue{
         if (count % 100000 == 0){
             LOGGER.info("append count {}, size {}, queueCount {}", count, size, queueCount);
         }
+
         Queue queue = getQueue(topic, queueId);
-        long offset = queue.write(tpf(), buffer);
+        byte[] bytes = new byte[buffer.capacity()];
+        buffer.get(bytes);
         buffer.flip();
 
-        ByteBuffer header = ByteBuffer.allocateDirect(topic.getBytes().length + 4)
-                .put(topic.getBytes())
-                .putShort((short) queueId)
-                .putShort((short) buffer.capacity());
-        header.flip();
-        barrier.write(header, buffer);
-        barrier.await(30, TimeUnit.SECONDS);
-        return offset;
+        CountDownLatch cdl = new CountDownLatch(2);
+        POOLS.execute(()-> {
+            queue.write(tpf(), buffer);
+            cdl.countDown();
+        });
+        POOLS.execute(()-> {
+            ByteBuffer header = ByteBuffer.allocateDirect(topic.getBytes().length + 4)
+                    .put(topic.getBytes())
+                    .putShort((short) queueId)
+                    .putShort((short) buffer.capacity());
+            header.flip();
+            barrier.write(header, ByteBuffer.wrap(bytes));
+            barrier.await(30, TimeUnit.SECONDS);
+            cdl.countDown();
+        });
+        try {
+            cdl.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return queue.getOffset();
     }
 
     public Map<Integer, ByteBuffer> getRange(String topic, int queueId, long offset, int fetchNum) {
