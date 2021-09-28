@@ -1,22 +1,16 @@
 package io.openmessaging.mq;
 
-import com.intel.pmem.llpl.AnyMemoryBlock;
 import com.intel.pmem.llpl.Heap;
 import io.openmessaging.MessageQueue;
-import io.openmessaging.consts.Const;
 import io.openmessaging.utils.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Mq extends MessageQueue{
 
@@ -33,8 +27,6 @@ public class Mq extends MessageQueue{
     private final ThreadLocal<FileWrapper> tpf;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
-
-    private static final ThreadPoolExecutor POOLS = (ThreadPoolExecutor) Executors.newFixedThreadPool(500);
 
     public Mq(Config config) throws FileNotFoundException {
         this.config = config;
@@ -91,7 +83,7 @@ public class Mq extends MessageQueue{
         return queues.computeIfAbsent(topic, k ->  new ConcurrentHashMap<>())
                 .computeIfAbsent(queueId, k -> {
                     Queue queue = new Queue();
-//                    queue.setActive(apply(config.getActiveSize()));
+                    queue.setActive(apply(config.getActiveSize()));
                     queueCount ++;
                     return queue;
                 });
