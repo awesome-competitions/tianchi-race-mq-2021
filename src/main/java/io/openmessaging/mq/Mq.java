@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -25,7 +26,7 @@ public class Mq extends MessageQueue{
 
     private final FileWrapper aof;
 
-    private final ThreadLocal<FileWrapper> tpf;
+    private final FileWrapper tpf;
 
     private final LinkedBlockingQueue<AnyMemoryBlock> blocks = new LinkedBlockingQueue<>();
 
@@ -35,13 +36,14 @@ public class Mq extends MessageQueue{
         this.config = config;
         this.queues = new ConcurrentHashMap<>();
         this.aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof", "rw"));
-        this.tpf = new ThreadLocal<>();
+        this.tpf = new FileWrapper(new RandomAccessFile(config.getDataDir() + "tpf", "rw"));
         this.barrier = new Barrier(config.getMaxCount(), this.aof);
         if (config.getHeapDir() != null){
             this.heap = Heap.exists(config.getHeapDir()) ? Heap.openHeap(config.getHeapDir()) : Heap.createHeap(config.getHeapDir(), config.getHeapSize());
         }
         startKiller();
         startProducer();
+        startForce();
         LOGGER.info("Start");
     }
 
@@ -60,23 +62,27 @@ public class Mq extends MessageQueue{
 
     void startProducer(){
         Thread producer = new Thread(()->{
-            for (int i = 0; i < 20 * 10000; i ++){
-                blocks.add(heap.allocateCompactMemoryBlock(config.getActiveSize()));
+            if (heap != null){
+                for (int i = 0; i < 20 * 10000; i ++){
+                    blocks.add(heap.allocateCompactMemoryBlock(config.getActiveSize()));
+                }
             }
         });
         producer.setDaemon(true);
         producer.start();
     }
 
-    FileWrapper getTpf(){
-        if (tpf.get() == null){
-            try {
-                tpf.set(new FileWrapper(new RandomAccessFile(config.getDataDir() + "tpf_" + Thread.currentThread().getId(), "rw")));
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
+    void startForce(){
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            public void run() {
+                try {
+                    tpf.force();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-        }
-        return tpf.get();
+        }, 0 , 1000);
     }
 
     Data apply(int capacity){
@@ -109,7 +115,7 @@ public class Mq extends MessageQueue{
             LOGGER.info(Monitor.information());
         }
         Queue queue = getQueue(topic, queueId);
-        queue.write(getTpf(), buffer);
+        queue.write(tpf, buffer);
         buffer.flip();
 
         ByteBuffer header = ByteBuffer.allocateDirect(topic.getBytes().length + 4)
