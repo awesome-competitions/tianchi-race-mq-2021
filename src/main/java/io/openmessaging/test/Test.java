@@ -18,7 +18,7 @@ import java.util.function.Supplier;
 
 public class Test {
 
-    private final static int BATCH = 1000;
+    private final static int BATCH = 10000;
     private final static int QUEUE_SIZE = 2;
     private final static int TOPIC_SIZE = 10;
 //    private final static String DIR = "/data/app/";
@@ -29,7 +29,7 @@ public class Test {
     private final static String DIR = "D://test//nio//";
     private final static String HEAP_DIR = null;
     private final static long HEAP_SIZE = 1024 * 1024 * 256;
-    private final static int ACTIVE_SIZE = 100;
+    private final static int ACTIVE_SIZE = 1024 * 5;
     private final static int READER_SIZE = 1024 * 90 / 10;
 
 
@@ -68,7 +68,7 @@ public class Test {
         return ()->{
             String[] inputs = new String[BATCH/1];
             for (int i = 0; i < inputs.length; i ++){
-                inputs[i] = randomString(2) + i;
+                inputs[i] = randomString(100) + i;
 //                inputs[i] = randomString(1);
             }
             long start = System.currentTimeMillis();
