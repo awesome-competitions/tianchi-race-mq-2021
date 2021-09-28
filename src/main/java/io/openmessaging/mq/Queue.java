@@ -55,7 +55,6 @@ public class Queue {
                 break;
             }
             buffers.add(data.get());
-            cache.recycle(data);
         }
         return buffers;
     }
