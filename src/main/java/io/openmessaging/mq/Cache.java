@@ -8,7 +8,7 @@ public class Cache {
 
     private Heap heap;
 
-    private AtomicLong used;
+    private final AtomicLong used;
 
     private final Config config;
 
@@ -17,6 +17,7 @@ public class Cache {
             this.heap = Heap.exists(config.getHeapDir()) ? Heap.openHeap(config.getHeapDir()) : Heap.createHeap(config.getHeapDir(), config.getHeapSize());
         }
         this.config = config;
+        this.used = new AtomicLong();
     }
 
     public Data apply(int capacity){
