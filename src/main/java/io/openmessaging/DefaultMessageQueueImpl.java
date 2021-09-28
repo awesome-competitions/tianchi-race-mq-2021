@@ -27,25 +27,24 @@ import java.util.concurrent.TimeUnit;
 
 public class DefaultMessageQueueImpl extends MessageQueue{
 
-    private final MessageQueue queue = new Mq(new Config(
-            "/essd/",
-            "/pmem/nico",
-            Const.G * 59,
-            Const.G * 54,
-            40,
-            Const.MINUTE * 15 + Const.SECOND * 2
-//            0
-    ));
-//    private final MessageQueue queue = null;
+//    private final MessageQueue queue = new Mq(new Config(
+//            "/essd/",
+//            "/pmem/nico",
+//            Const.G * 59,
+//            Const.G * 54,
+//            40,
+//            Const.MINUTE * 15 + Const.SECOND * 2
+//    ));
+    private final MessageQueue queue = null;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMessageQueueImpl.class);
 
     public DefaultMessageQueueImpl() throws FileNotFoundException {
-//        try {
-//            test();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            test();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -83,23 +82,13 @@ public class DefaultMessageQueueImpl extends MessageQueue{
 //        LOGGER.info("time {}", end - start);
 //        throw new RuntimeException("ex");
 
-//        String path = "/pmem/nico";
-//        long heapSize = Const.G * 20;
-//        Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
-//
-//        long blockSize = Const.K * 600;
-//        long n = Const.G * 10 / blockSize;
-//
-//        long start = System.currentTimeMillis();
-//        List<AnyMemoryBlock> blocks = new ArrayList<>();
-//        for (int i = 0; i < n; i ++){
-//            blocks.add(heap.allocateMemoryBlock(blockSize));
-//        }
-//        for (AnyMemoryBlock block: blocks){
-//            block.freeMemory();
-//        }
-//        long end = System.currentTimeMillis();
-//        System.out.println((end - start));
-//        throw new RuntimeException("ex");
+        String path = "/pmem/nico";
+        long heapSize = Const.G * 59;
+        Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
+        long start = System.currentTimeMillis();
+        heap.allocateCompactMemoryBlock(Const.G * 54);
+        long end = System.currentTimeMillis();
+        System.out.println((end - start));
+        throw new RuntimeException("ex");
     }
 }
