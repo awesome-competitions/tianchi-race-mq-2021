@@ -25,7 +25,7 @@ public class Mq extends MessageQueue{
 
     private final FileWrapper aof;
 
-    private final FileWrapper tpf;
+    private final ThreadLocal<FileWrapper> tpf;
 
     private final LinkedBlockingQueue<AnyMemoryBlock> blocks = new LinkedBlockingQueue<>();
 
@@ -35,7 +35,7 @@ public class Mq extends MessageQueue{
         this.config = config;
         this.queues = new ConcurrentHashMap<>();
         this.aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof", "rw"));
-        this.tpf = new FileWrapper(new RandomAccessFile(config.getDataDir() + "tpf", "rw"));
+        this.tpf = new ThreadLocal<>();
         this.barrier = new Barrier(config.getMaxCount(), this.aof);
         if (config.getHeapDir() != null){
             this.heap = Heap.exists(config.getHeapDir()) ? Heap.openHeap(config.getHeapDir()) : Heap.createHeap(config.getHeapDir(), config.getHeapSize());
@@ -68,6 +68,17 @@ public class Mq extends MessageQueue{
         producer.start();
     }
 
+    FileWrapper getTpf(){
+        if (tpf.get() == null){
+            try {
+                tpf.set(new FileWrapper(new RandomAccessFile(config.getDataDir() + "tpf_" + Thread.currentThread().getId(), "rw")));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        return tpf.get();
+    }
+
     Data apply(int capacity){
         if (heap == null){
             return new Dram(capacity);
@@ -98,7 +109,7 @@ public class Mq extends MessageQueue{
             LOGGER.info(Monitor.information());
         }
         Queue queue = getQueue(topic, queueId);
-        queue.write(tpf, buffer);
+        queue.write(getTpf(), buffer);
         buffer.flip();
 
         ByteBuffer header = ByteBuffer.allocateDirect(topic.getBytes().length + 4)

@@ -31,6 +31,7 @@ public class Queue {
                     ByteBuffer data = active.load();
                     Monitor.writeDistCount ++;
                     long position = fw.write(data);
+                    fw.force();
                     Data stable = new SSD(active.getStart(), active.getEnd(), position, data.capacity(), fw, active.getRecords());
                     for (long i = stable.getStart(); i <= active.getEnd(); i ++){
                         stables.put(i, stable);
