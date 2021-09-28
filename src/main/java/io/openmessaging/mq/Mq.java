@@ -59,7 +59,7 @@ public class Mq extends MessageQueue{
 
     void startProducer(){
         Thread monitor = new Thread(()->{
-            for (int i = 0; i < 18 * 10000; i ++){
+            for (int i = 0; i < 20 * 10000; i ++){
                 blocks.add(heap.allocateCompactMemoryBlock(config.getActiveSize()));
             }
         });
@@ -71,11 +71,12 @@ public class Mq extends MessageQueue{
         if (heap == null){
             return new Dram(capacity);
         }
-        AnyMemoryBlock block = blocks.poll();
-        if (block == null){
-            block = heap.allocateCompactMemoryBlock(capacity);
+        try {
+            return new PMem(blocks.take(), capacity);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-        return new PMem(block, capacity);
+        return null;
     }
 
     public Queue getQueue(String topic, int queueId){
