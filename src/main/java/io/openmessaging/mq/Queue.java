@@ -3,11 +3,10 @@ package io.openmessaging.mq;
 import com.intel.pmem.llpl.AnyMemoryBlock;
 import io.openmessaging.utils.CollectionUtils;
 
+import java.awt.font.FontRenderContext;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class Queue {
 
@@ -15,25 +14,27 @@ public class Queue {
 
     private Data active;
 
-    private Data reader;
+    private long readOffset;
 
-    private int readerIndex;
-
-    private List<Data> stables;
+    private final Map<Long, Data> stables;
 
     public Queue() {
         this.offset = -1;
-        this.stables = new ArrayList<>();
+        this.stables = new HashMap<>();
     }
 
     public long write(FileWrapper fw, ByteBuffer buffer){
         ++ offset;
         if (! active.writable(buffer.capacity())){
             try {
-                ByteBuffer data = active.load();
-                long position = fw.write(data);
-                Data stable = new SSD(active.getStart(), active.getEnd(), position, data.capacity(), fw, active.getRecords());
-                this.stables.add(stable);
+                if (active.getEnd() >= readOffset){
+                    ByteBuffer data = active.load();
+                    long position = fw.write(data);
+                    Data stable = new SSD(active.getStart(), active.getEnd(), position, data.capacity(), fw, active.getRecords());
+                    for (long i = stable.getStart(); i <= active.getEnd(); i ++){
+                        stables.put(i, stable);
+                    }
+                }
                 this.active.reset(offset, offset, 0, null, null);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -44,49 +45,30 @@ public class Queue {
     }
 
     public List<ByteBuffer> read(long offset, int num){
-        if (offset >= active.getStart()){
-            return active.read(offset, num);
-        }
-        if (reader == null){
-            reader = stables.get(0);
+        if (offset > this.offset){
+            return null;
         }
         int fetchedNum = num;
         long startOffset = offset;
         List<ByteBuffer> buffers = new ArrayList<>(num);
-        Data oldReader = reader;
-        List<List<ByteBuffer>> logs = new ArrayList<>();
-        while(fetchedNum > 0){
-            if (startOffset > reader.getEnd()){
-                ++readerIndex;
-                if (readerIndex == stables.size()){
-                    reader = active;
-                }else if (readerIndex > stables.size()){
-                    break;
-                }else{
-                    reader = stables.get(readerIndex);
+        while (fetchedNum > 0 && startOffset <= this.offset){
+            List<ByteBuffer> data = null;
+            if (startOffset >= active.getStart()){
+                data = active.read(startOffset, fetchedNum);
+            }else{
+                Data reader = stables.get(startOffset);
+                if (reader != null){
+                    data = reader.read(startOffset, fetchedNum);
                 }
             }
-            try{
-                List<ByteBuffer> data = reader.read(offset, num);
-                logs.add(data);
-                if (CollectionUtils.isEmpty(data)){
-                    break;
-                }
-                fetchedNum -= data.size();
-                startOffset += data.size();
-                buffers.addAll(data);
-            }catch (IndexOutOfBoundsException e){
-                System.out.println(oldReader);
-                System.out.println(reader);
-                System.out.println(stables);
-                System.out.println(active);
-                System.out.println(buffers);
-                System.out.println(logs);
-                System.out.println(fetchedNum);
-                System.out.println(startOffset);
-                throw e;
+            if (data == null){
+                break;
             }
+            buffers.addAll(data);
+            fetchedNum -= data.size();
+            startOffset += data.size();
         }
+        readOffset = offset + buffers.size();
         return buffers;
     }
 
@@ -98,27 +80,8 @@ public class Queue {
         this.offset = offset;
     }
 
-    public Data getActive() {
-        return active;
-    }
-
     public void setActive(Data active) {
         this.active = active;
     }
 
-    public Data getReader() {
-        return reader;
-    }
-
-    public void setReader(Data reader) {
-        this.reader = reader;
-    }
-
-    public List<Data> getStables() {
-        return stables;
-    }
-
-    public void setStables(List<Data> stables) {
-        this.stables = stables;
-    }
 }
