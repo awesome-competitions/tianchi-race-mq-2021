@@ -57,13 +57,12 @@ public class Mq extends MessageQueue{
     public Queue getQueue(String topic, int queueId){
         return queues.computeIfAbsent(topic, k ->  new ConcurrentHashMap<>())
                 .computeIfAbsent(queueId, k -> {
-                    Queue queue = new Queue(cache, aof);
+                    Queue queue = new Queue(aof);
                     queue.setActive(cache.apply((int) (Const.K * 17)));
                     Monitor.queueCount ++;
                     return queue;
                 });
     }
-
 
     public long append(String topic, int queueId, ByteBuffer buffer)  {
         Monitor.appendCount ++;
@@ -91,6 +90,14 @@ public class Mq extends MessageQueue{
     public Map<Integer, ByteBuffer> getRange(String topic, int queueId, long offset, int fetchNum) {
         Queue queue = getQueue(topic, queueId);
         List<ByteBuffer> buffers = queue.read(offset, fetchNum);
+
+        if (topic.equals("topic84") && queueId == 1809 && offset == 231){
+            System.out.println(queue.getOffset());
+            System.out.println(queue.getRecords());
+            System.out.println(queue.getActive());
+            System.out.println(buffers);
+        }
+
         Map<Integer, ByteBuffer> results = new HashMap<>();
         if (CollectionUtils.isEmpty(buffers)){
             return results;

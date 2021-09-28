@@ -1,10 +1,5 @@
 package io.openmessaging.mq;
 
-import com.intel.pmem.llpl.AnyMemoryBlock;
-import io.openmessaging.utils.CollectionUtils;
-
-import java.awt.font.FontRenderContext;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -16,14 +11,11 @@ public class Queue {
 
     private final Map<Long, Data> records;
 
-    private final Cache cache;
-
     private final FileWrapper fw;
 
     private boolean reading;
 
-    public Queue(Cache cache, FileWrapper fw) {
-        this.cache = cache;
+    public Queue(FileWrapper fw) {
         this.fw = fw;
         this.offset = -1;
         this.records = new HashMap<>();
@@ -42,7 +34,7 @@ public class Queue {
         }
         active.set(buffer);
         active.setPosition(position);
-        records.put( ++ offset, active);
+        records.put(++ offset, active);
         return offset;
     }
 
@@ -71,4 +63,11 @@ public class Queue {
         this.active = active;
     }
 
+    public Map<Long, Data> getRecords() {
+        return records;
+    }
+
+    public Data getActive() {
+        return active;
+    }
 }
