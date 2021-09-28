@@ -6,8 +6,6 @@ import java.util.List;
 
 public abstract class Data {
 
-    protected long offset;
-
     protected int capacity;
 
     protected long position;
@@ -36,5 +34,13 @@ public abstract class Data {
 
     public void setCapacity(int capacity) {
         this.capacity = capacity;
+    }
+
+    @Override
+    public String toString() {
+        return "Data{" +
+                "capacity=" + capacity +
+                ", position=" + position +
+                '}';
     }
 }

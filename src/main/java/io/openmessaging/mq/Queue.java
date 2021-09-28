@@ -42,7 +42,7 @@ public class Queue {
         reading = true;
         List<ByteBuffer> buffers = new ArrayList<>();
         for (long i = offset; i < offset + num; i ++){
-            Data data = records.get(offset);
+            Data data = records.get(i);
             if (data == null){
                 break;
             }
