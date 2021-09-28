@@ -24,10 +24,11 @@ public class Cache {
         if (heap == null){
             return new Dram(capacity);
         }
-        if (config.getHeapUsableSize() - used.longValue() > capacity){
-            used.addAndGet(capacity);
+        if (used.addAndGet(capacity) < config.getHeapUsableSize()){
             Monitor.heapUsedSize = used.longValue();
             return new PMem(heap.allocateCompactMemoryBlock(capacity), capacity);
+        }else{
+            used.addAndGet(- capacity);
         }
         return null;
     }
