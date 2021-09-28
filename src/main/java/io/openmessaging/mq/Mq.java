@@ -1,5 +1,6 @@
 package io.openmessaging.mq;
 
+import com.intel.pmem.llpl.AnyMemoryBlock;
 import com.intel.pmem.llpl.Heap;
 import io.openmessaging.MessageQueue;
 import io.openmessaging.utils.CollectionUtils;
@@ -26,6 +27,8 @@ public class Mq extends MessageQueue{
 
     private final FileWrapper tpf;
 
+    private final LinkedBlockingQueue<AnyMemoryBlock> blocks = new LinkedBlockingQueue<>();
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
 
     public Mq(Config config) throws FileNotFoundException {
@@ -37,25 +40,28 @@ public class Mq extends MessageQueue{
         if (config.getHeapDir() != null){
             this.heap = Heap.exists(config.getHeapDir()) ? Heap.openHeap(config.getHeapDir()) : Heap.createHeap(config.getHeapDir(), config.getHeapSize());
         }
-        if (config.getLiveTime() > 0){
-            startKiller();
-        }
-        startMonitor();
+        startKiller();
+        startProducer();
     }
 
     void startKiller(){
         new Thread(()->{
             try {
-                Thread.sleep(config.getLiveTime());
-                System.exit(-1);
+                if (config.getLiveTime() > 0) {
+                    Thread.sleep(config.getLiveTime());
+                    System.exit(-1);
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }).start();
     }
 
-    void startMonitor(){
+    void startProducer(){
         Thread monitor = new Thread(()->{
+            for (int i = 0; i < 19 * 10000; i ++){
+                blocks.add(heap.allocateCompactMemoryBlock(config.getActiveSize()));
+            }
         });
         monitor.setDaemon(true);
         monitor.start();
@@ -65,7 +71,11 @@ public class Mq extends MessageQueue{
         if (heap == null){
             return new Dram(capacity);
         }
-        return new PMem(heap.allocateCompactMemoryBlock(capacity), capacity);
+        AnyMemoryBlock block = blocks.poll();
+        if (block == null){
+            block = heap.allocateCompactMemoryBlock(capacity);
+        }
+        return new PMem(block, capacity);
     }
 
     public Queue getQueue(String topic, int queueId){
