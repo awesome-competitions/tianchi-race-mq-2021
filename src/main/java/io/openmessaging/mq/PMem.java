@@ -50,13 +50,6 @@ public class PMem extends Data {
         for (int i = (int) startIndex; i <= endIndex; i ++){
             capacity += records.get(i);
         }
-        if (capacity == 0){
-            System.out.println(records);
-            System.out.println(start);
-            System.out.println(end);
-            System.out.println(position);
-            System.out.println(offset + ":" + num);
-        }
         byte[] bytes = new byte[(int) capacity];
         block.copyToArray(startPos, bytes, 0, bytes.length);
         ByteBuffer data = ByteBuffer.wrap(bytes);

@@ -52,4 +52,15 @@ public abstract class Data {
     public long getEnd() {
         return end;
     }
+
+    @Override
+    public String toString() {
+        return "Data{" +
+                "capacity=" + capacity +
+                ", start=" + start +
+                ", end=" + end +
+                ", position=" + position +
+                ", records=" + records +
+                '}';
+    }
 }

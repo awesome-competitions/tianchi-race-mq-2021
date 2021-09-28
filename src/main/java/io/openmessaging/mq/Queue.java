@@ -53,6 +53,8 @@ public class Queue {
         int fetchedNum = num;
         long startOffset = offset;
         List<ByteBuffer> buffers = new ArrayList<>(num);
+        Data oldReader = reader;
+        List<List<ByteBuffer>> logs = new ArrayList<>();
         while(fetchedNum > 0){
             if (startOffset > reader.getEnd()){
                 ++readerIndex;
@@ -64,13 +66,26 @@ public class Queue {
                     reader = stables.get(readerIndex);
                 }
             }
-            List<ByteBuffer> data = reader.read(offset, num);
-            if (CollectionUtils.isEmpty(data)){
-                break;
+            try{
+                List<ByteBuffer> data = reader.read(offset, num);
+                logs.add(data);
+                if (CollectionUtils.isEmpty(data)){
+                    break;
+                }
+                fetchedNum -= data.size();
+                startOffset += data.size();
+                buffers.addAll(data);
+            }catch (IndexOutOfBoundsException e){
+                System.out.println(oldReader);
+                System.out.println(reader);
+                System.out.println(stables);
+                System.out.println(active);
+                System.out.println(buffers);
+                System.out.println(logs);
+                System.out.println(fetchedNum);
+                System.out.println(startOffset);
+                throw e;
             }
-            fetchedNum -= data.size();
-            startOffset += data.size();
-            buffers.addAll(data);
         }
         return buffers;
     }
