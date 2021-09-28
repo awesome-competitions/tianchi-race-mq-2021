@@ -65,7 +65,7 @@ public class Mq extends MessageQueue{
         if (heap == null){
             return new Dram(capacity);
         }
-        return new PMem(heap.allocateMemoryBlock(capacity), capacity);
+        return new PMem(heap.allocateCompactMemoryBlock(capacity), capacity);
     }
 
     public Queue getQueue(String topic, int queueId){
@@ -80,11 +80,11 @@ public class Mq extends MessageQueue{
 
 
     public long append(String topic, int queueId, ByteBuffer buffer)  {
-        Monitor.appendCount ++;
-        Monitor.appendSize += buffer.capacity();
         if (Monitor.appendCount % 100000 == 0){
             LOGGER.info(Monitor.information());
         }
+        Monitor.appendCount ++;
+        Monitor.appendSize += buffer.capacity();
         Queue queue = getQueue(topic, queueId);
         queue.write(tpf, buffer);
         buffer.flip();
