@@ -92,22 +92,22 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         System.out.println("all spend " + (end - start));
         throw new RuntimeException("ex");
     }
-
+    long heapSize = Const.G * 5;
     void testHeapAllocateAndRW(int id, Heap heap){
         long start = System.currentTimeMillis();
-        AnyMemoryBlock block = heap.allocateMemoryBlock(9 * Const.G);
+        AnyMemoryBlock block = heap.allocateMemoryBlock(heapSize);
         long end = System.currentTimeMillis();
         System.out.println(id + " allocate " + (end - start));
 
         start = System.currentTimeMillis();
-        for (long i = 0; i < 9 * Const.G; i ++){
+        for (long i = 0; i < heapSize; i ++){
             block.setByte(i, (byte) 1);
         }
         end = System.currentTimeMillis();
         System.out.println(id + " write " + (end - start));
 
         start = System.currentTimeMillis();
-        for (long i = 0; i < 9 * Const.G; i ++){
+        for (long i = 0; i < heapSize; i ++){
             block.getByte(i);
         }
         end = System.currentTimeMillis();
