@@ -24,24 +24,24 @@ import java.util.concurrent.TimeUnit;
 
 public class DefaultMessageQueueImpl extends MessageQueue{
 
-    private final MessageQueue queue = new Mq(new Config(
-            "/essd/",
-            "/pmem/nico",
-            Const.G * 59,
-            Const.G * 54,
-            40,
-            Const.MINUTE * 60 + Const.SECOND * 2
-    ));
-//    private final MessageQueue queue = null;
+//    private final MessageQueue queue = new Mq(new Config(
+//            "/essd/",
+//            "/pmem/nico",
+//            Const.G * 59,
+//            Const.G * 54,
+//            40,
+//            Const.MINUTE * 60 + Const.SECOND * 2
+//    ));
+    private final MessageQueue queue = null;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMessageQueueImpl.class);
 
     public DefaultMessageQueueImpl() throws FileNotFoundException {
-//        try {
-//            test();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            test();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -83,11 +83,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         long heapSize = Const.G * 59;
         Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
         long start = System.currentTimeMillis();
-        CompactAccessor accessor = heap.createCompactAccessor();
-
-        AnyMemoryBlock block = heap.allocateMemoryBlock(10);
-        accessor.setInt(0, 1);
-        System.out.println(accessor.getInt(0));
+        AnyMemoryBlock block = heap.allocateCompactMemoryBlock(10);
         long end = System.currentTimeMillis();
         System.out.println((end - start));
         throw new RuntimeException("ex");
