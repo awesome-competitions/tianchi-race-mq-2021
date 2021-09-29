@@ -88,8 +88,8 @@ public class DefaultMessageQueueImpl extends MessageQueue{
 //            testHeapAllocateAndRW(i, heap);
 //        }
 
-        CountDownLatch cdl = new CountDownLatch(1);
-        for (int i = 0; i < 1; i ++){
+        CountDownLatch cdl = new CountDownLatch(2);
+        for (int i = 0; i < 2; i ++){
             final int id = i;
             new Thread(()->{
                 testHeapAllocate(id);
