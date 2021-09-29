@@ -137,9 +137,9 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         long end = System.currentTimeMillis();
         System.out.println(id + " open heap " + (end - start));
 
-        start = System.currentTimeMillis();
-        heap.allocateMemoryBlock((long) (Const.G * 1.25));
-        end = System.currentTimeMillis();
-        System.out.println(id + " allocate " + (end - start));
+//        start = System.currentTimeMillis();
+//        heap.allocateMemoryBlock((long) (Const.G * 1.25));
+//        end = System.currentTimeMillis();
+//        System.out.println(id + " allocate " + (end - start));
     }
 }
