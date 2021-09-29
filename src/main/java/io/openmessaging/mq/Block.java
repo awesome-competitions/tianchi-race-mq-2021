@@ -22,7 +22,7 @@ public class Block {
 
     public long allocate(int capacity){
         long pos = position.addAndGet(capacity);
-        if (pos > capacity){
+        if (pos > this.capacity){
             return -1;
         }
         return pos - capacity;
