@@ -30,13 +30,14 @@ public class Mq extends MessageQueue{
     private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
 
     public Mq(Config config) throws FileNotFoundException {
+        LOGGER.info("Mq init");
         this.config = config;
         this.queues = new ConcurrentHashMap<>();
         this.aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof", "rw"));
         this.barrier = new Barrier(config.getMaxCount(), this.aof);
         this.cache = new Cache(config);
         startKiller();
-        LOGGER.info("Start");
+        LOGGER.info("Mq completed");
     }
 
     void startKiller(){
@@ -64,23 +65,22 @@ public class Mq extends MessageQueue{
 
     public long append(String topic, int queueId, ByteBuffer buffer)  {
         Monitor.appendCount ++;
-        Monitor.appendSize += buffer.capacity();
+        Monitor.appendSize += buffer.limit();
         if (Monitor.appendCount % 100000 == 0){
             LOGGER.info(Monitor.information());
         }
 
-        ByteBuffer data = ByteBuffer.allocateDirect(topic.getBytes().length + 4 + buffer.capacity())
+        ByteBuffer data = ByteBuffer.allocateDirect(topic.getBytes().length + 4 + buffer.limit())
                 .put(topic.getBytes())
                 .putShort((short) queueId)
-                .putShort((short) buffer.capacity())
+                .putShort((short) buffer.limit())
                 .put(buffer);
         data.flip();
         buffer.flip();
-        System.out.println(buffer);
 
         long position = barrier.write(data);
         Queue queue = getQueue(topic, queueId);
-        queue.write(position - buffer.capacity(), buffer);
+        queue.write(position - buffer.limit(), buffer);
 
         barrier.await(30, TimeUnit.SECONDS);
         return queue.getOffset();

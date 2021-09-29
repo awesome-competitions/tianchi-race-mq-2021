@@ -13,7 +13,7 @@ public class Queue {
 
     private final Map<Long, Data> records;
 
-    private Cache cache;
+    private final Cache cache;
 
     private final FileWrapper fw;
 
@@ -27,14 +27,14 @@ public class Queue {
     }
 
     public long write(long position, ByteBuffer buffer){
-        Data data = cache.apply(buffer.capacity());
+        Data data = cache.apply(buffer.limit());
         if(data != null){
             data.set(buffer);
             records.put(++ offset, data);
             return offset;
         }
         if (! reading){
-            records.put(++ offset, new SSD(fw, position, buffer.capacity()));
+            records.put(++ offset, new SSD(fw, position, buffer.limit()));
             return offset;
         }
         if (last != null){
@@ -42,7 +42,7 @@ public class Queue {
         }
         active.set(buffer);
         records.put(++ offset, active);
-        last = new SSD(fw, active.getPosition(), active.getCapacity());
+        last = new SSD(fw, position, buffer.limit());
         return offset;
     }
 
