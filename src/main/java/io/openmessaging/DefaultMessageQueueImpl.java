@@ -84,7 +84,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
 
         long start = System.currentTimeMillis();
-        for (int i = 0; i < 5; i ++){
+        for (int i = 0; i < 10; i ++){
             testHeapAllocateAndRW(i, heap);
         }
         long end = System.currentTimeMillis();
