@@ -62,8 +62,8 @@ public class Block {
     }
 
     public void unregister(long tid, long qid, long offset){
-        long max = offsets.get(tid * 10000 + qid);
-        if (offset >= max){
+        Long max = offsets.get(tid * 10000 + qid);
+        if (max != null && offset >= max){
             offsets.remove(tid * 10000 + qid);
         }
     }
