@@ -13,20 +13,33 @@ import java.util.concurrent.*;
 
 public class PMem extends Data {
 
-    private final AnyMemoryBlock block;
+    private final Block block;
 
-    public PMem(AnyMemoryBlock block, long position, int capacity) {
+    private final int tid;
+
+    private final int qid;
+
+    private final long offset;
+
+    private final long aofPos;
+
+    public PMem(Block block, long position, int capacity) {
+        this(block, 0, 0, 0, 0, position, capacity);
+    }
+
+    public PMem(Block block, int tid, int qid, long offset, long aofPos, long position, int capacity) {
         super(capacity);
         this.position = position;
         this.block = block;
+        this.tid = tid;
+        this.qid = qid;
+        this.offset = offset;
+        this.aofPos = aofPos;
     }
 
     @Override
     public ByteBuffer get() {
-        Monitor.readMemCount ++;
-        byte[] bytes = new byte[capacity];
-        block.copyToArray(position, bytes, 0, bytes.length);
-        return ByteBuffer.wrap(bytes);
+        return ByteBuffer.wrap(block.read(position, capacity));
     }
 
     @Override
@@ -34,7 +47,7 @@ public class PMem extends Data {
         Monitor.writeMemCount ++;
         byte[] bytes = new byte[buffer.limit()];
         buffer.get(bytes);
-        block.copyFromArray(bytes, 0, position, bytes.length);
+        block.write(position, bytes);
         this.capacity = bytes.length;
     }
 

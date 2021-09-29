@@ -48,11 +48,12 @@ public class Barrier {
     }
 
     public synchronized long write(ByteBuffer... buffers){
+        long pos = position;
         for (ByteBuffer buffer: buffers){
             position += buffer.capacity();
             this.buffers.add(buffer);
         }
-        return position;
+        return pos;
     }
 
     public synchronized ByteBuffer[] getAndClear(){

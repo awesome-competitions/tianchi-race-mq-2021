@@ -41,24 +41,24 @@ public class Cache {
         return new Block(heap.allocateCompactMemoryBlock(size), size);
     }
 
-    public Data apply(int capacity){
+    public Data allocate(int tid, int qid, long offset, long aofPos, int cap){
         if (heap == null){
-            return new Dram(capacity);
+            return new Dram(cap);
         }
         if (blockPos.get() == null){
             blockPos.set(0);
         }
-        long position = -1;
-        while (blockPos.get() < blocks.size() && (position = blocks.get(blockPos.get()).allocate(capacity)) == -1){
+        long memPos = -1;
+        while (blockPos.get() < blocks.size() && (memPos = blocks.get(blockPos.get()).allocate(cap)) == -1){
             blockPos.set(blockPos.get() + 1);
         }
-        if (position == -1){
+        if (memPos == -1){
             return null;
         }
-        return new PMem(blocks.get(blockPos.get()).getBlock(), position, capacity);
+        return new PMem(blocks.get(blockPos.get()), tid, qid, offset, aofPos, memPos, cap);
     }
 
-    public Data applyActive(int capacity){
+    public Data allocateActive(int capacity){
         if (heap == null){
             return new Dram(capacity);
         }
@@ -66,7 +66,7 @@ public class Cache {
         if (position == -1){
             return new Dram(capacity);
         }
-        return new PMem(active.getBlock(), position, capacity);
+        return new PMem(active, position, capacity);
     }
 
 }

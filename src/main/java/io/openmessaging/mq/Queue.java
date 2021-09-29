@@ -5,6 +5,10 @@ import java.util.*;
 
 public class Queue {
 
+    private final int tid;
+
+    private final int qid;
+
     private long offset;
 
     private Data active;
@@ -19,7 +23,9 @@ public class Queue {
 
     private boolean reading;
 
-    public Queue(Cache cache, FileWrapper fw) {
+    public Queue(int tid, int qid, Cache cache, FileWrapper fw) {
+        this.tid = tid;
+        this.qid = qid;
         this.fw = fw;
         this.cache = cache;
         this.offset = -1;
@@ -27,18 +33,19 @@ public class Queue {
     }
 
     public long write(long position, ByteBuffer buffer){
-        Data data = cache.apply(buffer.limit());
+        ++ offset;
+        Data data = cache.allocate(tid, qid, offset, position, buffer.limit());
         if(data != null){
             data.set(buffer);
-            records.put(++ offset, data);
+            records.put(offset, data);
             return offset;
         }
         if (! reading){
-            records.put(++ offset, new SSD(fw, position, buffer.limit()));
+            records.put(offset, new SSD(fw, position, buffer.limit()));
             return offset;
         }
         if (last != null){
-            records.put(offset, last);
+            records.put(offset - 1, last);
         }
         active.set(buffer);
         records.put(++ offset, active);

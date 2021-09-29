@@ -19,7 +19,7 @@ public class Mq extends MessageQueue{
 
     private final Config config;
 
-    private final Map<String, Map<Integer, Queue>> queues;
+    private final Map<Integer, Map<Integer, Queue>> queues;
 
     private final Barrier barrier;
 
@@ -28,6 +28,8 @@ public class Mq extends MessageQueue{
     private final Cache cache;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
+
+    private static final Map<String, Integer> TID = new ConcurrentHashMap<>();
 
     public Mq(Config config) throws FileNotFoundException {
         LOGGER.info("Mq init");
@@ -53,25 +55,33 @@ public class Mq extends MessageQueue{
         }).start();
     }
 
-    public Queue getQueue(String topic, int queueId){
+    public Queue getQueue(int topic, int queueId){
         return queues.computeIfAbsent(topic, k ->  new ConcurrentHashMap<>())
                 .computeIfAbsent(queueId, k -> {
-                    Queue queue = new Queue(cache, aof);
-                    queue.setActive(cache.applyActive((int) (Const.K * 17)));
+                    Queue queue = new Queue(topic, queueId, cache, aof);
+                    queue.setActive(cache.allocateActive((int) (Const.K * 17)));
                     Monitor.queueCount ++;
                     return queue;
                 });
     }
 
     public long append(String topic, int queueId, ByteBuffer buffer)  {
+        return append(TID.computeIfAbsent(topic, k -> Integer.parseInt(k.substring(5))), queueId, buffer);
+    }
+
+    public Map<Integer, ByteBuffer> getRange(String topic, int queueId, long offset, int fetchNum) {
+        return getRange(TID.computeIfAbsent(topic, k -> Integer.parseInt(k.substring(5))), queueId, offset, fetchNum);
+    }
+
+    public long append(int topic, int queueId, ByteBuffer buffer)  {
         Monitor.appendCount ++;
         Monitor.appendSize += buffer.limit();
         if (Monitor.appendCount % 100000 == 0){
             LOGGER.info(Monitor.information());
         }
 
-        ByteBuffer data = ByteBuffer.allocateDirect(topic.getBytes().length + 4 + buffer.limit())
-                .put(topic.getBytes())
+        ByteBuffer data = ByteBuffer.allocateDirect(5 + buffer.limit())
+                .put((byte) topic)
                 .putShort((short) queueId)
                 .putShort((short) buffer.limit())
                 .put(buffer);
@@ -80,13 +90,13 @@ public class Mq extends MessageQueue{
 
         long position = barrier.write(data);
         Queue queue = getQueue(topic, queueId);
-        queue.write(position - buffer.limit(), buffer);
+        queue.write(position + 5, buffer);
 
         barrier.await(30, TimeUnit.SECONDS);
         return queue.getOffset();
     }
 
-    public Map<Integer, ByteBuffer> getRange(String topic, int queueId, long offset, int fetchNum) {
+    public Map<Integer, ByteBuffer> getRange(int topic, int queueId, long offset, int fetchNum) {
         Queue queue = getQueue(topic, queueId);
         List<ByteBuffer> buffers = queue.read(offset, fetchNum);
 
