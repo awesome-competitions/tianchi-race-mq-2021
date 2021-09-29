@@ -83,7 +83,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         long heapSize = Const.G * 59;
         Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
         long start = System.currentTimeMillis();
-        AnyMemoryBlock block = heap.allocateCompactMemoryBlock(10);
+        AnyMemoryBlock block = heap.allocateCompactMemoryBlock(10 * Const.G);
         long end = System.currentTimeMillis();
         System.out.println((end - start));
         throw new RuntimeException("ex");
