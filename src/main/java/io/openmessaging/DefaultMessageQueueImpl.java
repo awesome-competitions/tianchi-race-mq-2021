@@ -95,22 +95,22 @@ public class DefaultMessageQueueImpl extends MessageQueue{
 
     void testHeapAllocateAndRW(int id, Heap heap){
         long start = System.currentTimeMillis();
-        AnyMemoryBlock block = heap.allocateMemoryBlock(10 * Const.G);
+        AnyMemoryBlock block = heap.allocateMemoryBlock(9 * Const.G);
         long end = System.currentTimeMillis();
         System.out.println(id + " allocate " + (end - start));
 
-//        start = System.currentTimeMillis();
-//        for (long i = 0; i < 10 * Const.G; i ++){
-//            block.setByte(i, (byte) 1);
-//        }
-//        end = System.currentTimeMillis();
-//        System.out.println(id + " write 10G " + (end - start));
-//
-//        start = System.currentTimeMillis();
-//        for (long i = 0; i < 10 * Const.G; i ++){
-//            block.getByte(i);
-//        }
-//        end = System.currentTimeMillis();
-//        System.out.println(id + " read 10G " + (end - start));
+        start = System.currentTimeMillis();
+        for (long i = 0; i < 10 * Const.G; i ++){
+            block.setByte(i, (byte) 1);
+        }
+        end = System.currentTimeMillis();
+        System.out.println(id + " write 10G " + (end - start));
+
+        start = System.currentTimeMillis();
+        for (long i = 0; i < 10 * Const.G; i ++){
+            block.getByte(i);
+        }
+        end = System.currentTimeMillis();
+        System.out.println(id + " read 10G " + (end - start));
     }
 }
