@@ -76,6 +76,7 @@ public class Mq extends MessageQueue{
                 .put(buffer);
         data.flip();
         buffer.flip();
+        System.out.println(buffer);
 
         long position = barrier.write(data);
         Queue queue = getQueue(topic, queueId);
