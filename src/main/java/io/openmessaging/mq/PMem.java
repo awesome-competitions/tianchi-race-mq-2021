@@ -32,6 +32,7 @@ public class PMem extends Data {
     @Override
     public void set(ByteBuffer buffer) {
         Monitor.writeMemCount ++;
+        System.out.println("1");
         byte[] bytes = new byte[buffer.limit()];
         buffer.get(bytes);
         block.copyFromArray(bytes, 0, position, bytes.length);
