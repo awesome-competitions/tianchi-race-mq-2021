@@ -23,6 +23,7 @@ public class PMem extends Data {
 
     @Override
     public ByteBuffer get() {
+        Monitor.readMemCount ++;
         return ByteBuffer.wrap(block.read(position, capacity));
     }
 
