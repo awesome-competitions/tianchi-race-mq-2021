@@ -52,13 +52,11 @@ public class Mq extends MessageQueue{
         }).start();
     }
 
-
-
     public Queue getQueue(String topic, int queueId){
         return queues.computeIfAbsent(topic, k ->  new ConcurrentHashMap<>())
                 .computeIfAbsent(queueId, k -> {
-                    Queue queue = new Queue(aof);
-                    queue.setActive(cache.apply((int) (Const.K * 17)));
+                    Queue queue = new Queue(cache, aof);
+                    queue.setActive(cache.applyActive((int) (Const.K * 17)));
                     Monitor.queueCount ++;
                     return queue;
                 });

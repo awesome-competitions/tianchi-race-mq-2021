@@ -1,38 +1,72 @@
 package io.openmessaging.mq;
 
-import com.intel.pmem.llpl.AnyMemoryBlock;
 import com.intel.pmem.llpl.Heap;
 import io.openmessaging.consts.Const;
 
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Cache {
 
     private Heap heap;
 
-    private Config config;
+    private Block active;
 
-    private ThreadLocal<AnyMemoryBlock> blocks;
+    private final List<Block> blocks = new ArrayList<>(10);
+
+    private final ThreadLocal<Integer> blockPos = new ThreadLocal<>();
+
+    private static final long ACTIVE_SIZE = Const.G * 3;
+
+    private static final long BLOCK_SIZE = Const.G * 5;
 
     public Cache(Config config){
         if (config.getHeapDir() != null){
             this.heap = Heap.exists(config.getHeapDir()) ? Heap.openHeap(config.getHeapDir()) : Heap.createHeap(config.getHeapDir(), config.getHeapSize());
+            this.active = applyBlock(ACTIVE_SIZE);
+            this.blocks.add(applyBlock(BLOCK_SIZE));
+            Thread producer = new Thread(() -> {
+                for (int i = 0; i < 9; i ++){
+                    this.blocks.add(applyBlock(BLOCK_SIZE));
+                }
+            });
+            producer.setDaemon(true);
+            producer.start();
         }
-        this.blocks = new ThreadLocal<>();
-        this.config = config;
+
     }
 
-    public AnyMemoryBlock getBlock(){
-        return heap.allocateCompactMemoryBlock(Const.G * 5);
+    public Block applyBlock(long size){
+        return new Block(heap.allocateCompactMemoryBlock(size), size);
     }
 
     public Data apply(int capacity){
         if (heap == null){
             return new Dram(capacity);
         }
-        Monitor.heapUsedSize += capacity;
-        return new PMem(heap.allocateCompactMemoryBlock(capacity), capacity);
+        if (blockPos.get() == null){
+            blockPos.set(0);
+        }
+        long position = -1;
+        while (blockPos.get() < blocks.size() && (position = blocks.get(blockPos.get()).allocate(capacity)) == -1){
+            blockPos.set(blockPos.get() + 1);
+        }
+        if (position == -1){
+            return null;
+        }
+        return new PMem(blocks.get(blockPos.get()).getBlock(), position, capacity);
+    }
+
+    public Data applyActive(int capacity){
+        if (heap == null){
+            return new Dram(capacity);
+        }
+        long position = active.allocate(capacity);
+        if (position == -1){
+            return new Dram(capacity);
+        }
+        return new PMem(active.getBlock(), position, capacity);
     }
 
 }

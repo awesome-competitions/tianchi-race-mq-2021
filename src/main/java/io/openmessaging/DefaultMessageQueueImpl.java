@@ -24,24 +24,24 @@ import java.util.concurrent.TimeUnit;
 
 public class DefaultMessageQueueImpl extends MessageQueue{
 
-//    private final MessageQueue queue = new Mq(new Config(
-//            "/essd/",
-//            "/pmem/nico",
-//            Const.G * 59,
-//            Const.G * 54,
-//            40,
-//            Const.MINUTE * 10 + Const.SECOND * 2
-//    ));
-    private final MessageQueue queue = null;
+    private final MessageQueue queue = new Mq(new Config(
+            "/essd/",
+            "/pmem/nico",
+            Const.G * 59,
+            Const.G * 54,
+            40,
+            Const.MINUTE * 4 + Const.SECOND * 2
+    ));
+//    private final MessageQueue queue = null;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMessageQueueImpl.class);
 
     public DefaultMessageQueueImpl() throws FileNotFoundException {
-        try {
-            test();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            test();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     @Override

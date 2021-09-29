@@ -15,17 +15,17 @@ public class PMem extends Data {
 
     private final AnyMemoryBlock block;
 
-    public PMem(AnyMemoryBlock block, int capacity) {
+    public PMem(AnyMemoryBlock block, long position, int capacity) {
         super(capacity);
+        this.position = position;
         this.block = block;
     }
-
 
     @Override
     public ByteBuffer get() {
         Monitor.readMemCount ++;
         byte[] bytes = new byte[capacity];
-        block.copyToArray(0, bytes, 0, bytes.length);
+        block.copyToArray(position, bytes, 0, bytes.length);
         return ByteBuffer.wrap(bytes);
     }
 
@@ -34,15 +34,11 @@ public class PMem extends Data {
         Monitor.writeMemCount ++;
         byte[] bytes = new byte[buffer.capacity()];
         buffer.get(bytes);
-        block.copyFromArray(bytes, 0, 0, bytes.length);
+        block.copyFromArray(bytes, 0, position, bytes.length);
         this.capacity = bytes.length;
     }
 
     @Override
-    public void clear() {
-        if (block.isValid()){
-            block.freeMemory();
-        }
-    }
+    public void clear() {}
 
 }

@@ -9,32 +9,40 @@ public class Queue {
 
     private Data active;
 
+    private Data last;
+
     private final Map<Long, Data> records;
+
+    private Cache cache;
 
     private final FileWrapper fw;
 
     private boolean reading;
 
-    public Queue(FileWrapper fw) {
+    public Queue(Cache cache, FileWrapper fw) {
         this.fw = fw;
+        this.cache = cache;
         this.offset = -1;
         this.records = new HashMap<>();
     }
 
     public long write(long position, ByteBuffer buffer){
+        Data data = cache.apply(buffer.capacity());
+        if(data != null){
+            data.set(buffer);
+            records.put(++ offset, data);
+            return offset;
+        }
         if (! reading){
-            active.setPosition(position);
-            active.setCapacity(buffer.capacity());
             records.put(++ offset, new SSD(fw, position, buffer.capacity()));
             return offset;
         }
-        if (! records.isEmpty()){
-            Data last = new SSD(fw, active.getPosition(), active.getCapacity());
+        if (last != null){
             records.put(offset, last);
         }
         active.set(buffer);
-        active.setPosition(position);
         records.put(++ offset, active);
+        last = new SSD(fw, active.getPosition(), active.getCapacity());
         return offset;
     }
 
