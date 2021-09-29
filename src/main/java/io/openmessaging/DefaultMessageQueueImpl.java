@@ -88,8 +88,8 @@ public class DefaultMessageQueueImpl extends MessageQueue{
 //            testHeapAllocateAndRW(i, heap);
 //        }
 
-        CountDownLatch cdl = new CountDownLatch(40);
-        for (int i = 0; i < 40; i ++){
+        CountDownLatch cdl = new CountDownLatch(1);
+        for (int i = 0; i < 1; i ++){
             final int id = i;
             new Thread(()->{
                 testHeapAllocate(id);
@@ -137,9 +137,9 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         long end = System.currentTimeMillis();
         System.out.println(id + " open heap " + (end - start));
 
-//        start = System.currentTimeMillis();
-//        heap.allocateMemoryBlock((long) (Const.G * 1.25));
-//        end = System.currentTimeMillis();
-//        System.out.println(id + " allocate " + (end - start));
+        start = System.currentTimeMillis();
+        heap.allocateMemoryBlock((long) (Const.G * 1));
+        end = System.currentTimeMillis();
+        System.out.println(id + " allocate " + (end - start));
     }
 }
