@@ -19,7 +19,7 @@ public class Cache {
 
     private static final long ACTIVE_SIZE = Const.G * 3;
 
-    private static final long BLOCK_SIZE = Const.G * 5;
+    private static final long BLOCK_SIZE = Const.G * 2;
 
     public Cache(Config config){
         if (config.getHeapDir() != null){
@@ -27,7 +27,7 @@ public class Cache {
             this.active = applyBlock(ACTIVE_SIZE);
             this.blocks.add(applyBlock(BLOCK_SIZE));
             Thread producer = new Thread(() -> {
-                for (int i = 0; i < 9; i ++){
+                for (int i = 0; i < 24; i ++){
                     this.blocks.add(applyBlock(BLOCK_SIZE));
                 }
             });
