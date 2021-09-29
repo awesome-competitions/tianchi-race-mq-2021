@@ -106,7 +106,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
 
     void testHeapAllocateAndRW(int id, Heap heap){
         long start = System.currentTimeMillis();
-        AnyMemoryBlock block = heap.allocateCompactMemoryBlock(10 * Const.G);
+        AnyMemoryBlock block = heap.allocateMemoryBlock(10 * Const.G);
         long end = System.currentTimeMillis();
         System.out.println(id + " allocate " + (end - start));
 
