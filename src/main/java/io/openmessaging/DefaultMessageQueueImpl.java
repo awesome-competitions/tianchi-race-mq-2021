@@ -85,7 +85,21 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         long start = System.currentTimeMillis();
         AnyMemoryBlock block = heap.allocateCompactMemoryBlock(10 * Const.G);
         long end = System.currentTimeMillis();
-        System.out.println((end - start));
+        System.out.println("allocate " + (end - start));
+
+        start = System.currentTimeMillis();
+        for (long i = 0; i < 10 * Const.G; i ++){
+            block.setByte(i, (byte) 1);
+        }
+        end = System.currentTimeMillis();
+        System.out.println("write 10G " + (end - start));
+
+        start = System.currentTimeMillis();
+        for (long i = 0; i < 10 * Const.G; i ++){
+            block.getByte(i);
+        }
+        end = System.currentTimeMillis();
+        System.out.println("read 10G " + (end - start));
         throw new RuntimeException("ex");
     }
 }
