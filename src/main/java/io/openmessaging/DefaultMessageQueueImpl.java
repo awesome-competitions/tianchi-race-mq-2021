@@ -82,38 +82,46 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         String path = "/pmem/nico";
         long heapSize = Const.G * 59;
         Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
+
+        CountDownLatch cdl = new CountDownLatch(5);
+
+        long start = System.currentTimeMillis();
+        for (int i = 0; i < 5; i ++){
+            final int id = i;
+            new Thread(()->{
+                testHeapAllocateAndRW(id, heap);
+                cdl.countDown();
+            }).start();
+        }
+        try {
+            cdl.await(5, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        long end = System.currentTimeMillis();
+
+        System.out.println("all spend " + (end - start));
+        throw new RuntimeException("ex");
+    }
+
+    void testHeapAllocateAndRW(int id, Heap heap){
         long start = System.currentTimeMillis();
         AnyMemoryBlock block = heap.allocateCompactMemoryBlock(10 * Const.G);
         long end = System.currentTimeMillis();
-        System.out.println("allocate " + (end - start));
+        System.out.println(id + " allocate " + (end - start));
 
         start = System.currentTimeMillis();
         for (long i = 0; i < 10 * Const.G; i ++){
             block.setByte(i, (byte) 1);
         }
         end = System.currentTimeMillis();
-        System.out.println("write 10G " + (end - start));
+        System.out.println(id + " write 10G " + (end - start));
 
         start = System.currentTimeMillis();
         for (long i = 0; i < 10 * Const.G; i ++){
             block.getByte(i);
         }
         end = System.currentTimeMillis();
-        System.out.println("read 10G " + (end - start));
-
-        start = System.currentTimeMillis();
-        for (long i = 0; i < 10 * Const.G; i ++){
-            block.setByte(i, (byte) 1);
-        }
-        end = System.currentTimeMillis();
-        System.out.println("write 10G " + (end - start));
-
-        start = System.currentTimeMillis();
-        for (long i = 0; i < 10 * Const.G; i ++){
-            block.getByte(i);
-        }
-        end = System.currentTimeMillis();
-        System.out.println("read 10G " + (end - start));
-        throw new RuntimeException("ex");
+        System.out.println(id + " read 10G " + (end - start));
     }
 }
