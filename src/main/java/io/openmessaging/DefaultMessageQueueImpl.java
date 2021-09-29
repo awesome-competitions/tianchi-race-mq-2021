@@ -100,17 +100,17 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         System.out.println(id + " allocate " + (end - start));
 
         start = System.currentTimeMillis();
-        for (long i = 0; i < 10 * Const.G; i ++){
+        for (long i = 0; i < 9 * Const.G; i ++){
             block.setByte(i, (byte) 1);
         }
         end = System.currentTimeMillis();
-        System.out.println(id + " write 10G " + (end - start));
+        System.out.println(id + " write " + (end - start));
 
         start = System.currentTimeMillis();
-        for (long i = 0; i < 10 * Const.G; i ++){
+        for (long i = 0; i < 9 * Const.G; i ++){
             block.getByte(i);
         }
         end = System.currentTimeMillis();
-        System.out.println(id + " read 10G " + (end - start));
+        System.out.println(id + " read " + (end - start));
     }
 }
