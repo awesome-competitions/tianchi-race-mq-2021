@@ -84,11 +84,24 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
 
         long start = System.currentTimeMillis();
-        for (int i = 0; i < 10; i ++){
-            testHeapAllocateAndRW(i, heap);
+//        for (int i = 0; i < 10; i ++){
+//            testHeapAllocateAndRW(i, heap);
+//        }
+
+        CountDownLatch cdl = new CountDownLatch(40);
+        for (int i = 0; i < 40; i ++){
+            final int id = i;
+            new Thread(()->{
+                testHeapAllocate(id, heap);
+                cdl.countDown();
+            }).start();
         }
         long end = System.currentTimeMillis();
-
+        try {
+            cdl.await(5, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         System.out.println("all spend " + (end - start));
         throw new RuntimeException("ex");
     }
@@ -112,5 +125,12 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         }
         end = System.currentTimeMillis();
         System.out.println(id + " read " + (end - start));
+    }
+
+    void testHeapAllocate(int id, Heap heap){
+        long start = System.currentTimeMillis();
+        heap.allocateMemoryBlock((long) (Const.G * 1.25));
+        long end = System.currentTimeMillis();
+        System.out.println(id + " allocate " + (end - start));
     }
 }
