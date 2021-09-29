@@ -83,20 +83,9 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         long heapSize = Const.G * 59;
         Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
 
-        CountDownLatch cdl = new CountDownLatch(5);
-
         long start = System.currentTimeMillis();
         for (int i = 0; i < 5; i ++){
-            final int id = i;
-            new Thread(()->{
-                testHeapAllocateAndRW(id, heap);
-                cdl.countDown();
-            }).start();
-        }
-        try {
-            cdl.await(5, TimeUnit.MINUTES);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            testHeapAllocateAndRW(i, heap);
         }
         long end = System.currentTimeMillis();
 
@@ -110,18 +99,18 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         long end = System.currentTimeMillis();
         System.out.println(id + " allocate " + (end - start));
 
-        start = System.currentTimeMillis();
-        for (long i = 0; i < 10 * Const.G; i ++){
-            block.setByte(i, (byte) 1);
-        }
-        end = System.currentTimeMillis();
-        System.out.println(id + " write 10G " + (end - start));
-
-        start = System.currentTimeMillis();
-        for (long i = 0; i < 10 * Const.G; i ++){
-            block.getByte(i);
-        }
-        end = System.currentTimeMillis();
-        System.out.println(id + " read 10G " + (end - start));
+//        start = System.currentTimeMillis();
+//        for (long i = 0; i < 10 * Const.G; i ++){
+//            block.setByte(i, (byte) 1);
+//        }
+//        end = System.currentTimeMillis();
+//        System.out.println(id + " write 10G " + (end - start));
+//
+//        start = System.currentTimeMillis();
+//        for (long i = 0; i < 10 * Const.G; i ++){
+//            block.getByte(i);
+//        }
+//        end = System.currentTimeMillis();
+//        System.out.println(id + " read 10G " + (end - start));
     }
 }
