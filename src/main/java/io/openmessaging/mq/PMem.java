@@ -15,26 +15,10 @@ public class PMem extends Data {
 
     private final Block block;
 
-    private final int tid;
-
-    private final int qid;
-
-    private final long offset;
-
-    private final long aofPos;
-
     public PMem(Block block, long position, int capacity) {
-        this(block, 0, 0, 0, 0, position, capacity);
-    }
-
-    public PMem(Block block, int tid, int qid, long offset, long aofPos, long position, int capacity) {
         super(capacity);
         this.position = position;
         this.block = block;
-        this.tid = tid;
-        this.qid = qid;
-        this.offset = offset;
-        this.aofPos = aofPos;
     }
 
     @Override

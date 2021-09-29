@@ -37,7 +37,7 @@ public class Mq extends MessageQueue{
         this.queues = new ConcurrentHashMap<>();
         this.aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof", "rw"));
         this.barrier = new Barrier(config.getMaxCount(), this.aof);
-        this.cache = new Cache(config);
+        this.cache = new Cache(this);
         startKiller();
         LOGGER.info("Mq completed");
     }
@@ -65,6 +65,18 @@ public class Mq extends MessageQueue{
                 });
     }
 
+    public Config getConfig() {
+        return config;
+    }
+
+    public Map<Integer, Map<Integer, Queue>> getQueues() {
+        return queues;
+    }
+
+    public FileWrapper getAof() {
+        return aof;
+    }
+
     public long append(String topic, int queueId, ByteBuffer buffer)  {
         return append(TID.computeIfAbsent(topic, k -> Integer.parseInt(k.substring(5))), queueId, buffer);
     }
@@ -80,16 +92,19 @@ public class Mq extends MessageQueue{
             LOGGER.info(Monitor.information());
         }
 
-        ByteBuffer data = ByteBuffer.allocateDirect(5 + buffer.limit())
+        Queue queue = getQueue(topic, queueId);
+        long offset = queue.nextOffset();
+
+        ByteBuffer data = ByteBuffer.allocateDirect(9 + buffer.limit())
                 .put((byte) topic)
                 .putShort((short) queueId)
+                .putInt((int) offset)
                 .putShort((short) buffer.limit())
                 .put(buffer);
         data.flip();
         buffer.flip();
 
         long position = barrier.write(data);
-        Queue queue = getQueue(topic, queueId);
         queue.write(position + 5, buffer);
 
         barrier.await(30, TimeUnit.SECONDS);

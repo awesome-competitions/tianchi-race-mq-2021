@@ -15,10 +15,8 @@ public class FileWrapper {
         this.channel = file.getChannel();
     }
 
-    private void position(long pos) throws IOException {
-        if (channel.position() != pos){
-            channel.position(pos);
-        }
+    public long position() throws IOException {
+        return channel.position();
     }
 
     public synchronized long write(ByteBuffer[] buffers) throws IOException {

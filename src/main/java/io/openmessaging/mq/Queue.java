@@ -32,12 +32,19 @@ public class Queue {
         this.records = new HashMap<>();
     }
 
+    public long nextOffset(){
+        return ++ offset;
+    }
+
     public long write(long position, ByteBuffer buffer){
-        ++ offset;
-        Data data = cache.allocate(tid, qid, offset, position, buffer.limit());
+        Data data = cache.allocate(position, buffer.limit());
         if(data != null){
             data.set(buffer);
             records.put(offset, data);
+            Block block = cache.localBlock();
+            if (block != null){
+                block.register(tid, qid, offset);
+            }
             return offset;
         }
         if (! reading){
@@ -48,7 +55,7 @@ public class Queue {
             records.put(offset - 1, last);
         }
         active.set(buffer);
-        records.put(++ offset, active);
+        records.put(offset, active);
         last = new SSD(fw, position, buffer.limit());
         return offset;
     }
@@ -62,6 +69,7 @@ public class Queue {
                 break;
             }
             buffers.add(data.get());
+            cache.unregister(tid, qid, i);
         }
         return buffers;
     }
@@ -85,4 +93,5 @@ public class Queue {
     public Data getActive() {
         return active;
     }
+
 }
