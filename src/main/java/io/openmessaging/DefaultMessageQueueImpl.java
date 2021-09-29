@@ -131,12 +131,15 @@ public class DefaultMessageQueueImpl extends MessageQueue{
 
     void testHeapAllocate(int id){
         String path = "/pmem/nico" + id;
+        long start = System.currentTimeMillis();
         long heapSize = (long) (Const.G * 1.25);
         Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
-
-        long start = System.currentTimeMillis();
-        heap.allocateMemoryBlock((long) (Const.G * 1.25));
         long end = System.currentTimeMillis();
+        System.out.println(id + " open heap " + (end - start));
+
+        start = System.currentTimeMillis();
+        heap.allocateMemoryBlock((long) (Const.G * 1.25));
+        end = System.currentTimeMillis();
         System.out.println(id + " allocate " + (end - start));
     }
 }
