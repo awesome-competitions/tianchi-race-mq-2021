@@ -53,10 +53,6 @@ public class Queue {
             }
             return offset;
         }
-        if (! reading){
-            records.put(offset, new SSD(fw, position, buffer.limit()));
-            return offset;
-        }
         if (last != null){
             records.put(offset - 1, last);
         }
@@ -75,7 +71,7 @@ public class Queue {
                 break;
             }
             if (data instanceof SSD){
-                LOGGER.info("read-ssd, topic {}, queue {}, active {}, last offset {}, read offset {}", tid, qid, active, offset, i);
+                LOGGER.info("read-ssd, topic {}, queue {}, active {}, last offset {}, read offset {}", tid, qid, active, this.offset, i);
             }
             buffers.add(data.get());
         }
