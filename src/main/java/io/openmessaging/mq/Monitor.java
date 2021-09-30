@@ -5,13 +5,10 @@ public class Monitor {
     public static long queueCount = 0;
     public static long appendSize = 0;
     public static long appendCount = 0;
-    public static long heapUsedSize = 0;
     public static long readDistCount = 0;
     public static long readMemCount = 0;
     public static long writeMemCount = 0;
-    public static long loadTimes = 0;
-    public static long loadSpend = 0;
-    public static long maxRecordSize = 0;
+    public static long readIdleCount = 0;
 
     public static String information(){
         return "queueCount: " + queueCount +
@@ -20,10 +17,7 @@ public class Monitor {
                 ", readDistCount: " + readDistCount +
                 ", readMemCount: " + readMemCount +
                 ", writeMemCount: " + writeMemCount +
-                ", heapUsedSize: " + heapUsedSize +
-                ", loadTimes: " + loadTimes +
-                ", loadSpend: " + loadSpend +
-                ", maxRecordSize: " + maxRecordSize
+                ", readIdleCount: " + readIdleCount
                 ;
     }
 }

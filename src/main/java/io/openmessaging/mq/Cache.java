@@ -75,6 +75,7 @@ public class Cache {
             Data data;
             while ((data = idles.poll()) != null){
                 if (data.getCapacity() >= cap){
+                    Monitor.readIdleCount ++;
                     return data;
                 }
                 idles.add(data);
