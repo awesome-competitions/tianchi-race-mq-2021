@@ -32,7 +32,7 @@ public class Queue {
     }
 
     public long write(long position, ByteBuffer buffer){
-        Data data = cache.allocate(position, (int) (Const.K * 17));
+        Data data = cache.allocate(position, buffer.limit());
         if(data != null){
             data.set(buffer);
             records.put(offset, data);

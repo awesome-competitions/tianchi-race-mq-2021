@@ -41,7 +41,7 @@ public class Cache {
 
     private void startProducer(){
         Thread producer = new Thread(() -> {
-            for (int i = 0; i < 26; i ++){
+            for (int i = 0; i < 25; i ++){
                 this.blocks.add(applyBlock(BLOCK_SIZE));
             }
         });
@@ -72,7 +72,14 @@ public class Cache {
             blockPos.set(blockPos.get() + 1);
         }
         if (memPos == -1){
-            return idles.poll();
+            Data data;
+            while ((data = idles.poll()) != null){
+                if (data.getCapacity() >= cap){
+                    return data;
+                }
+                idles.add(data);
+            }
+            return null;
         }
         long oldPos = this.aofPos.get();
         long newPos = aofPosition + cap;
