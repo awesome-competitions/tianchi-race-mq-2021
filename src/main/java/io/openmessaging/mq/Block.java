@@ -71,4 +71,8 @@ public class Block {
     public boolean isFree(){
         return offsets.isEmpty();
     }
+
+    public Map<Long, Long> getOffsets() {
+        return offsets;
+    }
 }

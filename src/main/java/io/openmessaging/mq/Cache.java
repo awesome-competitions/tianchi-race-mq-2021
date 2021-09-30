@@ -50,6 +50,7 @@ public class Cache {
             this.aofPos = new AtomicLong();
             startProducer();
             startLoader();
+            startBlockMonitor();
         }
     }
 
@@ -61,6 +62,27 @@ public class Cache {
         });
         producer.setDaemon(true);
         producer.start();
+    }
+
+    private void startBlockMonitor(){
+        Thread monitor = new Thread(() -> {
+            while (true){
+                try {
+                    Thread.sleep(60 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Iterator<Map.Entry<Integer, Block>> iterator = stables.entrySet().iterator();
+                List<Integer> removed = null;
+                while (iterator.hasNext()){
+                    Map.Entry<Integer, Block> entry = iterator.next();
+                    Block block = entry.getValue();
+                    LOGGER.info("block {}, offsets size {}", block.getId(), block.getOffsets().size());
+                }
+            }
+        });
+        monitor.setDaemon(true);
+        monitor.start();
     }
 
     private void startLoader(){
