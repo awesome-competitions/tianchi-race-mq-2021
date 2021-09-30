@@ -73,11 +73,13 @@ public class Cache {
         }
         if (memPos == -1){
             Data data;
-            while ((data = idles.poll()) != null){
+            int count = 0;
+            while ((data = idles.poll()) != null && count < 10000){
                 if (data.getCapacity() >= cap){
                     Monitor.readIdleCount ++;
                     return data;
                 }
+                count ++;
                 idles.add(data);
             }
             return null;
