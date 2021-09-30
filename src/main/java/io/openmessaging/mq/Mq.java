@@ -37,7 +37,7 @@ public class Mq extends MessageQueue{
         this.queues = new ConcurrentHashMap<>();
         this.aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof", "rw"));
         this.barrier = new Barrier(config.getMaxCount(), this.aof);
-        this.cache = new Cache(this);
+        this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
         startKiller();
         LOGGER.info("Mq completed");
     }
@@ -58,23 +58,13 @@ public class Mq extends MessageQueue{
     public Queue getQueue(int topic, int queueId){
         return queues.computeIfAbsent(topic, k ->  new ConcurrentHashMap<>())
                 .computeIfAbsent(queueId, k -> {
-                    Queue queue = new Queue(topic, queueId, cache, aof);
-                    queue.setActive(cache.allocateActive((int) (Const.K * 17)));
                     Monitor.queueCount ++;
-                    return queue;
+                    return new Queue(cache, aof);
                 });
     }
 
     public Config getConfig() {
         return config;
-    }
-
-    public Map<Integer, Map<Integer, Queue>> getQueues() {
-        return queues;
-    }
-
-    public FileWrapper getAof() {
-        return aof;
     }
 
     public long append(String topic, int queueId, ByteBuffer buffer)  {

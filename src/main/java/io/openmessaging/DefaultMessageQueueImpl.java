@@ -15,6 +15,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -30,7 +31,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
             Const.G * 59,
             Const.G * 54,
             40,
-            Const.MINUTE * 6 + Const.SECOND * 2
+            Const.MINUTE * 15 + Const.SECOND * 2
     ));
 //    private final MessageQueue queue = null;
 
@@ -145,4 +146,5 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         end = System.currentTimeMillis();
         System.out.println(id + " allocate " + (end - start));
     }
+
 }
