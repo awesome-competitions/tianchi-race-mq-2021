@@ -1,5 +1,9 @@
 package io.openmessaging.mq;
 
+import io.openmessaging.utils.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -22,6 +26,8 @@ public class Queue {
     private final FileWrapper fw;
 
     private boolean reading;
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(Queue.class);
 
     public Queue(int tid, int qid, Cache cache, FileWrapper fw) {
         this.tid = tid;
@@ -68,8 +74,13 @@ public class Queue {
             if (data == null){
                 break;
             }
+            if (data instanceof SSD){
+                LOGGER.info("read-ssd, topic {}, queue {}, active {}, last offset {}, read offset {}", tid, qid, active, offset, i);
+            }
             buffers.add(data.get());
-            cache.unregister(tid, qid, i);
+        }
+        if (CollectionUtils.isNotEmpty(buffers)){
+            cache.unregister(tid, qid, offset + buffers.size() - 1);
         }
         return buffers;
     }

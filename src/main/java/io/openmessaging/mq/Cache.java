@@ -50,7 +50,7 @@ public class Cache {
             this.aofPos = new AtomicLong();
             startProducer();
             startLoader();
-            startBlockMonitor();
+//            startBlockMonitor();
         }
     }
 
