@@ -11,8 +11,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Block {
 
-    private final int id;
-
     private final AnyMemoryBlock block;
 
     private final long capacity;
@@ -21,21 +19,11 @@ public class Block {
 
     private final Map<Long, Long> offsets;
 
-    public Block(int id, AnyMemoryBlock block, long capacity) {
-        this.id = id;
+    public Block(AnyMemoryBlock block, long capacity) {
         this.block = block;
         this.capacity = capacity;
         this.memPos = new AtomicLong();
         this.offsets = new ConcurrentHashMap<>();
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void reset(){
-        this.memPos.set(0);
-        this.offsets.clear();
     }
 
     public long allocate(int cap){

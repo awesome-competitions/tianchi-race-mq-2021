@@ -33,7 +33,7 @@ public class Cache {
     public Cache(String heapDir, long heapSize){
         if (heapDir != null){
             this.heap = Heap.exists(heapDir) ? Heap.openHeap(heapDir) : Heap.createHeap(heapDir, heapSize);
-            this.blocks.add(applyBlock(1, BLOCK_SIZE));
+            this.blocks.add(applyBlock(BLOCK_SIZE));
             this.aofPos = new AtomicLong();
             startProducer();
         }
@@ -42,15 +42,15 @@ public class Cache {
     private void startProducer(){
         Thread producer = new Thread(() -> {
             for (int i = 0; i < 27; i ++){
-                this.blocks.add(applyBlock(1 + i, BLOCK_SIZE));
+                this.blocks.add(applyBlock(BLOCK_SIZE));
             }
         });
         producer.setDaemon(true);
         producer.start();
     }
 
-    public Block applyBlock(int id, long size){
-        return new Block(id, heap.allocateCompactMemoryBlock(size), size);
+    public Block applyBlock(long size){
+        return new Block(heap.allocateCompactMemoryBlock(size), size);
     }
 
     public Block localBlock(){
