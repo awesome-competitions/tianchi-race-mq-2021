@@ -81,6 +81,7 @@ public class Mq extends MessageQueue{
         if (Monitor.appendCount % 100000 == 0){
             LOGGER.info(Monitor.information());
         }
+        Monitor.maxRecordSize = Math.max(buffer.limit(), Monitor.maxRecordSize);
 
         Queue queue = getQueue(topic, queueId);
         long offset = queue.nextOffset();

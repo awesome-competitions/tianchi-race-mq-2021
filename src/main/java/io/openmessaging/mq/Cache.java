@@ -41,7 +41,7 @@ public class Cache {
 
     private void startProducer(){
         Thread producer = new Thread(() -> {
-            for (int i = 0; i < 27; i ++){
+            for (int i = 0; i < 26; i ++){
                 this.blocks.add(applyBlock(BLOCK_SIZE));
             }
         });

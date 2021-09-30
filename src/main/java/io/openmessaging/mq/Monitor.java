@@ -11,6 +11,7 @@ public class Monitor {
     public static long writeMemCount = 0;
     public static long loadTimes = 0;
     public static long loadSpend = 0;
+    public static long maxRecordSize = 0;
 
     public static String information(){
         return "queueCount: " + queueCount +
@@ -21,7 +22,8 @@ public class Monitor {
                 ", writeMemCount: " + writeMemCount +
                 ", heapUsedSize: " + heapUsedSize +
                 ", loadTimes: " + loadTimes +
-                ", loadSpend: " + loadSpend
+                ", loadSpend: " + loadSpend +
+                ", maxRecordSize: " + maxRecordSize
                 ;
     }
 }
