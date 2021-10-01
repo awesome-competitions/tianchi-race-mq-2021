@@ -59,6 +59,7 @@ public class Cache {
     }
 
     public Data allocate(int cap){
+        cap = (int) (Const.K * 17);
         if (heap == null){
             return new Dram(cap);
         }
@@ -70,19 +71,13 @@ public class Cache {
             blockPos.set(blockPos.get() + 1);
         }
         if (memPos == -1){
-            Data data;
-            int count = 0;
-            int size = 2000;
-            while ((data = idles.poll()) != null && count < size){
-                if (data.getCapacity() >= cap){
-                    Monitor.allocateIdleCount ++;
-                    return data;
-                }
-                count ++;
-                idles.add(data);
+            Data data = idles.poll();
+            if (data == null){
+                Monitor.missingIdleCount ++;
+            }else{
+                Monitor.allocateIdleCount ++;
             }
-            Monitor.missingIdleCount ++;
-            return null;
+            return data;
         }
         return new PMem(localBlock(), memPos, cap);
     }
