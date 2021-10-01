@@ -21,13 +21,13 @@ public class Topic {
         this.pageSize = pageSize;
     }
 
-    public Queue getQueue(int queueId, Cache cache, FileWrapper aof){
+    public Queue getQueue(int queueId, Cache cache){
         return queues.computeIfAbsent(queueId, k -> {
-            return new Queue(this, cache, aof);
+            return new Queue(this, cache);
         });
     }
 
-    public SSDBlock nextSSDBlock(){
-        return new SSDBlock(tpl, page.getAndIncrement() * pageSize, pageSize);
+    public SSD nextSSDBlock(){
+        return new SSD(tpl, page.getAndIncrement() * pageSize, pageSize);
     }
 }

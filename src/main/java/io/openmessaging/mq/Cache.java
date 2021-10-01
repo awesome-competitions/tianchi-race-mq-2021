@@ -59,7 +59,6 @@ public class Cache {
     }
 
     public Data allocate(int cap){
-        cap = (int) (Const.K * 17);
         if (heap == null){
             return new Dram(cap);
         }
@@ -84,6 +83,7 @@ public class Cache {
 
     public void recycle(Data data){
         if (data instanceof PMem){
+            data.clear();
             idles.add(data);
         }
     }

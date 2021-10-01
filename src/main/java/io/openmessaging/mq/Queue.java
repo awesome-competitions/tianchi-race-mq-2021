@@ -1,12 +1,8 @@
 package io.openmessaging.mq;
 
-import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
-import io.openmessaging.consts.Const;
-import io.openmessaging.utils.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -14,23 +10,20 @@ public class Queue {
 
     private long offset;
 
-    private Topic topic;
+    private final Topic topic;
 
     private final Map<Long, Data> records;
 
     private final Cache cache;
 
-    private final FileWrapper aof;
-
-    private SSDBlock ssdBlock;
+    private SSD ssd;
 
     private boolean reading;
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Queue.class);
 
-    public Queue(Topic topic, Cache cache, FileWrapper aof) {
+    public Queue(Topic topic, Cache cache) {
         this.topic = topic;
-        this.aof = aof;
         this.cache = cache;
         this.offset = -1;
         this.records = new HashMap<>();
@@ -47,11 +40,11 @@ public class Queue {
             records.put(offset, data);
             return offset;
         }
-        if (ssdBlock == null || ! ssdBlock.writable(buffer)){
-            ssdBlock = topic.nextSSDBlock();
+        if (ssd == null || ! ssd.writable(buffer)){
+            ssd = topic.nextSSDBlock();
         }
-        ssdBlock.write(offset, buffer);
-        records.put(offset, ssdBlock);
+        ssd.write(offset, buffer);
+        records.put(offset, ssd);
         return offset;
     }
 
@@ -78,13 +71,11 @@ public class Queue {
             if (data instanceof PMem){
                 buffers.add(data.get());
                 cache.recycle(data);
-            }else if (data instanceof SSDBlock){
-                SSDBlock ssdBlock = (SSDBlock) data;
+            }else if (data instanceof SSD){
+                SSD ssdBlock = (SSD) data;
                 tmpRecords.putAll(ssdBlock.load());
                 buffers.add(tmpRecords.remove(i).get());
             }else if (data instanceof Dram){
-                buffers.add(data.get());
-            }else if (data instanceof SSD){
                 buffers.add(data.get());
             }
         }

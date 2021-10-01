@@ -62,7 +62,7 @@ public class Mq extends MessageQueue{
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }
-        }).getQueue(queueId, cache, aof);
+        }).getQueue(queueId, cache);
     }
 
     public Config getConfig() {
