@@ -41,7 +41,7 @@ public class Queue {
     }
 
     public long write(ByteBuffer buffer){
-        Data data = cache.allocate();
+        Data data = cache.allocate(buffer.limit());
         if(data != null){
             data.set(buffer);
             records.put(offset, data);
@@ -92,7 +92,7 @@ public class Queue {
                 if (tmpRecord.getKey() < nextReadOffset){
                     continue;
                 }
-                Data data = cache.allocate();
+                Data data = cache.allocate(tmpRecord.getValue().getCapacity());
                 if (data != null){
                     data.set(tmpRecord.getValue().get());
                     records.put(tmpRecord.getKey(), data);
