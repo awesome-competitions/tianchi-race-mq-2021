@@ -24,6 +24,8 @@ public class Queue {
 
     private SSDBlock ssdBlock;
 
+    private boolean reading;
+
     private final static Logger LOGGER = LoggerFactory.getLogger(Queue.class);
 
     public Queue(Topic topic, Cache cache, FileWrapper aof) {
@@ -54,6 +56,13 @@ public class Queue {
     }
 
     public List<ByteBuffer> read(long offset, int num){
+        if (!reading){
+            for (long i = 0; i < offset; i ++){
+                Data data = records.remove(i);
+                cache.recycle(data);
+            }
+            reading = true;
+        }
         List<ByteBuffer> buffers = new ArrayList<>();
         Map<Long, Data> tmpRecords = new HashMap<>();
         for (long i = offset; i < offset + num; i ++){

@@ -71,14 +71,15 @@ public class Cache {
         if (memPos == -1){
             Data data;
             int count = 0;
-            while ((data = idles.poll()) != null && count < 1000){
+            while ((data = idles.poll()) != null && count < 2000){
                 if (data.getCapacity() >= cap){
-                    Monitor.readIdleCount ++;
+                    Monitor.allocateIdleCount ++;
                     return data;
                 }
                 count ++;
                 idles.add(data);
             }
+            Monitor.missingIdleCount ++;
             return null;
         }
         return new PMem(localBlock(), memPos, cap);
