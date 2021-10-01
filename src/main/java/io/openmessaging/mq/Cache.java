@@ -71,7 +71,7 @@ public class Cache {
         if (memPos == -1){
             Data data;
             int count = 0;
-            int size = idles.size() / 2;
+            int size = 2000;
             while ((data = idles.poll()) != null && count < size){
                 if (data.getCapacity() >= cap){
                     Monitor.allocateIdleCount ++;
