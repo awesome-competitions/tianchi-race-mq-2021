@@ -86,8 +86,12 @@ public class Queue {
                 buffers.add(data.get());
             }
         }
+        long nextReadOffset = offset + buffers.size();
         if (! tmpRecords.isEmpty()){
             for (Map.Entry<Long, Data> tmpRecord: tmpRecords.entrySet()){
+                if (tmpRecord.getKey() < nextReadOffset){
+                    continue;
+                }
                 Data data = cache.allocate();
                 if (data != null){
                     data.set(tmpRecord.getValue().get());
