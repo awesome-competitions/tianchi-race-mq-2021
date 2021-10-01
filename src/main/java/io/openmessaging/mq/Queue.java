@@ -41,7 +41,7 @@ public class Queue {
     }
 
     public long write(ByteBuffer buffer){
-        Data data = cache.allocate(buffer.limit());
+        Data data = cache.allocate();
         if(data != null){
             data.set(buffer);
             records.put(offset, data);
@@ -88,7 +88,7 @@ public class Queue {
         }
         if (! tmpRecords.isEmpty()){
             for (Map.Entry<Long, Data> tmpRecord: tmpRecords.entrySet()){
-                Data data = cache.allocate(tmpRecord.getValue().capacity);
+                Data data = cache.allocate();
                 if (data != null){
                     data.set(tmpRecord.getValue().get());
                     records.put(tmpRecord.getKey(), data);
