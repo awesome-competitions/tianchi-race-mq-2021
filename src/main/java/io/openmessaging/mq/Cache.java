@@ -24,7 +24,7 @@ public class Cache {
 
     private final ThreadLocal<Integer> blockPos = new ThreadLocal<>();
 
-    private static final long BLOCK_SIZE = Const.G * 2;
+    private static final long BLOCK_SIZE = Const.G * 5;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Cache.class);
 
@@ -32,13 +32,14 @@ public class Cache {
         if (heapDir != null){
             this.heap = Heap.exists(heapDir) ? Heap.openHeap(heapDir) : Heap.createHeap(heapDir, heapSize);
             this.blocks.add(applyBlock(BLOCK_SIZE));
+            this.blocks.add(applyBlock(Const.G * 2));
             startProducer();
         }
     }
 
     private void startProducer(){
         Thread producer = new Thread(() -> {
-            for (int i = 0; i < 25; i ++){
+            for (int i = 0; i < 9; i ++){
                 this.blocks.add(applyBlock(BLOCK_SIZE));
             }
         });
