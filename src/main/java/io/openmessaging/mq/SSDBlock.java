@@ -63,12 +63,12 @@ public class SSDBlock extends Data{
         } catch (IOException e) {
             e.printStackTrace();
         }
-        aos += buffer.capacity();
-        this.records.add(new Record(offset, buffer.capacity()));
+        aos += buffer.limit();
+        this.records.add(new Record(offset, buffer.limit()));
     }
 
     public boolean writable(ByteBuffer buffer){
-        return capacity - (aos - position) >= buffer.capacity();
+        return capacity - (aos - position) >= buffer.limit();
     }
 
     public FileWrapper getFw() {
