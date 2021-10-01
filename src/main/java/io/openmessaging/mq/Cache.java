@@ -18,8 +18,6 @@ public class Cache {
 
     private Heap heap;
 
-    private AtomicLong aofPos;
-
     private final List<Block> blocks = new ArrayList<>(10);
 
     private final LinkedBlockingQueue<Data> idles = new LinkedBlockingQueue<>();
@@ -34,7 +32,6 @@ public class Cache {
         if (heapDir != null){
             this.heap = Heap.exists(heapDir) ? Heap.openHeap(heapDir) : Heap.createHeap(heapDir, heapSize);
             this.blocks.add(applyBlock(BLOCK_SIZE));
-            this.aofPos = new AtomicLong();
             startProducer();
         }
     }
@@ -60,7 +57,7 @@ public class Cache {
         return null;
     }
 
-    public Data allocate(long aofPosition, int cap){
+    public Data allocate(int cap){
         if (heap == null){
             return new Dram(cap);
         }
@@ -74,7 +71,7 @@ public class Cache {
         if (memPos == -1){
             Data data;
             int count = 0;
-            while ((data = idles.poll()) != null && count < 10000){
+            while ((data = idles.poll()) != null && count < 1000){
                 if (data.getCapacity() >= cap){
                     Monitor.readIdleCount ++;
                     return data;
@@ -83,11 +80,6 @@ public class Cache {
                 idles.add(data);
             }
             return null;
-        }
-        long oldPos = this.aofPos.get();
-        long newPos = aofPosition + cap;
-        while (newPos > oldPos && ! this.aofPos.compareAndSet(oldPos, newPos)){
-            oldPos = this.aofPos.get();
         }
         return new PMem(localBlock(), memPos, cap);
     }

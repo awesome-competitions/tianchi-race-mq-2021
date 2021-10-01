@@ -43,7 +43,7 @@ public class Test {
 
     public static void main(String[] args) throws InterruptedException, FileNotFoundException {
         cleanDB();
-        MessageQueue mMapMessageQueue = new Mq(new Config(DIR, HEAP_DIR, HEAP_SIZE, HEAP_USABLE_SIZE, 1, 0));
+        MessageQueue mMapMessageQueue = new Mq(new Config(DIR, HEAP_DIR, HEAP_SIZE, HEAP_USABLE_SIZE, 1, (int) (Const.K * 512), 0));
         List<Supplier<?>> suppliers = new ArrayList<>();
 
         for (int j = 1; j <= TOPIC_SIZE; j ++){
@@ -91,7 +91,6 @@ public class Test {
             }
             end = System.currentTimeMillis();
             System.out.println("【read】 topic " + topic + ", queue " + queueId + " spend " + (end - start) + "ms");
-
             return null;
         };
     }

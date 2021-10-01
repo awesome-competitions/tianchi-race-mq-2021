@@ -9,6 +9,8 @@ public class Monitor {
     public static long readMemCount = 0;
     public static long writeMemCount = 0;
     public static long readIdleCount = 0;
+    public static long writeSSDBlockCount = 0;
+    public static long readSSDBlockCount = 0;
 
     public static String information(){
         return "queueCount: " + queueCount +
@@ -17,7 +19,9 @@ public class Monitor {
                 ", readDistCount: " + readDistCount +
                 ", readMemCount: " + readMemCount +
                 ", writeMemCount: " + writeMemCount +
-                ", readIdleCount: " + readIdleCount
+                ", readIdleCount: " + readIdleCount +
+                ", writeSSDBlockCount: " + writeSSDBlockCount +
+                ", readSSDBlockCount: " + readSSDBlockCount
                 ;
     }
 }

@@ -19,7 +19,7 @@ public class Mq extends MessageQueue{
 
     private final Config config;
 
-    private final Map<Integer, Map<Integer, Queue>> queues;
+    private final Map<Integer, Topic> topics;
 
     private final Barrier barrier;
 
@@ -34,7 +34,7 @@ public class Mq extends MessageQueue{
     public Mq(Config config) throws FileNotFoundException {
         LOGGER.info("Mq init");
         this.config = config;
-        this.queues = new ConcurrentHashMap<>();
+        this.topics = new ConcurrentHashMap<>();
         this.aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof", "rw"));
         this.barrier = new Barrier(config.getMaxCount(), this.aof);
         this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
@@ -56,11 +56,13 @@ public class Mq extends MessageQueue{
     }
 
     public Queue getQueue(int topic, int queueId){
-        return queues.computeIfAbsent(topic, k ->  new ConcurrentHashMap<>())
-                .computeIfAbsent(queueId, k -> {
-                    Monitor.queueCount ++;
-                    return new Queue(cache, aof);
-                });
+        return topics.computeIfAbsent(topic, k -> {
+            try {
+                return new Topic(new FileWrapper(new RandomAccessFile(config.getDataDir() + "tpl_" + topic, "rw")), config.getPageSize());
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }).getQueue(queueId, cache, aof);
     }
 
     public Config getConfig() {
@@ -94,8 +96,8 @@ public class Mq extends MessageQueue{
         data.flip();
         buffer.flip();
 
-        long position = barrier.write(data);
-        queue.write(position + 9, buffer);
+        barrier.write(data);
+        queue.write(buffer);
 
         barrier.await(30, TimeUnit.SECONDS);
         return queue.getOffset();

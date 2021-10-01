@@ -15,6 +15,11 @@ public class Dram extends Data {
         super(capacity);
     }
 
+    public Dram(ByteBuffer data) {
+        super(data.capacity());
+        this.data = data;
+    }
+
     @Override
     public ByteBuffer get() {
         return data;
