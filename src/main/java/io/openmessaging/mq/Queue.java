@@ -57,10 +57,12 @@ public class Queue {
 
     public List<ByteBuffer> read(long offset, int num){
         if (!reading){
-            for (long i = 0; i < offset; i ++){
-                Data data = records.remove(i);
-                cache.recycle(data);
-            }
+            new Thread(()->{
+                for (long i = 0; i < offset; i ++){
+                    Data data = records.remove(i);
+                    cache.recycle(data);
+                }
+            }).start();
             reading = true;
         }
         List<ByteBuffer> buffers = new ArrayList<>();
