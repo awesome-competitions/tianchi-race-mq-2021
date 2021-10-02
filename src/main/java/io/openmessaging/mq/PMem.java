@@ -23,15 +23,17 @@ public class PMem extends Data {
         super(capacity);
         this.position = position;
         this.block = block;
+        this.size = capacity;
     }
 
     @Override
     public ByteBuffer get() {
         Monitor.readMemCount ++;
-        byte[] data = block.read(position, size);
-        ByteBuffer buffer = ByteBuffer.allocate(data.length + (ext != null ? ext.length : 0));
+        int extSize = ext == null ? 0 : ext.length;
+        byte[] data = block.read(position, size - extSize);
+        ByteBuffer buffer = ByteBuffer.allocate(size);
         buffer.put(data);
-        if (ext != null){
+        if (extSize > 0){
             buffer.put(ext);
         }
         buffer.flip();
@@ -41,7 +43,7 @@ public class PMem extends Data {
     @Override
     public void set(ByteBuffer buffer) {
         Monitor.writeMemCount ++;
-
+        this.size = buffer.limit();
         byte[] bytes = new byte[Math.min(buffer.limit(), capacity)];
         buffer.get(bytes);
         block.write(position, bytes);
@@ -50,7 +52,6 @@ public class PMem extends Data {
             ext = new byte[buffer.remaining()];
             buffer.get(ext);
         }
-        this.size = buffer.limit();
     }
 
     @Override
