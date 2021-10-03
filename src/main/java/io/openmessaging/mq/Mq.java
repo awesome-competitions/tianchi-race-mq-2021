@@ -30,6 +30,8 @@ public class Mq extends MessageQueue{
 
     private static final ThreadLocal<ByteBuffer> BUFFERS = new ThreadLocal<>();
 
+    private static final ThreadPoolExecutor POOL = (ThreadPoolExecutor) Executors.newFixedThreadPool(100);
+
     public Mq(Config config) throws FileNotFoundException {
         LOGGER.info("Mq init");
         this.config = config;
@@ -105,7 +107,7 @@ public class Mq extends MessageQueue{
         buffer.flip();
 
         barrier.write(data);
-        queue.write(buffer);
+        POOL.execute(() -> queue.write(buffer));
 
         barrier.await(30, TimeUnit.SECONDS);
         return queue.getOffset();
