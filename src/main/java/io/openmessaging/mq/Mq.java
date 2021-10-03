@@ -1,16 +1,12 @@
 package io.openmessaging.mq;
 
-import com.intel.pmem.llpl.AnyMemoryBlock;
-import com.intel.pmem.llpl.Heap;
 import io.openmessaging.MessageQueue;
 import io.openmessaging.consts.Const;
 import io.openmessaging.utils.CollectionUtils;
-import jdk.management.resource.internal.inst.ThreadRMHooks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.*;
