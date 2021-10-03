@@ -87,7 +87,7 @@ public class Mq extends MessageQueue{
         Queue queue = getQueue(topic, queueId);
         long offset = queue.nextOffset();
 
-        ByteBuffer data = ByteBuffer.allocateDirect(9 + buffer.limit())
+        ByteBuffer data = ByteBuffer.allocate(9 + buffer.limit())
                 .put((byte) topic)
                 .putShort((short) queueId)
                 .putInt((int) offset)
