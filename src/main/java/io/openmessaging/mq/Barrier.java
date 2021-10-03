@@ -30,6 +30,7 @@ public class Barrier {
                 try {
                     aof.write(array);
                     aof.force();
+                    Arrays.stream(array).forEach(ByteBuffer::clear);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -50,7 +51,7 @@ public class Barrier {
     public synchronized long write(ByteBuffer... buffers){
         long pos = position;
         for (ByteBuffer buffer: buffers){
-            position += buffer.capacity();
+            position += buffer.limit();
             this.buffers.add(buffer);
         }
         return pos;

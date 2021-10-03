@@ -5,6 +5,7 @@ import com.intel.pmem.llpl.Heap;
 import io.openmessaging.MessageQueue;
 import io.openmessaging.consts.Const;
 import io.openmessaging.utils.CollectionUtils;
+import jdk.management.resource.internal.inst.ThreadRMHooks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,8 @@ public class Mq extends MessageQueue{
     private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
 
     private static final Map<String, Integer> TID = new ConcurrentHashMap<>();
+
+    private static final ThreadLocal<ByteBuffer> BUFFERS = new ThreadLocal<>();
 
     public Mq(Config config) throws FileNotFoundException {
         LOGGER.info("Mq init");
@@ -65,6 +68,15 @@ public class Mq extends MessageQueue{
         }).getQueue(queueId, cache);
     }
 
+    public ByteBuffer getByteBuffer(){
+        ByteBuffer buffer = BUFFERS.get();
+        if (buffer == null){
+            buffer = ByteBuffer.allocateDirect((int) (Const.K * 17 + 10));
+            BUFFERS.set(buffer);
+        }
+        return buffer;
+    }
+
     public Config getConfig() {
         return config;
     }
@@ -87,7 +99,7 @@ public class Mq extends MessageQueue{
         Queue queue = getQueue(topic, queueId);
         long offset = queue.nextOffset();
 
-        ByteBuffer data = ByteBuffer.allocateDirect(9 + buffer.limit())
+        ByteBuffer data = getByteBuffer()
                 .put((byte) topic)
                 .putShort((short) queueId)
                 .putInt((int) offset)
