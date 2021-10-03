@@ -106,8 +106,20 @@ public class Mq extends MessageQueue{
         data.flip();
         buffer.flip();
 
-        barrier.write(data);
-        POOL.execute(() -> queue.write(buffer));
+        CountDownLatch cdl = new CountDownLatch(2);
+        POOL.execute(() -> {
+            barrier.write(data);
+            cdl.countDown();
+        });
+        POOL.execute(() -> {
+            queue.write(buffer);
+            cdl.countDown();
+        });
+        try {
+            cdl.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         barrier.await(30, TimeUnit.SECONDS);
         return queue.getOffset();
