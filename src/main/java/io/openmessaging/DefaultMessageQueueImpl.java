@@ -30,7 +30,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
             "/pmem/nico",
             Const.G * 59,
             40,
-            (int) (Const.K * 128),
+            (int) (Const.K * 256),
             Const.MINUTE * 5 + Const.SECOND * 2
     ));
 //    private final MessageQueue queue = null;
