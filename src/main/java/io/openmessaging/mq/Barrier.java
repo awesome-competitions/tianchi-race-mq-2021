@@ -25,16 +25,16 @@ public class Barrier {
     public Barrier(int parties, FileWrapper aof) {
         this.buffers = new ArrayList<>();
         this.action = ()->{
-            ByteBuffer[] array = getAndClear();
-            if (array.length > 0){
-                try {
-                    aof.write(array);
-                    aof.force();
-                    Arrays.stream(array).forEach(ByteBuffer::clear);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+//            ByteBuffer[] array = getAndClear();
+//            if (array.length > 0){
+//                try {
+//                    aof.write(array);
+//                    aof.force();
+//                    Arrays.stream(array).forEach(ByteBuffer::clear);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
         };
         this.barrier = new CyclicBarrier(parties, this.action);
     }
