@@ -36,7 +36,7 @@ public class FileWrapper {
     }
 
     public void force() throws IOException {
-        this.channel.force(false);
+        this.channel.force(true);
     }
 
     public synchronized int read(long position, ByteBuffer dst) throws IOException {
