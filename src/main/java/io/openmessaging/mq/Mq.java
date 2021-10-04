@@ -105,6 +105,7 @@ public class Mq extends MessageQueue{
                 .put(buffer);
         data.flip();
         buffer.flip();
+        data.clear();
 
 //        barrier.write(data);
 //        queue.write(buffer);
