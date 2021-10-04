@@ -41,6 +41,7 @@ public class Mq extends MessageQueue{
         this.aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof", "rw"));
         this.barrier = new Barrier(config.getMaxCount(), this.aof);
         this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
+        initPools();
         startKiller();
         LOGGER.info("Mq completed");
     }
