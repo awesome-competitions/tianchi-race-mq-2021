@@ -106,10 +106,10 @@ public class Mq extends MessageQueue{
         data.flip();
         buffer.flip();
 
-        barrier.write(data);
+//        barrier.write(data);
 //        queue.write(buffer);
 
-        barrier.await(30, TimeUnit.SECONDS);
+//        barrier.await(30, TimeUnit.SECONDS);
         return queue.getOffset();
     }
 
