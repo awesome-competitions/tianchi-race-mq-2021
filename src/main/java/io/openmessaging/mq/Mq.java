@@ -18,8 +18,6 @@ public class Mq extends MessageQueue{
 
     private final Map<Integer, Topic> topics;
 
-    private final Barrier barrier;
-
     private final FileWrapper aof;
 
     private final Cache cache;
@@ -39,7 +37,6 @@ public class Mq extends MessageQueue{
         this.config = config;
         this.topics = new ConcurrentHashMap<>();
         this.aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof", "rw"));
-        this.barrier = new Barrier(config.getMaxCount(), this.aof);
         this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
         initPools();
         startKiller();
@@ -47,8 +44,8 @@ public class Mq extends MessageQueue{
     }
 
     void initPools(){
-        for (int i = 0; i < 2; i ++){
-            Barrier barrier = new Barrier(20, aof);
+        for (int i = 0; i < 4; i ++){
+            Barrier barrier = new Barrier(10, aof);
             for (int j = 0; j < 20; j ++){
                 POOLS.add(barrier);
             }
