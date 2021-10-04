@@ -21,9 +21,7 @@ public class FileWrapper {
 
     public synchronized long write(ByteBuffer[] buffers) throws IOException {
         long pos = channel.position();
-        for (ByteBuffer buffer: buffers){
-            channel.write(buffer);
-        }
+        channel.write(buffers);
         return pos;
     }
 
