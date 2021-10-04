@@ -28,7 +28,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
     private final MessageQueue queue = new Mq(new Config(
             "/essd/",
             "/pmem/nico",
-            Const.G * 80,
+            Const.G * 65,
             40,
             (int) (Const.K * 256),
             Const.MINUTE * 1 + Const.SECOND * 2
