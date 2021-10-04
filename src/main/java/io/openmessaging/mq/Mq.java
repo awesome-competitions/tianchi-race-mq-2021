@@ -44,9 +44,12 @@ public class Mq extends MessageQueue{
     }
 
     void initPools(){
-        for (int i = 0; i < 4; i ++){
-            Barrier barrier = new Barrier(10, aof);
-            for (int j = 0; j < 10; j ++){
+        for (int i = 0; i < 3; i ++){
+            Barrier barrier = new Barrier(13, aof);
+            for (int j = 0; j < 13; j ++){
+                POOLS.add(barrier);
+            }
+            if (i == 2){
                 POOLS.add(barrier);
             }
         }
