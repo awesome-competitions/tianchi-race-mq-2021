@@ -30,7 +30,9 @@ public class Mq extends MessageQueue{
 
     private static final ThreadLocal<ByteBuffer> BUFFERS = new ThreadLocal<>();
 
-    private static final ThreadPoolExecutor POOL = (ThreadPoolExecutor) Executors.newFixedThreadPool(100);
+    private static final ThreadLocal<Barrier> BARRIERS = new ThreadLocal<>();
+
+    private static final LinkedBlockingQueue<Barrier> POOLS = new LinkedBlockingQueue<>();
 
     public Mq(Config config) throws FileNotFoundException {
         LOGGER.info("Mq init");
@@ -41,6 +43,15 @@ public class Mq extends MessageQueue{
         this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
         startKiller();
         LOGGER.info("Mq completed");
+    }
+
+    void initPools(){
+        for (int i = 0; i < 2; i ++){
+            Barrier barrier = new Barrier(20, aof);
+            for (int j = 0; j < 20; j ++){
+                POOLS.add(barrier);
+            }
+        }
     }
 
     void startKiller(){
@@ -75,6 +86,15 @@ public class Mq extends MessageQueue{
         return buffer;
     }
 
+    public Barrier getBarrier(){
+        Barrier barrier = BARRIERS.get();
+        if (barrier == null){
+            barrier = POOLS.poll();
+            BARRIERS.set(barrier);
+        }
+        return barrier;
+    }
+
     public Config getConfig() {
         return config;
     }
@@ -106,10 +126,10 @@ public class Mq extends MessageQueue{
         data.flip();
         buffer.flip();
 
-        barrier.write(data);
+        getBarrier().write(data);
 //        queue.write(buffer);
 
-        barrier.await(30, TimeUnit.SECONDS);
+        getBarrier().await(30, TimeUnit.SECONDS);
         return queue.getOffset();
     }
 
