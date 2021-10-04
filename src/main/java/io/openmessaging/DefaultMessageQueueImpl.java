@@ -37,7 +37,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMessageQueueImpl.class);
 
-    public DefaultMessageQueueImpl() throws FileNotFoundException {
+    public DefaultMessageQueueImpl() throws IOException {
 //        try {
 //            test();
 //        } catch (IOException e) {

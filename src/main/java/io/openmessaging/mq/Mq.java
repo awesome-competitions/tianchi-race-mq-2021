@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -24,29 +25,56 @@ public class Mq extends MessageQueue{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
 
-    private static final Map<String, Integer> TID = new ConcurrentHashMap<>();
+    private final Map<String, Integer> TID = new ConcurrentHashMap<>();
 
-    private static final ThreadLocal<ByteBuffer> BUFFERS = new ThreadLocal<>();
+    private final ThreadLocal<ByteBuffer> BUFFERS = new ThreadLocal<>();
 
-    private static final ThreadLocal<Barrier> BARRIERS = new ThreadLocal<>();
+    private final ThreadLocal<Barrier> BARRIERS = new ThreadLocal<>();
 
-    private static final LinkedBlockingQueue<Barrier> POOLS = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<Barrier> POOLS = new LinkedBlockingQueue<>();
 
-    public Mq(Config config) throws FileNotFoundException {
+    public Mq(Config config) throws IOException {
         LOGGER.info("Mq init");
         this.config = config;
         this.topics = new ConcurrentHashMap<>();
         this.aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof", "rw"));
         this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
+        loadAof();
         initPools();
         startKiller();
         LOGGER.info("Mq completed");
     }
 
+    void loadAof() throws IOException {
+        long position = 0;
+        ByteBuffer header = ByteBuffer.allocate(5);
+        while(true){
+            aof.read(position, header);
+            position += 5;
+            header.flip();
+            if (header.remaining() < 5){
+                break;
+            }
+            int topic = header.get();
+            int queueId = header.getShort();
+            int size = header.getShort();
+            header.clear();
+            if (size == 0){
+                break;
+            }
+            ByteBuffer data = ByteBuffer.allocate(size);
+            aof.read(position, data);
+            data.flip();
+            position += size;
+            innerAppend(topic, queueId, data);
+
+        }
+    }
+
     void initPools(){
-        for (int i = 0; i < 2; i ++){
-            Barrier barrier = new Barrier(20, aof);
-            for (int j = 0; j < 20; j ++){
+        for (int i = 0; i < 10; i ++){
+            Barrier barrier = new Barrier(config.getMaxCount(), aof);
+            for (int j = 0; j < config.getMaxCount(); j ++){
                 POOLS.add(barrier);
             }
         }
@@ -105,6 +133,13 @@ public class Mq extends MessageQueue{
         return getRange(TID.computeIfAbsent(topic, k -> Integer.parseInt(k.substring(5))), queueId, offset, fetchNum);
     }
 
+    private long innerAppend(int topic, int queueId, ByteBuffer buffer){
+        Queue queue = getQueue(topic, queueId);
+        long offset = queue.nextOffset();
+        queue.write(buffer);
+        return offset;
+    }
+
     public long append(int topic, int queueId, ByteBuffer buffer)  {
         Monitor.appendCount ++;
         Monitor.appendSize += buffer.limit();
@@ -113,12 +148,11 @@ public class Mq extends MessageQueue{
         }
 
         Queue queue = getQueue(topic, queueId);
-        long offset = queue.nextOffset();
+        queue.nextOffset();
 
         ByteBuffer data = getByteBuffer()
                 .put((byte) topic)
                 .putShort((short) queueId)
-                .putInt((int) offset)
                 .putShort((short) buffer.limit())
                 .put(buffer);
         data.flip();
@@ -127,7 +161,7 @@ public class Mq extends MessageQueue{
         getBarrier().write(data);
         queue.write(buffer);
 
-        getBarrier().await(30, TimeUnit.SECONDS);
+        getBarrier().await(5, TimeUnit.SECONDS);
         return queue.getOffset();
     }
 

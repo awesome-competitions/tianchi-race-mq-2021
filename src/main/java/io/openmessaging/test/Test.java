@@ -18,9 +18,9 @@ import java.util.function.Supplier;
 
 public class Test {
 
-    private final static int BATCH = 10000;
-    private final static int QUEUE_SIZE = 2;
-    private final static int TOPIC_SIZE = 10;
+    private final static int BATCH = 1000;
+    private final static int QUEUE_SIZE = 1;
+        private final static int TOPIC_SIZE = 1;
 //    private final static String DIR = "/data/app/";
 //    private final static String HEAP_DIR = "/mnt/mem/nico3";
 //    private final static long HEAP_SIZE = 1024 * 1024 * 256;
@@ -41,7 +41,7 @@ public class Test {
         }
     }
 
-    public static void main(String[] args) throws InterruptedException, FileNotFoundException {
+    public static void main(String[] args) throws InterruptedException, IOException {
         cleanDB();
         MessageQueue mMapMessageQueue = new Mq(new Config(DIR, HEAP_DIR, HEAP_SIZE, 1, (int) (Const.K * 512), 0));
         List<Supplier<?>> suppliers = new ArrayList<>();

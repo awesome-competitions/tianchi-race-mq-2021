@@ -1,9 +1,15 @@
 package io.openmessaging.test;
 
 import io.openmessaging.MessageQueue;
+import io.openmessaging.consts.Const;
 import io.openmessaging.impl.MessageQueueImpl;
 import io.openmessaging.model.Config;
+import io.openmessaging.mq.Mq;
+import io.openmessaging.utils.ArrayUtils;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -13,18 +19,29 @@ import java.util.function.Supplier;
 public class TestLoadDB {
 
 
-    private final static int BATCH = 10000;
-    private final static int PARALLEL_SIZE = 1;
 
-    public static void main(String[] args) throws InterruptedException {
-        MessageQueueImpl mMapMessageQueue = new MessageQueueImpl(new Config(
-                "D:\\test\\nio\\",
-                null,
-                1024 * 1024 * 256,
-                1024,
-                1
-        ));
-        mMapMessageQueue.cleanDB();
+    private final static int BATCH = 1000;
+    private final static int PARALLEL_SIZE = 1;
+    private final static String DIR = "D://test//nio//";
+    private final static String HEAP_DIR = null;
+
+    public static Mq getMq(int count) throws IOException {
+        return new Mq(new io.openmessaging.mq.Config(DIR, null, 0, count, (int) (Const.K * 512), 0));
+    }
+
+    public static void cleanDB(){
+        File root = new File(DIR);
+        if (root.exists() && root.isDirectory()){
+            if (ArrayUtils.isEmpty(root.listFiles())) return;
+            for (File file: Objects.requireNonNull(root.listFiles())){
+                if (file.exists() && ! file.isDirectory() && file.delete()){ }
+            }
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException, IOException {
+        cleanDB();
+        MessageQueue mMapMessageQueue = getMq(1);
         List<Supplier<?>> suppliers = new ArrayList<>();
         Map<Long, Integer> results = new ConcurrentHashMap<>();
 
@@ -35,7 +52,7 @@ public class TestLoadDB {
 
         long start = System.currentTimeMillis();
         for (int i = 0; i < PARALLEL_SIZE; i ++){
-            suppliers.add(test(msgQueue, mMapMessageQueue, results,"test3", 1));
+            suppliers.add(test(msgQueue, mMapMessageQueue, results,"topic3", 1));
         }
         final CountDownLatch cdl = new CountDownLatch(suppliers.size());
         ExecutorService POOLS = Executors.newFixedThreadPool(suppliers.size());
@@ -45,7 +62,7 @@ public class TestLoadDB {
         cdl.await();
 
         for (int i = 0; i < BATCH; i ++){
-            Map<Integer, ByteBuffer> data = mMapMessageQueue.getRange("test3", 1, i, 1);
+            Map<Integer, ByteBuffer> data = mMapMessageQueue.getRange("topic3", 1, i, 1);
             if (! Objects.equals(new String(data.get(0).array()), String.valueOf(results.get((long) i)))){
                 throw new RuntimeException("err at " + i);
             }
@@ -54,16 +71,9 @@ public class TestLoadDB {
         System.out.println("p1 spend time " + (end - start) + "ms");
 
 
-        MessageQueueImpl mMapMessageQueueNew = new MessageQueueImpl(new Config(
-                "D:\\test\\nio\\",
-                null,
-                1024 * 1024 * 256,
-                1024,
-                1
-        ));
-        mMapMessageQueueNew.loadDB();
+        MessageQueue mMapMessageQueueNew = getMq(2);
         for (int i = 0; i < BATCH; i ++){
-            Map<Integer, ByteBuffer> data = mMapMessageQueueNew.getRange("test3", 1, i, 1);
+            Map<Integer, ByteBuffer> data = mMapMessageQueueNew.getRange("topic3", 1, i, 1);
             if (data.isEmpty()){
                 throw new RuntimeException("err at " + i);
             }
@@ -73,8 +83,8 @@ public class TestLoadDB {
         }
 
 
-        long offset = mMapMessageQueueNew.append("test3", 1, ByteBuffer.wrap("hello".getBytes(StandardCharsets.UTF_8)));
-        Map<Integer, ByteBuffer> values = mMapMessageQueueNew.getRange("test3", 1, offset, 1);
+        long offset = mMapMessageQueueNew.append("topic3", 1, ByteBuffer.wrap("hello".getBytes(StandardCharsets.UTF_8)));
+        Map<Integer, ByteBuffer> values = mMapMessageQueueNew.getRange("topic3", 1, offset, 1);
         System.out.println(offset + ":" + new String(values.get(0).array()));
 
         POOLS.shutdown();
