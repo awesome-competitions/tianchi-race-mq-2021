@@ -31,7 +31,7 @@ public class Cache {
     public Cache(String heapDir, long heapSize){
         if (heapDir != null){
             this.heap = Heap.exists(heapDir) ? Heap.openHeap(heapDir) : Heap.createHeap(heapDir, heapSize);
-            this.blocks.add(applyBlock(BLOCK_SIZE));
+            this.blocks.add(applyBlock(Const.G * 6));
             startProducer();
         }
     }
