@@ -32,14 +32,13 @@ public class Cache {
         if (heapDir != null){
             this.heap = Heap.exists(heapDir) ? Heap.openHeap(heapDir) : Heap.createHeap(heapDir, heapSize);
             this.blocks.add(applyBlock(BLOCK_SIZE));
-            this.blocks.add(applyBlock(Const.G * 2));
             startProducer();
         }
     }
 
     private void startProducer(){
         Thread producer = new Thread(() -> {
-            for (int i = 0; i < 9; i ++){
+            for (int i = 0; i < 10; i ++){
                 this.blocks.add(applyBlock(BLOCK_SIZE));
             }
         });
