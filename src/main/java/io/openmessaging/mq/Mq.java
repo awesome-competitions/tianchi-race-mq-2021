@@ -39,7 +39,7 @@ public class Mq extends MessageQueue{
         this.queues = new ConcurrentHashMap<>();
         this.aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof", "rw"));
         this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
-        loadAof();
+//        loadAof();
         initPools();
         startKiller();
         LOGGER.info("Mq completed");
