@@ -132,7 +132,7 @@ public class Mq extends MessageQueue{
         buffer.flip();
 
         long position = barrier.write(data);
-        queue.write(position, buffer);
+//        queue.write(position, buffer);
 
         barrier.await(5, TimeUnit.SECONDS);
         return queue.getOffset();
