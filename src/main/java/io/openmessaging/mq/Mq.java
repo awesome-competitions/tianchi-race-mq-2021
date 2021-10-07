@@ -21,7 +21,7 @@ public class Mq extends MessageQueue{
 
     private final FileWrapper aof;
 
-    private final Cache cache;
+    private Cache cache;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
 
@@ -38,7 +38,7 @@ public class Mq extends MessageQueue{
         this.config = config;
         this.queues = new ConcurrentHashMap<>();
         this.aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof", "rw"));
-        this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
+//        this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
 //        loadAof();
         initPools();
         startKiller();
@@ -151,9 +151,11 @@ public class Mq extends MessageQueue{
         data.flip();
         buffer.flip();
 
-        long aos = getBarrier().write(data);
-        getBarrier().await(5, TimeUnit.SECONDS);
-        long position = getBarrier().getPosition();
+        Barrier barrier = getBarrier();
+
+        long aos = barrier.write(data);
+        barrier.await(5, TimeUnit.SECONDS);
+        long position = barrier.getPosition();
 //        queue.write(position + aos, buffer);
         return queue.getOffset();
     }
