@@ -23,22 +23,24 @@ public class Mq extends MessageQueue{
 
     private final Cache cache;
 
-    private final Barrier barrier;
-
     private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
 
     private final Map<String, Integer> TID = new ConcurrentHashMap<>();
 
     private final ThreadLocal<ByteBuffer> BUFFERS = new ThreadLocal<>();
 
+    private final ThreadLocal<Barrier> BARRIERS = new ThreadLocal<>();
+
+    private final LinkedBlockingQueue<Barrier> POOLS = new LinkedBlockingQueue<>();
+
     public Mq(Config config) throws IOException {
         LOGGER.info("Mq init");
         this.config = config;
         this.queues = new ConcurrentHashMap<>();
         this.aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof", "rw"));
-        this.barrier = new Barrier(config.getMaxCount(), aof);
         this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
         loadAof();
+        initPools();
         startKiller();
         LOGGER.info("Mq completed");
     }
@@ -79,6 +81,24 @@ public class Mq extends MessageQueue{
                 e.printStackTrace();
             }
         }).start();
+    }
+
+    void initPools(){
+        for (int i = 0; i < 10; i ++){
+            Barrier barrier = new Barrier(config.getMaxCount(), aof);
+            for (int j = 0; j < config.getMaxCount(); j ++){
+                POOLS.add(barrier);
+            }
+        }
+    }
+
+    public Barrier getBarrier(){
+        Barrier barrier = BARRIERS.get();
+        if (barrier == null){
+            barrier = POOLS.poll();
+            BARRIERS.set(barrier);
+        }
+        return barrier;
     }
 
     public Queue getQueue(int topic, int queueId){
@@ -131,10 +151,10 @@ public class Mq extends MessageQueue{
         data.flip();
         buffer.flip();
 
-        long position = barrier.write(data);
-//        queue.write(position, buffer);
-
-        barrier.await(5, TimeUnit.SECONDS);
+        long aos = getBarrier().write(data);
+        getBarrier().await(5, TimeUnit.SECONDS);
+        long position = getBarrier().getPosition();
+//        queue.write(position + aos, buffer);
         return queue.getOffset();
     }
 

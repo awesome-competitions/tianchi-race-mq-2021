@@ -23,6 +23,8 @@ public class Barrier {
 
     private long position;
 
+    private long aos;
+
     private final List<ByteBuffer> buffers;
 
     private CyclicBarrier barrier;
@@ -40,9 +42,10 @@ public class Barrier {
             ByteBuffer[] array = getAndClear();
             if (array.length > 0){
                 try {
-                    aof.write(array);
+                    position = aof.write(array);
                     aof.force();
                     count.set(0);
+                    aos = 0;
                     Arrays.stream(array).forEach(ByteBuffer::clear);
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -71,10 +74,10 @@ public class Barrier {
     }
 
     public synchronized long write(ByteBuffer buffer){
-        long pos = position;
+        long oldAos = aos;
         this.buffers.add(buffer);
-        position += buffer.limit();
-        return pos;
+        aos += buffer.limit();
+        return oldAos;
     }
 
     public synchronized ByteBuffer[] getAndClear(){
@@ -83,4 +86,7 @@ public class Barrier {
         return arr;
     }
 
+    public long getPosition() {
+        return position;
+    }
 }
