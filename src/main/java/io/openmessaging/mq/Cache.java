@@ -80,6 +80,15 @@ public class Cache {
         return new PMem(localBlock(), memPos, cap);
     }
 
+    public Data take(){
+        try {
+            return idles.take();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public void recycle(Data data){
         if (data instanceof PMem){
             data.clear();

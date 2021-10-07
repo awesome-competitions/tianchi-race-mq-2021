@@ -23,6 +23,8 @@ public class Mq extends MessageQueue{
 
     private final Cache cache;
 
+    private final Loader loader;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
 
     private final Map<String, Integer> TID = new ConcurrentHashMap<>();
@@ -39,6 +41,7 @@ public class Mq extends MessageQueue{
         this.queues = new ConcurrentHashMap<>();
         this.aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof", "rw"));
         this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
+        this.loader = new Loader(aof, cache, queues);
 //        loadAof();
         initPools();
         startKiller();
@@ -47,16 +50,17 @@ public class Mq extends MessageQueue{
 
     void loadAof() throws IOException {
         long position = 0;
-        ByteBuffer header = ByteBuffer.allocate(5);
+        ByteBuffer header = ByteBuffer.allocate(9);
         while(true){
             aof.read(position, header);
-            position += 5;
+            position += 9;
             header.flip();
-            if (header.remaining() < 5){
+            if (header.remaining() < 9){
                 break;
             }
             int topic = header.get();
             int queueId = header.getShort();
+            int offset = header.getInt();
             int size = header.getShort();
             header.clear();
             if (size == 0){
@@ -141,11 +145,12 @@ public class Mq extends MessageQueue{
         }
 
         Queue queue = getQueue(topic, queueId);
-        queue.nextOffset();
+        long offset = queue.nextOffset();
 
         ByteBuffer data = getByteBuffer()
                 .put((byte) topic)
                 .putShort((short) queueId)
+                .putInt((int) offset)
                 .putShort((short) buffer.limit())
                 .put(buffer);
         data.flip();
@@ -156,7 +161,10 @@ public class Mq extends MessageQueue{
         long aos = barrier.write(data);
         barrier.await(5, TimeUnit.SECONDS);
         long position = barrier.getPosition();
-        queue.write(position + aos, buffer);
+
+        if(! queue.write(position + aos, buffer)){
+            loader.start(position + aos);
+        }
         return queue.getOffset();
     }
 

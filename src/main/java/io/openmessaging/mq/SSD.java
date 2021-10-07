@@ -22,7 +22,7 @@ public class SSD extends Data{
         ByteBuffer buffer = ByteBuffer.allocate(capacity);
         try {
             Monitor.readSSDCount ++;
-            fw.read(position + 5, buffer);
+            fw.read(position + 9, buffer);
         } catch (IOException e) {
             e.printStackTrace();
         }

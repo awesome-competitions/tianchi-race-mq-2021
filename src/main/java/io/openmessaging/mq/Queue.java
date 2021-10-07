@@ -16,6 +16,8 @@ public class Queue {
 
     private boolean reading;
 
+    private long nextReadOffset;
+
     public Queue(FileWrapper aof, Cache cache) {
         this.cache = cache;
         this.aof = aof;
@@ -28,15 +30,15 @@ public class Queue {
         return ++ offset;
     }
 
-    public long write(long position, ByteBuffer buffer){
+    public boolean write(long position, ByteBuffer buffer){
         Data data = cache.allocate(buffer.limit());
         if(data != null){
             data.set(buffer);
             records.put(offset, data);
-            return offset;
+            return true;
         }
         records.put(offset, new SSD(aof, position, buffer.limit()));
-        return offset;
+        return false;
     }
 
     public List<ByteBuffer> read(long offset, int num){
@@ -64,6 +66,7 @@ public class Queue {
                 buffers.add(data.get());
             }
         }
+        nextReadOffset = offset + buffers.size();
         return buffers;
     }
 
@@ -73,5 +76,13 @@ public class Queue {
 
     public void setOffset(long offset) {
         this.offset = offset;
+    }
+
+    public long getNextReadOffset() {
+        return nextReadOffset;
+    }
+
+    public Map<Long, Data> getRecords() {
+        return records;
     }
 }
