@@ -21,6 +21,7 @@ public class Queue {
         this.aof = aof;
         this.offset = -1;
         this.records = new HashMap<>();
+        Monitor.queueCount ++;
     }
 
     public long nextOffset(){

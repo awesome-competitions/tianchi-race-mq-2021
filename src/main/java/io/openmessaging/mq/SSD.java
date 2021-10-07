@@ -21,6 +21,7 @@ public class SSD extends Data{
     public ByteBuffer get() {
         ByteBuffer buffer = ByteBuffer.allocate(capacity);
         try {
+            Monitor.readSSDCount ++;
             fw.read(position + 5, buffer);
         } catch (IOException e) {
             e.printStackTrace();

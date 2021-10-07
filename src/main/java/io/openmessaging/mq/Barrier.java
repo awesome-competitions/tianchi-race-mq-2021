@@ -43,7 +43,7 @@ public class Barrier {
             if (array.length > 0){
                 try {
                     position = aof.write(array);
-                    aof.force();
+//                    aof.force();
                     count.set(0);
                     aos = 0;
                     Arrays.stream(array).forEach(ByteBuffer::clear);
