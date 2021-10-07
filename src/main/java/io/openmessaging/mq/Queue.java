@@ -1,7 +1,5 @@
 package io.openmessaging.mq;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -10,21 +8,17 @@ public class Queue {
 
     private long offset;
 
-    private final Topic topic;
-
     private final Map<Long, Data> records;
 
     private final Cache cache;
 
-    private SSD ssd;
+    private final FileWrapper aof;
 
     private boolean reading;
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(Queue.class);
-
-    public Queue(Topic topic, Cache cache) {
-        this.topic = topic;
+    public Queue(FileWrapper aof, Cache cache) {
         this.cache = cache;
+        this.aof = aof;
         this.offset = -1;
         this.records = new HashMap<>();
     }
@@ -33,18 +27,14 @@ public class Queue {
         return ++ offset;
     }
 
-    public long write(ByteBuffer buffer){
+    public long write(long position, ByteBuffer buffer){
         Data data = cache.allocate(buffer.limit());
         if(data != null){
             data.set(buffer);
             records.put(offset, data);
             return offset;
         }
-        if (ssd == null || ! ssd.writable(buffer)){
-            ssd = topic.nextSSDBlock();
-        }
-        ssd.write(offset, buffer);
-        records.put(offset, ssd);
+        records.put(offset, new SSD(aof, position, buffer.limit()));
         return offset;
     }
 
@@ -59,37 +49,18 @@ public class Queue {
             reading = true;
         }
         List<ByteBuffer> buffers = new ArrayList<>();
-        Map<Long, Data> tmpRecords = new HashMap<>();
         for (long i = offset; i < offset + num; i ++){
-            Data data = tmpRecords.remove(i);
+            Data data = records.get(i);
             if (data == null){
-                data = records.get(i);
-                if (data == null){
-                    break;
-                }
+                break;
             }
             if (data instanceof PMem){
                 buffers.add(data.get());
                 cache.recycle(data);
             }else if (data instanceof SSD){
-                SSD ssdBlock = (SSD) data;
-                tmpRecords.putAll(ssdBlock.load());
-                buffers.add(tmpRecords.remove(i).get());
+                buffers.add(data.get());
             }else if (data instanceof Dram){
                 buffers.add(data.get());
-            }
-        }
-        long nextReadOffset = offset + buffers.size();
-        if (! tmpRecords.isEmpty()){
-            for (Map.Entry<Long, Data> tmpRecord: tmpRecords.entrySet()){
-                if (tmpRecord.getKey() < nextReadOffset){
-                    continue;
-                }
-                Data data = cache.allocate(tmpRecord.getValue().getCapacity());
-                if (data != null){
-                    data.set(tmpRecord.getValue().get());
-                    records.put(tmpRecord.getKey(), data);
-                }
             }
         }
         return buffers;

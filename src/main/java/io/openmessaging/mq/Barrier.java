@@ -19,7 +19,9 @@ public class Barrier {
 
     private final Runnable action;
 
-    private AtomicInteger count;
+    private final AtomicInteger count;
+
+    private long position;
 
     private final List<ByteBuffer> buffers;
 
@@ -68,8 +70,11 @@ public class Barrier {
         }
     }
 
-    public synchronized void write(ByteBuffer... buffers){
-        this.buffers.addAll(Arrays.asList(buffers));
+    public synchronized long write(ByteBuffer buffer){
+        long pos = position;
+        this.buffers.add(buffer);
+        position += buffer.limit();
+        return pos;
     }
 
     public synchronized ByteBuffer[] getAndClear(){

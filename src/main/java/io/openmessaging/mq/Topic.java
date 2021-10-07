@@ -23,7 +23,7 @@ public class Topic {
 
     public Queue getQueue(int queueId, Cache cache){
         return queues.computeIfAbsent(queueId, k -> {
-            return new Queue(this, cache);
+            return new Queue(cache);
         });
     }
 
