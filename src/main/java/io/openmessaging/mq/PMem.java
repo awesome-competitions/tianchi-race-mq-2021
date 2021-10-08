@@ -2,6 +2,7 @@ package io.openmessaging.mq;
 
 import com.intel.pmem.llpl.AnyMemoryBlock;
 import com.intel.pmem.llpl.Heap;
+import io.openmessaging.utils.BufferUtils;
 import io.openmessaging.utils.CollectionUtils;
 
 import java.io.IOException;
@@ -16,7 +17,7 @@ public class PMem extends Data {
 
     private final Block block;
 
-    private byte[] ext;
+    private ByteBuffer ext;
 
     private int size;
 
@@ -30,7 +31,7 @@ public class PMem extends Data {
     @Override
     public ByteBuffer get() {
         Monitor.readMemCount ++;
-        int extSize = ext == null ? 0 : ext.length;
+        int extSize = ext == null ? 0 : ext.limit();
         byte[] data = block.read(position, size - extSize);
         ByteBuffer buffer = Buffers.allocateBuffer();
         buffer.limit(size);
@@ -49,16 +50,19 @@ public class PMem extends Data {
         block.write(position, buffer.array(), Math.min(buffer.limit(), capacity));
 
         if (buffer.limit() > capacity){
-            ext = new byte[buffer.limit() - capacity];
-            Monitor.extSize += ext.length;
-            System.arraycopy(buffer.array(), capacity, ext, 0, ext.length);
+            ext = ByteBuffer.allocateDirect(buffer.limit() - capacity);
+            Monitor.extSize += ext.capacity();
+            buffer.position(capacity);
+            ext.put(buffer);
+            ext.flip();
         }
     }
 
     @Override
     public void clear() {
         if (this.ext != null){
-            Monitor.extSize -= ext.length;
+            Monitor.extSize -= ext.capacity();
+            BufferUtils.clean(ext);
         }
         this.ext = null;
     }
