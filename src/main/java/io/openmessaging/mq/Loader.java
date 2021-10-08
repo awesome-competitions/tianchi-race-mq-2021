@@ -60,7 +60,7 @@ public class Loader {
 
         int batch = (int) (Const.M * 512);
         ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
-        long endPos = (long) (position + Const.G * 20.5);
+        long endPos = (long) (position + Const.G * 7);
         long startPos = position;
         while (startPos < endPos){
             try {

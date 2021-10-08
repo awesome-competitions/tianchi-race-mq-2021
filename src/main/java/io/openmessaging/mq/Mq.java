@@ -18,11 +18,7 @@ public class Mq extends MessageQueue{
 
     private final Map<Integer, Queue> queues;
 
-    private final FileWrapper aof;
-
     private Cache cache;
-
-    private final Loader loader;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
 
@@ -32,16 +28,14 @@ public class Mq extends MessageQueue{
         LOGGER.info("Mq init");
         this.config = config;
         this.queues = new ConcurrentHashMap<>();
-        this.aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof", "rw"));
 //        this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
-        this.loader = new Loader(aof, cache, queues);
 //        loadAof();
         initPools();
         startKiller();
         LOGGER.info("Mq completed");
     }
 
-    void loadAof() throws IOException {
+    void loadAof(FileWrapper aof) throws IOException {
         long position = 0;
         ByteBuffer header = ByteBuffer.allocate(9);
         while(true){
@@ -81,16 +75,23 @@ public class Mq extends MessageQueue{
         }).start();
     }
 
+    FileWrapper createAof(String name) throws FileNotFoundException {
+        return  new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof1", "rw"));
+    }
+
     void initPools() throws FileNotFoundException {
-        Barrier barrier = new Barrier(13, new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof1", "rw")));
+        FileWrapper aof1 = createAof("aof1");
+        FileWrapper aof2 = createAof("aof2");
+        FileWrapper aof3 = createAof("aof3");
+        Barrier barrier = new Barrier(13, aof1, new Loader(aof1, cache, queues));
         for (int j = 0; j < 13; j ++){
             POOLS.add(barrier);
         }
-        barrier = new Barrier(13, new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof2", "rw")));
+        barrier = new Barrier(13, aof2, new Loader(aof2, cache, queues));
         for (int j = 0; j < 13; j ++){
             POOLS.add(barrier);
         }
-        barrier = new Barrier(14, new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof3", "rw")));
+        barrier = new Barrier(14, aof3, new Loader(aof3, cache, queues));
         for (int j = 0; j < 14; j ++){
             POOLS.add(barrier);
         }
@@ -110,7 +111,7 @@ public class Mq extends MessageQueue{
     }
 
     public Queue getQueue(int topic, int queueId){
-        return queues.computeIfAbsent(topic * 10000 + queueId, k -> new Queue(aof, cache));
+        return queues.computeIfAbsent(topic * 10000 + queueId, k -> new Queue(getBarrier().getAof(), cache));
     }
 
     public Config getConfig() {
@@ -156,15 +157,15 @@ public class Mq extends MessageQueue{
         if (position == -1){
             position = barrier.getPosition() + ctx.getSsdPos();
         }
-//
-//        if(! queue.write(position, buffer)){
-//            loader.setPosition(position);
-//        }
+        if(! queue.write(position, buffer)){
+            barrier.getLoader().setPosition(position);
+        }
         return queue.getOffset();
     }
 
     public Map<Integer, ByteBuffer> getRange(int topic, int queueId, long offset, int fetchNum) {
-        loader.start();
+        Barrier barrier = getBarrier();
+        barrier.getLoader().start();
 
         Queue queue = getQueue(topic, queueId);
         List<ByteBuffer> buffers = queue.read(offset, fetchNum);

@@ -29,19 +29,24 @@ public class Barrier {
 
     private final FileWrapper aof;
 
+    private final Loader loader;
+
     public final static ByteBuffer[] EMPTY = new ByteBuffer[0];
 
-    public Barrier(int parties, FileWrapper aof) {
+    public Barrier(int parties, FileWrapper aof, Loader loader) {
         this.buffers = new ArrayList<>();
         this.contexts = new ArrayList<>();
         this.aof = aof;
         this.action = ()->{
             ByteBuffer[] bs = new ByteBuffer[contexts.size()];
+            long pos = 0;
             for(int i = 0; i < contexts.size(); i ++){
-                bs[i] = contexts.get(i).getBuffer();
+                Threads.Context ctx = contexts.get(i);
+                bs[i] = ctx.getBuffer();
+                ctx.setSsdPos(pos);
             }
             try {
-                aof.write(bs);
+                position = aof.write(bs);
                 aof.force();
                 for (ByteBuffer b: bs){
                     b.clear();
@@ -49,33 +54,9 @@ public class Barrier {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-//            long pos = 0;
-//            ByteBuffer[] bs = new ByteBuffer[contexts.size()];
-//            for(int i = 0; i < contexts.size(); i ++){
-//                bs[i] = contexts.get(i).getBuffer();
-//            }
-//            for (Threads.Context ctx: contexts){
-//                if (ctx.isReadyWrite()){
-//                    buffers.add(ctx.getBuffer());
-//                    ctx.setSsdPos(pos);
-//                    pos += ctx.getBuffer().limit();
-//                    ctx.setReadyWrite(false);
-//                }
-//            }
-//            if (buffers.size() > 0){
-//                try {
-//                    position = aof.write(buffers.toArray(EMPTY));
-//                    aof.force();
-//
-//                    buffers.forEach(ByteBuffer::clear);
-//                    buffers.clear();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
         };
         this.barrier = new CyclicBarrier(parties, this.action);
+        this.loader = loader;
     }
 
     public long await(long timeout, TimeUnit unit){
@@ -100,5 +81,13 @@ public class Barrier {
 
     public long getPosition() {
         return position;
+    }
+
+    public Loader getLoader() {
+        return loader;
+    }
+
+    public FileWrapper getAof() {
+        return aof;
     }
 }
