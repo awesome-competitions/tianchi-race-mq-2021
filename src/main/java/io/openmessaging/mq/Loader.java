@@ -95,7 +95,7 @@ public class Loader {
                 tmp.put(buffer);
                 buffer.limit(buffer.capacity());
                 tmp.flip();
-                Data data = cache.take();
+                Data data = cache.take(size);
                 data.set(tmp);
                 tmp.clear();
 

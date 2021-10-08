@@ -20,7 +20,8 @@ public class Cache {
 
     private final List<Block> blocks = new ArrayList<>(10);
 
-    private final LinkedBlockingQueue<Data> idles = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<Data> idles1 = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<Data> idles2 = new LinkedBlockingQueue<>();
 
     private final ThreadLocal<Integer> blockPos = new ThreadLocal<>();
 
@@ -70,7 +71,7 @@ public class Cache {
             blockPos.set(blockPos.get() + 1);
         }
         if (memPos == -1){
-            Data data = idles.poll();
+            Data data = getIdles(cap).poll();
             if (data == null){
                 Monitor.missingIdleCount ++;
             }else{
@@ -81,9 +82,9 @@ public class Cache {
         return new PMem(localBlock(), memPos, cap);
     }
 
-    public Data take(){
+    public Data take(int cap){
         try {
-            return idles.take();
+            return getIdles(cap).take();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -93,8 +94,12 @@ public class Cache {
     public void recycle(Data data){
         if (data instanceof PMem){
             data.clear();
-            idles.add(data);
+            getIdles(data.getCapacity()).add(data);
         }
+    }
+
+    private LinkedBlockingQueue<Data> getIdles(int cap){
+        return cap > Const.K * 11 ? idles2 : idles1;
     }
 
 }
