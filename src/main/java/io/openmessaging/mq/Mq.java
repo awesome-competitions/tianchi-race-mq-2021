@@ -81,16 +81,12 @@ public class Mq extends MessageQueue{
     }
 
     void initPools(){
-        Barrier barrier = new Barrier(13, aof);
-        for (int j = 0; j < 13; j ++){
+        Barrier barrier = new Barrier(18, aof);
+        for (int j = 0; j < 18; j ++){
             POOLS.add(barrier);
         }
-        barrier = new Barrier(13, aof);
-        for (int j = 0; j < 13; j ++){
-            POOLS.add(barrier);
-        }
-        barrier = new Barrier(14, aof);
-        for (int j = 0; j < 14; j ++){
+        barrier = new Barrier(22, aof);
+        for (int j = 0; j < 22; j ++){
             POOLS.add(barrier);
         }
     }
