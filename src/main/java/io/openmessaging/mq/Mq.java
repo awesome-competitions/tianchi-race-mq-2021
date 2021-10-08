@@ -28,7 +28,7 @@ public class Mq extends MessageQueue{
         LOGGER.info("Mq init");
         this.config = config;
         this.queues = new ConcurrentHashMap<>();
-//        this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
+        this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
 //        loadAof();
         initPools();
         startKiller();
@@ -137,11 +137,11 @@ public class Mq extends MessageQueue{
     }
 
     public long append(int topic, int queueId, ByteBuffer buffer)  {
-//        Monitor.appendCount ++;
+        Monitor.appendCount ++;
         Monitor.appendSize += buffer.limit();
-//        if (Monitor.appendCount % 100000 == 0){
-//            LOGGER.info(Monitor.information());
-//        }
+        if (Monitor.appendCount % 100000 == 0){
+            LOGGER.info(Monitor.information());
+        }
 
         Queue queue = getQueue(topic, queueId);
         long offset = queue.nextOffset();
@@ -162,9 +162,9 @@ public class Mq extends MessageQueue{
         if (position == -1){
             position = barrier.getPosition() + ctx.getSsdPos();
         }
-//        if(! queue.write(position, buffer)){
-//            barrier.getLoader().setPosition(position);
-//        }
+        if(! queue.write(position, buffer)){
+            barrier.getLoader().setPosition(position);
+        }
         return queue.getOffset();
     }
 
