@@ -31,7 +31,7 @@ public class Threads {
         private volatile boolean readyWrite;
 
         public Context() {
-            this.buffer = ByteBuffer.allocateDirect((int) (Const.K * 17));
+            this.buffer = ByteBuffer.allocateDirect((int) (Const.K * 17) + 9);
         }
 
         public ByteBuffer getBuffer() {
