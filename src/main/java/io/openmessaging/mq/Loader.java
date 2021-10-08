@@ -59,7 +59,7 @@ public class Loader {
 
         ByteBuffer tmp = ByteBuffer.allocate((int) (Const.K * 17));
 
-        int batch = (int) (Const.M * 4);
+        int batch = (int) (Const.M);
         ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
         long endPos = position + Const.G * 20;
         long startPos = position;

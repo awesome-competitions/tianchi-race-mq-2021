@@ -159,7 +159,7 @@ public class Mq extends MessageQueue{
         Barrier barrier = getBarrier();
 
         long aos = barrier.write(data);
-        barrier.await(5, TimeUnit.SECONDS);
+        barrier.await(20, TimeUnit.SECONDS);
         long position = barrier.getPosition();
 
         if(! queue.write(position + aos, buffer)){

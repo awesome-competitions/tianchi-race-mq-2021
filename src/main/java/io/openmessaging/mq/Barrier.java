@@ -19,8 +19,6 @@ public class Barrier {
 
     private final Runnable action;
 
-    private final AtomicInteger count;
-
     private long position;
 
     private long aos;
@@ -37,14 +35,12 @@ public class Barrier {
 
     public Barrier(int parties, FileWrapper aof) {
         this.buffers = new ArrayList<>();
-        this.count = new AtomicInteger();
         this.action = ()->{
             ByteBuffer[] array = getAndClear();
             if (array.length > 0){
                 try {
                     position = aof.write(array);
                     aof.force();
-                    count.set(0);
                     aos = 0;
                     Arrays.stream(array).forEach(ByteBuffer::clear);
                 } catch (IOException e) {
@@ -57,19 +53,9 @@ public class Barrier {
 
     public void await(long timeout, TimeUnit unit){
         try {
-            count.incrementAndGet();
             this.barrier.await(timeout, unit);
         } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
-            try{
-                lock.lock();
-                if (count.get() > 0){
-                    LOGGER.info("barrier drop, count {}", count);
-                    this.barrier = new CyclicBarrier(count.get(), this.action);
-                    action.run();
-                }
-            }finally {
-                lock.unlock();
-            }
+            e.printStackTrace();
         }
     }
 
