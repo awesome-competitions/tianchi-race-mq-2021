@@ -58,17 +58,11 @@ public class Loader {
 
         ByteBuffer tmp = ByteBuffer.allocate((int) (Const.K * 17));
 
-        int batch = (int) (Const.M);
+        int batch = (int) (Const.M * 64);
         ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
         long endPos = position + Const.G * 20;
         long startPos = position;
-        long loadSize = 0;
-        int count = 0;
         while (startPos < endPos){
-            if (loadSize > Const.G){
-                LOGGER.info("load {} G", ++count);
-                loadSize = 0;
-            }
             try {
                 aof.read(startPos, buffer);
             } catch (IOException e) {
@@ -104,7 +98,6 @@ public class Loader {
             }
 
             startPos += buffer.position();
-            loadSize += buffer.position();
             buffer.clear();
         }
 
