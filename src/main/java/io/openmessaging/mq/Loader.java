@@ -57,11 +57,19 @@ public class Loader {
     private void startLoad(){
         LOGGER.info("start loader, position {}", position);
 
+        ByteBuffer tmp = ByteBuffer.allocate((int) (Const.K * 17));
+
         int batch = (int) (Const.M * 4);
         ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
         long endPos = position + Const.G * 20;
         long startPos = position;
+        long size = 0;
+        int count = 0;
         while (startPos < endPos){
+            if (size > Const.G){
+                LOGGER.info("load {} G", ++count);
+                size = 0;
+            }
             try {
                 aof.read(startPos, buffer);
             } catch (IOException e) {
@@ -84,16 +92,19 @@ public class Loader {
                     continue;
                 }
 
-                byte[] bytes = new byte[size];
-                buffer.get(bytes);
+                tmp.limit(size);
+                tmp.put(buffer);
+                tmp.flip();
                 Data data = cache.take();
-                data.set(ByteBuffer.wrap(bytes));
+                data.set(tmp);
+                tmp.clear();
 
                 Monitor.swapSSDToPmemCount ++;
                 queue.getRecords().put(offset, data);
             }
 
             startPos += buffer.position();
+            size += buffer.position();
             buffer.clear();
         }
 
