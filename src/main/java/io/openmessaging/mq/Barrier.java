@@ -41,7 +41,7 @@ public class Barrier {
                 bs[i] = contexts.get(i).getBuffer();
             }
             try {
-                aof.write(buffers.toArray(EMPTY));
+                aof.write(bs);
                 aof.force();
                 for (ByteBuffer b: bs){
                     b.clear();
