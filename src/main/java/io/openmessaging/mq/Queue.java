@@ -16,7 +16,7 @@ public class Queue {
 
     private boolean reading;
 
-    private long nextReadOffset;
+    private volatile long nextReadOffset;
 
     public Queue(FileWrapper aof, Cache cache) {
         this.cache = cache;

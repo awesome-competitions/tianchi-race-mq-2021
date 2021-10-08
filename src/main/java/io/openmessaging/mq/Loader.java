@@ -55,7 +55,7 @@ public class Loader {
 
     // 55 - 75 = 20
     private void startLoad(){
-        LOGGER.info("start loader");
+        LOGGER.info("start loader, position {}", position);
 
         int batch = (int) (Const.M * 4);
         ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
@@ -63,7 +63,7 @@ public class Loader {
         long startPos = position;
         while (startPos < endPos){
             try {
-                aof.read(position, buffer);
+                aof.read(startPos, buffer);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -97,6 +97,6 @@ public class Loader {
             buffer.clear();
         }
 
-
+        LOGGER.info("end loader, position {}", startPos);
     }
 }
