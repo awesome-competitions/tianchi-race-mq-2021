@@ -1,5 +1,7 @@
 package io.openmessaging.mq;
 
+import io.openmessaging.utils.OSUtils;
+
 public class Monitor {
 
     public static long queueCount = 0;
@@ -14,6 +16,7 @@ public class Monitor {
 
 
     public static String information(){
+        OSUtils.memoryUsage();
         return "queueCount: " + queueCount +
                 ", appendSize: " + appendSize +
                 ", appendCount: " + appendCount +
