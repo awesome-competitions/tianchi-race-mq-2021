@@ -81,11 +81,17 @@ public class Mq extends MessageQueue{
     }
 
     void initPools(){
-        for (int i = 0; i < 5; i ++){
-            Barrier barrier = new Barrier(config.getMaxCount(), aof);
-            for (int j = 0; j < config.getMaxCount(); j ++){
-                POOLS.add(barrier);
-            }
+        Barrier barrier = new Barrier(13, aof);
+        for (int j = 0; j < 13; j ++){
+            POOLS.add(barrier);
+        }
+        barrier = new Barrier(13, aof);
+        for (int j = 0; j < 13; j ++){
+            POOLS.add(barrier);
+        }
+        barrier = new Barrier(14, aof);
+        for (int j = 0; j < 14; j ++){
+            POOLS.add(barrier);
         }
     }
 
