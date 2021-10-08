@@ -57,6 +57,9 @@ public class PMem extends Data {
 
     @Override
     public void clear() {
+        if (this.ext != null){
+            Monitor.extSize -= ext.length;
+        }
         this.ext = null;
     }
 
