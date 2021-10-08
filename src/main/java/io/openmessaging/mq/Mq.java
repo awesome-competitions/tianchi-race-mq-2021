@@ -5,6 +5,7 @@ import io.openmessaging.utils.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -80,13 +81,13 @@ public class Mq extends MessageQueue{
         }).start();
     }
 
-    void initPools(){
-        Barrier barrier = new Barrier(18, aof);
-        for (int j = 0; j < 18; j ++){
+    void initPools() throws FileNotFoundException {
+        Barrier barrier = new Barrier(20, new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof1", "rw")));
+        for (int j = 0; j < 20; j ++){
             POOLS.add(barrier);
         }
-        barrier = new Barrier(22, aof);
-        for (int j = 0; j < 22; j ++){
+        barrier = new Barrier(20, new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof2", "rw")));
+        for (int j = 0; j < 20; j ++){
             POOLS.add(barrier);
         }
     }
@@ -122,7 +123,6 @@ public class Mq extends MessageQueue{
 
     private void _append(int topic, int queueId, long position, ByteBuffer buffer){
         Queue queue = getQueue(topic, queueId);
-        long offset = queue.nextOffset();
         queue.write(position, buffer);
     }
 
