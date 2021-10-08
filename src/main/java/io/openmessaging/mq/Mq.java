@@ -155,10 +155,10 @@ public class Mq extends MessageQueue{
         if (position == -1){
             position = barrier.getPosition() + ctx.getSsdPos();
         }
-
-        if(! queue.write(position, buffer)){
-            loader.setPosition(position);
-        }
+//
+//        if(! queue.write(position, buffer)){
+//            loader.setPosition(position);
+//        }
         return queue.getOffset();
     }
 
