@@ -16,7 +16,7 @@ public class Mq extends MessageQueue{
 
     private final Config config;
 
-    private final Map<Integer, Queue> queues;
+    private final Map<Integer, Map<Integer, Queue>> queues;
 
     private Cache cache;
 
@@ -116,7 +116,7 @@ public class Mq extends MessageQueue{
     }
 
     public Queue getQueue(int topic, int queueId){
-        return queues.computeIfAbsent(topic * 10000 + queueId, k -> new Queue(getBarrier().getAof(), cache));
+        return queues.computeIfAbsent(topic, k -> new HashMap<>()).computeIfAbsent(queueId, k -> new Queue(getBarrier().getAof(), cache));
     }
 
     public Config getConfig() {

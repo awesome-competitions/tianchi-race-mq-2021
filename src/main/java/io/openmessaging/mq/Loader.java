@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Loader {
@@ -19,13 +20,30 @@ public class Loader {
 
     private long position = -1;
 
-    private final Map<Integer, Queue> queues;
+    private final Map<Integer, Map<Integer, Queue>> queues;
 
     private final ReentrantLock lock = new ReentrantLock();
 
+    private final static LinkedBlockingQueue<Loader> loaders = new LinkedBlockingQueue<>();
+
     private final Logger LOGGER = LoggerFactory.getLogger(Loader.class);
 
-    public Loader(FileWrapper aof, Cache cache, Map<Integer, Queue> queues) {
+    static {
+        Thread loading = new Thread(()->{
+            while (true){
+                try {
+                    Loader loader = loaders.take();
+                    loader.startLoad();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        loading.setDaemon(true);
+        loading.start();
+    }
+
+    public Loader(FileWrapper aof, Cache cache, Map<Integer, Map<Integer, Queue>> queues) {
         this.aof = aof;
         this.cache = cache;
         this.queues = queues;
@@ -36,7 +54,7 @@ public class Loader {
             lock.lock();
             if (!start){
                 start = true;
-                new Thread(this::startLoad).start();
+                loaders.add(this);
             }
             lock.unlock();
         }
@@ -58,7 +76,7 @@ public class Loader {
 
         ByteBuffer tmp = ByteBuffer.allocate((int) (Const.K * 17));
 
-        int batch = (int) (Const.M * 64);
+        int batch = (int) (Const.M * 128);
         ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
         long endPos = (long) (position + Const.G * 5.1);
         long startPos = position;
@@ -79,8 +97,8 @@ public class Loader {
                     buffer.position(buffer.position() - 9);
                     break;
                 }
-                Queue queue = queues.get(topic * 10000 + queueId);
-                if (queue.getRecords().get(offset) instanceof PMem || queue.getNextReadOffset() > offset){
+                Queue queue = queues.get(topic).get(queueId);
+                if (queue == null || queue.getRecords().get(offset) instanceof PMem || queue.getNextReadOffset() > offset){
                     buffer.position(buffer.position() + size);
                     continue;
                 }
