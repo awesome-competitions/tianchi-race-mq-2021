@@ -50,6 +50,7 @@ public class PMem extends Data {
 
         if (buffer.limit() > capacity){
             ext = new byte[buffer.limit() - capacity];
+            Monitor.extSize += ext.length;
             System.arraycopy(buffer.array(), capacity, ext, 0, ext.length);
         }
     }

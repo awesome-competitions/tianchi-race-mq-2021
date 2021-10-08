@@ -1,7 +1,5 @@
 package io.openmessaging.mq;
 
-import io.openmessaging.utils.OSUtils;
-
 public class Monitor {
 
     public static long queueCount = 0;
@@ -13,10 +11,10 @@ public class Monitor {
     public static long swapSSDToPmemCount = 0;
     public static long allocateIdleCount = 0;
     public static long missingIdleCount = 0;
+    public static long extSize = 0;
 
 
     public static String information(){
-        OSUtils.memoryUsage();
         return "queueCount: " + queueCount +
                 ", appendSize: " + appendSize +
                 ", appendCount: " + appendCount +
@@ -25,7 +23,8 @@ public class Monitor {
                 ", readSSDCount: " + readSSDCount +
                 ", swapSSDToPmemCount: " + swapSSDToPmemCount +
                 ", allocateIdleCount: " + allocateIdleCount +
-                ", missingIdleCount: " + missingIdleCount
+                ", missingIdleCount: " + missingIdleCount +
+                ", extSize: " + extSize
                 ;
     }
 }
