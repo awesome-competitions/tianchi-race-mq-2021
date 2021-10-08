@@ -7,6 +7,7 @@ import io.openmessaging.utils.CollectionUtils;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
@@ -44,13 +45,11 @@ public class PMem extends Data {
     public void set(ByteBuffer buffer) {
         Monitor.writeMemCount ++;
         this.size = buffer.limit();
-        byte[] bytes = new byte[Math.min(buffer.limit(), capacity)];
-        buffer.get(bytes);
-        block.write(position, bytes);
+        block.write(position, buffer.array(), Math.min(buffer.limit(), capacity));
 
-        if (buffer.remaining() > 0){
-            ext = new byte[buffer.remaining()];
-            buffer.get(ext);
+        if (buffer.limit() > capacity){
+            ext = new byte[buffer.limit() - capacity];
+            System.arraycopy(buffer.array(), capacity, ext, 0, ext.length);
         }
     }
 

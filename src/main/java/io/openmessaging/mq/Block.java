@@ -41,8 +41,8 @@ public class Block {
         return bytes;
     }
 
-    public void write(long position, byte[] bytes){
-        block.copyFromArray(bytes, 0, position, bytes.length);
+    public void write(long position, byte[] bytes, int len){
+        block.copyFromArray(bytes, 0, position, len);
     }
 
     public void register(long tid, long qid, long offset){
