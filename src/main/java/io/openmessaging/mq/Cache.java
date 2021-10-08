@@ -24,6 +24,7 @@ public class Cache {
     private final LinkedBlockingQueue<Data> idles2 = new LinkedBlockingQueue<>();
     private final LinkedBlockingQueue<Data> idles3 = new LinkedBlockingQueue<>();
     private final LinkedBlockingQueue<Data> idles4 = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<Data> idles5 = new LinkedBlockingQueue<>();
 
     private final ThreadLocal<Integer> blockPos = new ThreadLocal<>();
 
@@ -101,14 +102,16 @@ public class Cache {
     }
 
     private LinkedBlockingQueue<Data> getIdles(int cap){
-        if (cap < Const.K * 4.5){
+        if (cap < Const.K * 3.5){
             return idles1;
-        }else if (cap < Const.K * 9){
+        }else if (cap < Const.K * 7){
             return idles2;
-        }else if (cap < Const.K * 13.5){
+        }else if (cap < Const.K * 10.5){
             return idles3;
-        }else{
+        }else if (cap < Const.K * 14){
             return idles4;
+        }else{
+            return idles5;
         }
     }
 
