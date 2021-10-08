@@ -31,7 +31,7 @@ public class FileWrapper {
         return pos;
     }
 
-    public synchronized void write(long position, ByteBuffer buffer) throws IOException {
+    public void write(long position, ByteBuffer buffer) throws IOException {
         channel.write(buffer, position);
     }
 
@@ -39,7 +39,7 @@ public class FileWrapper {
         this.channel.force(false);
     }
 
-    public synchronized int read(long position, ByteBuffer dst) throws IOException {
+    public int read(long position, ByteBuffer dst) throws IOException {
         return channel.read(dst, position);
     }
 

@@ -79,6 +79,7 @@ public class Mq extends MessageQueue{
             try {
                 if (config.getLiveTime() > 0) {
                     Thread.sleep(config.getLiveTime());
+                    LOGGER.info("killed: " + Monitor.information());
                     System.exit(-1);
                 }
             } catch (InterruptedException e) {
