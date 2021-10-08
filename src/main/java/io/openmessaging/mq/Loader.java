@@ -57,7 +57,7 @@ public class Loader {
     private void startLoad(){
         LOGGER.info("start loader, position {}", position);
 
-        ByteBuffer tmp = ByteBuffer.allocate((int) (Const.K * 17));
+        ByteBuffer tmp = ByteBuffer.allocateDirect((int) (Const.K * 17));
 
         int batch = (int) (Const.M * 4);
         ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
@@ -92,8 +92,9 @@ public class Loader {
                     continue;
                 }
 
-                tmp.limit(size);
+                buffer.limit(buffer.position() + size);
                 tmp.put(buffer);
+                buffer.limit(buffer.capacity());
                 tmp.flip();
                 Data data = cache.take();
                 data.set(tmp);
