@@ -82,12 +82,16 @@ public class Mq extends MessageQueue{
     }
 
     void initPools() throws FileNotFoundException {
-        Barrier barrier = new Barrier(20, new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof1", "rw")));
-        for (int j = 0; j < 20; j ++){
+        Barrier barrier = new Barrier(13, new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof1", "rw")));
+        for (int j = 0; j < 13; j ++){
             POOLS.add(barrier);
         }
-        barrier = new Barrier(20, new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof2", "rw")));
-        for (int j = 0; j < 20; j ++){
+        barrier = new Barrier(13, new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof2", "rw")));
+        for (int j = 0; j < 13; j ++){
+            POOLS.add(barrier);
+        }
+        barrier = new Barrier(14, new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof3", "rw")));
+        for (int j = 0; j < 14; j ++){
             POOLS.add(barrier);
         }
     }
