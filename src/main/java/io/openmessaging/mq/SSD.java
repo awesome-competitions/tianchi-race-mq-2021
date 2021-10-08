@@ -19,7 +19,8 @@ public class SSD extends Data{
 
     @Override
     public ByteBuffer get() {
-        ByteBuffer buffer = ByteBuffer.allocate(capacity);
+        ByteBuffer buffer = Buffers.allocateBuffer();
+        buffer.limit(capacity);
         try {
             Monitor.readSSDCount ++;
             fw.read(position + 9, buffer);

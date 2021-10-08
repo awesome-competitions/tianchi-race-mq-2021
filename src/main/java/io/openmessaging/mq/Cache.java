@@ -34,6 +34,7 @@ public class Cache {
             this.blocks.add(applyBlock(Const.G * 5));
             startProducer();
         }
+        Buffers.initBuffers();
     }
 
     private void startProducer(){
