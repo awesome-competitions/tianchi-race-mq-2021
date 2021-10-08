@@ -26,9 +26,9 @@ public class Threads {
 
         private int blockPos;
 
-        private volatile long ssdPos;
+        private long ssdPos;
 
-        private volatile boolean readyWrite;
+        private boolean readyWrite;
 
         public Context() {
             this.buffer = ByteBuffer.allocateDirect((int) (Const.K * 17) + 9);
