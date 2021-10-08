@@ -29,10 +29,6 @@ public class Mq extends MessageQueue{
 
     private final Map<String, Integer> TID = new ConcurrentHashMap<>();
 
-    private final ThreadLocal<ByteBuffer> BUFFERS = new ThreadLocal<>();
-
-    private final ThreadLocal<Barrier> BARRIERS = new ThreadLocal<>();
-
     private final LinkedBlockingQueue<Barrier> POOLS = new LinkedBlockingQueue<>();
 
     public Mq(Config config) throws IOException {
@@ -98,25 +94,20 @@ public class Mq extends MessageQueue{
     }
 
     public Barrier getBarrier(){
-        Barrier barrier = BARRIERS.get();
+        Threads.Context ctx = Threads.get();
+        Barrier barrier = ctx.getBarrier();
         if (barrier == null){
             barrier = POOLS.poll();
-            BARRIERS.set(barrier);
+            ctx.setBarrier(barrier);
+            if (barrier != null){
+                barrier.register(ctx);
+            }
         }
         return barrier;
     }
 
     public Queue getQueue(int topic, int queueId){
         return queues.computeIfAbsent(topic, k -> new HashMap<>()).computeIfAbsent(queueId, k -> new Queue(aof, cache));
-    }
-
-    public ByteBuffer getByteBuffer(){
-        ByteBuffer buffer = BUFFERS.get();
-        if (buffer == null){
-            buffer = ByteBuffer.allocateDirect((int) (Const.K * 17 + 10));
-            BUFFERS.set(buffer);
-        }
-        return buffer;
     }
 
     public Config getConfig() {
@@ -131,11 +122,10 @@ public class Mq extends MessageQueue{
         return getRange(TID.computeIfAbsent(topic, k -> Integer.parseInt(k.substring(5))), queueId, offset, fetchNum);
     }
 
-    private long _append(int topic, int queueId, long position, ByteBuffer buffer){
+    private void _append(int topic, int queueId, long position, ByteBuffer buffer){
         Queue queue = getQueue(topic, queueId);
         long offset = queue.nextOffset();
         queue.write(position, buffer);
-        return offset;
     }
 
     public long append(int topic, int queueId, ByteBuffer buffer)  {
@@ -148,23 +138,26 @@ public class Mq extends MessageQueue{
         Queue queue = getQueue(topic, queueId);
         long offset = queue.nextOffset();
 
-        ByteBuffer data = getByteBuffer()
+        Threads.Context ctx = Threads.get();
+
+        ByteBuffer data = ctx.getBuffer()
                 .put((byte) topic)
                 .putShort((short) queueId)
                 .putInt((int) offset)
                 .putShort((short) buffer.limit())
                 .put(buffer);
         data.flip();
+        ctx.setReadyWrite(true);
         buffer.flip();
 
         Barrier barrier = getBarrier();
+        long position = barrier.await(20, TimeUnit.SECONDS);
+        if (position == -1){
+            position = barrier.getPosition() + ctx.getSsdPos();
+        }
 
-        long aos = barrier.write(data);
-        barrier.await(20, TimeUnit.SECONDS);
-        long position = barrier.getPosition();
-
-        if(! queue.write(position + aos, buffer)){
-            loader.setPosition(position + aos);
+        if(! queue.write(position, buffer)){
+            loader.setPosition(position);
         }
         return queue.getOffset();
     }

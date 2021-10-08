@@ -21,28 +21,37 @@ public class Barrier {
 
     private long position;
 
-    private long aos;
-
     private final List<ByteBuffer> buffers;
 
-    private CyclicBarrier barrier;
+    private final List<Threads.Context> contexts;
 
-    private final ReentrantLock lock = new ReentrantLock();
+    private final CyclicBarrier barrier;
+
+    private final FileWrapper aof;
 
     public final static ByteBuffer[] EMPTY = new ByteBuffer[0];
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(Barrier.class);
-
     public Barrier(int parties, FileWrapper aof) {
         this.buffers = new ArrayList<>();
+        this.contexts = new ArrayList<>();
+        this.aof = aof;
         this.action = ()->{
-            ByteBuffer[] array = getAndClear();
-            if (array.length > 0){
+            long pos = 0;
+            for (Threads.Context ctx: contexts){
+                if (ctx.isReadyWrite()){
+                    buffers.add(ctx.getBuffer());
+                    ctx.setSsdPos(pos);
+                    pos += ctx.getBuffer().limit();
+                    ctx.setReadyWrite(false);
+                }
+            }
+            if (buffers.size() > 0){
                 try {
-                    position = aof.write(array);
+                    position = aof.write(buffers.toArray(EMPTY));
                     aof.force();
-                    aos = 0;
-                    Arrays.stream(array).forEach(ByteBuffer::clear);
+
+                    buffers.forEach(ByteBuffer::clear);
+                    buffers.clear();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -51,25 +60,24 @@ public class Barrier {
         this.barrier = new CyclicBarrier(parties, this.action);
     }
 
-    public void await(long timeout, TimeUnit unit){
+    public long await(long timeout, TimeUnit unit){
         try {
             this.barrier.await(timeout, unit);
         } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
             e.printStackTrace();
+            try {
+                long pos = aof.write(Threads.get().getBuffer());
+                aof.force();
+                return pos;
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
         }
+        return -1;
     }
 
-    public synchronized long write(ByteBuffer buffer){
-        long oldAos = aos;
-        this.buffers.add(buffer);
-        aos += buffer.limit();
-        return oldAos;
-    }
-
-    public synchronized ByteBuffer[] getAndClear(){
-        ByteBuffer[] arr = this.buffers.toArray(EMPTY);
-        this.buffers.clear();
-        return arr;
+    public synchronized void register(Threads.Context ctx){
+        contexts.add(ctx);
     }
 
     public long getPosition() {

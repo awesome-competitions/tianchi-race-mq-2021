@@ -9,6 +9,10 @@ public class Buffers {
 
     private static final LinkedBlockingQueue<ByteBuffer> buffers = new LinkedBlockingQueue<>();
 
+    static {
+        initBuffers();
+    }
+
     public static ByteBuffer allocateBuffer(){
         try {
             ByteBuffer buffer =  buffers.take();
