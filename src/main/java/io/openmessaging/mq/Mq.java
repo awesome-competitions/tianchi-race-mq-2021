@@ -21,7 +21,7 @@ public class Mq extends MessageQueue{
 
     private final FileWrapper aof;
 
-    private final Cache cache;
+    private Cache cache;
 
     private final Loader loader;
 
@@ -36,7 +36,7 @@ public class Mq extends MessageQueue{
         this.config = config;
         this.queues = new ConcurrentHashMap<>();
         this.aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof", "rw"));
-        this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
+//        this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
         this.loader = new Loader(aof, cache, queues);
 //        loadAof();
         initPools();

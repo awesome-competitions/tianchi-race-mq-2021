@@ -54,8 +54,8 @@ public class Threads {
             return blockPos;
         }
 
-        public int blockPosIncrement(){
-            return ++blockPos;
+        public void blockPosIncrement(){
+            ++blockPos;
         }
 
         public void setBlockPos(int blockPos) {
