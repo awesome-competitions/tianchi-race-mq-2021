@@ -23,7 +23,6 @@ public class Monitor {
                 ", readSSDCount: " + readSSDCount +
                 ", swapSSDToPmemCount: " + swapSSDToPmemCount +
                 ", allocateIdleCount: " + allocateIdleCount +
-                ", allocatePMemCount: " + allocatePMemCount +
                 ", missingIdleCount: " + missingIdleCount +
                 ", extSize: " + extSize
                 ;
