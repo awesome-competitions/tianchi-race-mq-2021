@@ -44,6 +44,7 @@ public class Barrier {
                 Threads.Context ctx = contexts.get(i);
                 bs[i] = ctx.getBuffer();
                 ctx.setSsdPos(pos);
+                pos += ctx.getBuffer().limit();
             }
             try {
                 position = aof.write(bs);
