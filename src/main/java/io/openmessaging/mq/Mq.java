@@ -147,7 +147,6 @@ public class Mq extends MessageQueue{
                 .putShort((short) buffer.limit())
                 .put(buffer);
         data.flip();
-        ctx.setReadyWrite(true);
         buffer.flip();
 
         Barrier barrier = getBarrier();
