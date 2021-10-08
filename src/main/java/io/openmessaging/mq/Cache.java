@@ -104,11 +104,11 @@ public class Cache {
         if (cap < Const.K * 4.5){
             return idles1;
         }else if (cap < Const.K * 9){
-            return idles3;
+            return idles2;
         }else if (cap < Const.K * 13.5){
             return idles3;
         }else{
-            return idles2;
+            return idles4;
         }
     }
 
