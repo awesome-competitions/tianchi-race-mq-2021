@@ -76,23 +76,28 @@ public class Mq extends MessageQueue{
     }
 
     FileWrapper createAof(String name) throws FileNotFoundException {
-        return  new FileWrapper(new RandomAccessFile(config.getDataDir() + "aof1", "rw"));
+        return  new FileWrapper(new RandomAccessFile(config.getDataDir() + name, "rw"));
     }
 
     void initPools() throws FileNotFoundException {
         FileWrapper aof1 = createAof("aof1");
         FileWrapper aof2 = createAof("aof2");
         FileWrapper aof3 = createAof("aof3");
-        Barrier barrier = new Barrier(13, aof1, new Loader(aof1, cache, queues));
-        for (int j = 0; j < 13; j ++){
+        FileWrapper aof4 = createAof("aof4");
+        Barrier barrier = new Barrier(10, aof1, new Loader(aof1, cache, queues));
+        for (int j = 0; j < 10; j ++){
             POOLS.add(barrier);
         }
-        barrier = new Barrier(13, aof2, new Loader(aof2, cache, queues));
-        for (int j = 0; j < 13; j ++){
+        barrier = new Barrier(10, aof2, new Loader(aof2, cache, queues));
+        for (int j = 0; j < 10; j ++){
             POOLS.add(barrier);
         }
-        barrier = new Barrier(14, aof3, new Loader(aof3, cache, queues));
-        for (int j = 0; j < 14; j ++){
+        barrier = new Barrier(10, aof3, new Loader(aof3, cache, queues));
+        for (int j = 0; j < 10; j ++){
+            POOLS.add(barrier);
+        }
+        barrier = new Barrier(10, aof4, new Loader(aof4, cache, queues));
+        for (int j = 0; j < 10; j ++){
             POOLS.add(barrier);
         }
     }
