@@ -133,7 +133,6 @@ public class Mq extends MessageQueue{
         Monitor.appendSize += buffer.limit();
         if (Monitor.appendCount % 100000 == 0){
             LOGGER.info(Monitor.information());
-            System.out.println();
         }
 
         Queue queue = getQueue(topic, queueId);

@@ -28,8 +28,6 @@ public class Threads {
 
         private long ssdPos;
 
-        private boolean readyWrite;
-
         public Context() {
             this.buffer = ByteBuffer.allocateDirect((int) (Const.K * 17) + 9);
         }
@@ -60,14 +58,6 @@ public class Threads {
 
         public void setBlockPos(int blockPos) {
             this.blockPos = blockPos;
-        }
-
-        public boolean isReadyWrite() {
-            return readyWrite;
-        }
-
-        public void setReadyWrite(boolean readyWrite) {
-            this.readyWrite = readyWrite;
         }
 
         public long getSsdPos() {
