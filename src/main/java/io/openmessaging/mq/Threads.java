@@ -6,14 +6,13 @@ import java.nio.ByteBuffer;
 
 public class Threads {
 
-    private static final Context[] CTX = new Context[100];
+    private static final ThreadLocal<Context> CTX = new ThreadLocal<>();
 
     public static Context get(){
-        int tid = (int) Thread.currentThread().getId();
-        Context ctx = CTX[tid];
+        Context ctx = CTX.get();
         if (ctx == null){
             ctx = new Context();
-            CTX[tid] = ctx;
+            CTX.set(ctx);
         }
         return ctx;
     }
