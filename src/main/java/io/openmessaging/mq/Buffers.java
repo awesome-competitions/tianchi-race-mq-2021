@@ -14,6 +14,7 @@ public class Buffers {
             ByteBuffer buffer =  buffers.take();
             buffer.clear();
             buffers.add(buffer);
+            return buffer;
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
