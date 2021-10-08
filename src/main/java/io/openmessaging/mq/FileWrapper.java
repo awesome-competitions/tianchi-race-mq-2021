@@ -19,7 +19,7 @@ public class FileWrapper {
         return channel.position();
     }
 
-    public long write(ByteBuffer[] buffers) throws IOException {
+    public synchronized long write(ByteBuffer[] buffers) throws IOException {
         long pos = channel.position();
         channel.write(buffers);
         return pos;
