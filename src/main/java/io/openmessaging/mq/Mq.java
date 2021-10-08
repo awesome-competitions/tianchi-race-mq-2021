@@ -163,12 +163,14 @@ public class Mq extends MessageQueue{
         long position = barrier.getPosition();
 
         if(! queue.write(position + aos, buffer)){
-            loader.start(position + aos);
+            loader.setPosition(position + aos);
         }
         return queue.getOffset();
     }
 
     public Map<Integer, ByteBuffer> getRange(int topic, int queueId, long offset, int fetchNum) {
+        loader.startLoad();
+
         Queue queue = getQueue(topic, queueId);
         List<ByteBuffer> buffers = queue.read(offset, fetchNum);
 

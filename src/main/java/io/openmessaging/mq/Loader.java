@@ -17,6 +17,8 @@ public class Loader {
 
     private volatile boolean start;
 
+    private long position = -1;
+
     private final Map<Integer, Map<Integer, Queue>> queues;
 
     private final ReentrantLock lock = new ReentrantLock();
@@ -29,22 +31,30 @@ public class Loader {
         this.queues = queues;
     }
 
-    public void start(long position){
+    public void start(){
         if (!start){
             lock.lock();
             if (!start){
                 start = true;
-                new Thread(() -> {
-                    startLoad(position);
-                }).start();
+                new Thread(this::startLoad).start();
                 start = true;
             }
             lock.unlock();
         }
     }
 
+    public void setPosition(long pos){
+        if (position == -1){
+            lock.lock();
+            if (position == -1){
+                this.position = pos;
+            }
+            lock.unlock();
+        }
+    }
+
     // 55 - 75 = 20
-    public void startLoad(long position){
+    public void startLoad(){
         LOGGER.info("start loader");
 
         int batch = (int) (Const.M * 4);
@@ -64,7 +74,7 @@ public class Loader {
                 int queueId = buffer.getShort();
                 long offset = buffer.getInt();
                 int size = buffer.getShort();
-                if (buffer.remaining() < size){
+                if (buffer.remaining() < size || size == 0){
                     buffer.position(buffer.position() - 9);
                     break;
                 }
@@ -78,14 +88,14 @@ public class Loader {
                 buffer.get(bytes);
                 Data data = cache.take();
                 data.set(ByteBuffer.wrap(bytes));
+
+                Monitor.swapSSDToPmemCount ++;
                 queue.getRecords().put(offset, data);
             }
 
             startPos += buffer.position();
             buffer.clear();
         }
-
-
 
 
     }

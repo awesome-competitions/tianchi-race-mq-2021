@@ -8,6 +8,7 @@ public class Monitor {
     public static long readMemCount = 0;
     public static long writeMemCount = 0;
     public static long readSSDCount = 0;
+    public static long swapSSDToPmemCount = 0;
     public static long allocateIdleCount = 0;
     public static long missingIdleCount = 0;
 
@@ -19,6 +20,7 @@ public class Monitor {
                 ", readMemCount: " + readMemCount +
                 ", writeMemCount: " + writeMemCount +
                 ", readSSDCount: " + readSSDCount +
+                ", swapSSDToPmemCount: " + swapSSDToPmemCount +
                 ", allocateIdleCount: " + allocateIdleCount +
                 ", missingIdleCount: " + missingIdleCount
                 ;
