@@ -63,12 +63,12 @@ public class Loader {
         ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
         long endPos = position + Const.G * 20;
         long startPos = position;
-        long size = 0;
+        long loadSize = 0;
         int count = 0;
         while (startPos < endPos){
-            if (size > Const.G){
+            if (loadSize > Const.G){
                 LOGGER.info("load {} G", ++count);
-                size = 0;
+                loadSize = 0;
             }
             try {
                 aof.read(startPos, buffer);
@@ -104,7 +104,7 @@ public class Loader {
             }
 
             startPos += buffer.position();
-            size += buffer.position();
+            loadSize += buffer.position();
             buffer.clear();
         }
 
