@@ -37,7 +37,6 @@ public class Loader {
             if (!start){
                 start = true;
                 new Thread(this::startLoad).start();
-                start = true;
             }
             lock.unlock();
         }
