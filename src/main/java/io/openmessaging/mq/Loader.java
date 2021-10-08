@@ -54,7 +54,7 @@ public class Loader {
     }
 
     // 55 - 75 = 20
-    public void startLoad(){
+    private void startLoad(){
         LOGGER.info("start loader");
 
         int batch = (int) (Const.M * 4);

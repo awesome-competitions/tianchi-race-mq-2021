@@ -169,7 +169,7 @@ public class Mq extends MessageQueue{
     }
 
     public Map<Integer, ByteBuffer> getRange(int topic, int queueId, long offset, int fetchNum) {
-        loader.startLoad();
+        loader.start();
 
         Queue queue = getQueue(topic, queueId);
         List<ByteBuffer> buffers = queue.read(offset, fetchNum);
