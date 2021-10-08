@@ -99,7 +99,7 @@ public class Cache {
     }
 
     private LinkedBlockingQueue<Data> getIdles(int cap){
-        return cap > Const.K * 11 ? idles2 : idles1;
+        return cap > Const.K * 8.5 ? idles2 : idles1;
     }
 
 }
