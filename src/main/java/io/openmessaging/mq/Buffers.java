@@ -40,10 +40,10 @@ public class Buffers {
         for (int i = 0; i < 10000; i ++){
             buffers.add(ByteBuffer.allocate((int) (Const.K * 17)));
         }
-        for (int i = 0; i < 100000; i ++){
+        for (int i = 0; i < 80000; i ++){
             readBuffers.add(new Dram(ByteBuffer.allocateDirect((int) (Const.K * 17))));
         }
-        for (int i = 0; i < 100000; i ++){
+        for (int i = 0; i < 80000; i ++){
             readBuffers.add(new Dram(ByteBuffer.allocate((int) (Const.K * 17))));
         }
     }
