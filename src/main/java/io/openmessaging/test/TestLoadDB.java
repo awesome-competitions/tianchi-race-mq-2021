@@ -71,7 +71,7 @@ public class TestLoadDB {
         System.out.println("p1 spend time " + (end - start) + "ms");
 
 
-        MessageQueue mMapMessageQueueNew = getMq(2);
+        MessageQueue mMapMessageQueueNew = getMq(1);
         for (int i = 0; i < BATCH; i ++){
             Map<Integer, ByteBuffer> data = mMapMessageQueueNew.getRange("topic3", 1, i, 1);
             if (data.isEmpty()){

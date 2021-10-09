@@ -73,6 +73,9 @@ public class Loader {
     // 55 - 75 = 20
     private void startLoad(){
         LOGGER.info("start loader, position {}", position);
+        if (position == -1){
+            return;
+        }
 
         ByteBuffer tmp = ByteBuffer.allocate((int) (Const.K * 17));
 
