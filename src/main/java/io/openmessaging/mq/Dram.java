@@ -1,11 +1,7 @@
 package io.openmessaging.mq;
 
-import io.openmessaging.utils.CollectionUtils;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 public class Dram extends Data {
 
@@ -22,7 +18,11 @@ public class Dram extends Data {
 
     @Override
     public ByteBuffer get() {
-        return data;
+        ByteBuffer buffer = Buffers.allocateBuffer();
+        buffer.limit(capacity);
+        buffer.put(data);
+        buffer.flip();
+        return buffer;
     }
 
     @Override
@@ -36,6 +36,6 @@ public class Dram extends Data {
 
     @Override
     public void clear() {
-        this.data = null;
+        data.clear();
     }
 }

@@ -9,6 +9,8 @@ public class Buffers {
 
     private static final LinkedBlockingQueue<ByteBuffer> buffers = new LinkedBlockingQueue<>();
 
+    private static final LinkedBlockingQueue<Data> readBuffers = new LinkedBlockingQueue<>();
+
     static {
         initBuffers();
     }
@@ -25,9 +27,24 @@ public class Buffers {
         return ByteBuffer.allocate((int) (Const.K * 17));
     }
 
+    public static Data allocateReadBuffer(){
+        return readBuffers.poll();
+    }
+
+    public static void recycle(Data Data){
+        Data.clear();
+        readBuffers.add(Data);
+    }
+
     public static void initBuffers(){
         for (int i = 0; i < 10000; i ++){
             buffers.add(ByteBuffer.allocate((int) (Const.K * 17)));
+        }
+        for (int i = 0; i < 50000; i ++){
+            readBuffers.add(new Dram(ByteBuffer.allocateDirect((int) (Const.K * 17))));
+        }
+        for (int i = 0; i < 100000; i ++){
+            readBuffers.add(new Dram(ByteBuffer.allocate((int) (Const.K * 17))));
         }
     }
 }

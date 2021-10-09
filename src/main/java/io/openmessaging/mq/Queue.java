@@ -37,6 +37,13 @@ public class Queue {
             records.put(offset, data);
             return true;
         }
+        data = Buffers.allocateReadBuffer();
+        if (data != null){
+            data.set(buffer);
+            records.put(offset, data);
+            return true;
+        }
+
 //        data = new Dram(buffer.limit());
 //        data.set(buffer);
         data = new SSD(aof, position, buffer.limit());
@@ -67,6 +74,7 @@ public class Queue {
                 buffers.add(data.get());
             }else if (data instanceof Dram){
                 buffers.add(data.get());
+                Buffers.recycle(data);
             }
         }
         nextReadOffset = offset + buffers.size();
