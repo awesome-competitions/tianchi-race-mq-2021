@@ -58,7 +58,7 @@ public class Barrier {
             e.printStackTrace();
             try {
                 ByteBuffer buffer = Threads.get().getBuffer();
-                long pos = aof.write(Threads.get().getBuffer());
+                long pos = aof.write(buffer);
                 aof.force();
                 buffer.clear();
                 return pos;
