@@ -18,7 +18,7 @@ public class Mq extends MessageQueue{
 
     private final Map<Integer, Map<Integer, Queue>> queues;
 
-    private Cache cache;
+    private final Cache cache;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
 
@@ -29,7 +29,6 @@ public class Mq extends MessageQueue{
         this.config = config;
         this.queues = new ConcurrentHashMap<>();
         this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
-//        loadAof();
         initPools();
         startKiller();
         LOGGER.info("Mq completed");
@@ -75,11 +74,13 @@ public class Mq extends MessageQueue{
         }).start();
     }
 
-    FileWrapper createAof(String name) throws FileNotFoundException {
-        return  new FileWrapper(new RandomAccessFile(config.getDataDir() + name, "rw"));
+    FileWrapper createAof(String name) throws IOException {
+        FileWrapper aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + name, "rw"));
+        loadAof(aof);
+        return aof;
     }
 
-    void initPools() throws FileNotFoundException {
+    void initPools() throws IOException {
         FileWrapper aof1 = createAof("aof1");
         FileWrapper aof2 = createAof("aof2");
         FileWrapper aof3 = createAof("aof3");
