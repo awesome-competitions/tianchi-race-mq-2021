@@ -57,8 +57,10 @@ public class Barrier {
         } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
             e.printStackTrace();
             try {
+                ByteBuffer buffer = Threads.get().getBuffer();
                 long pos = aof.write(Threads.get().getBuffer());
                 aof.force();
+                buffer.clear();
                 return pos;
             } catch (IOException ioException) {
                 ioException.printStackTrace();
