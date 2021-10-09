@@ -145,7 +145,7 @@ public class Mq extends MessageQueue{
         buffer.flip();
 
         Barrier barrier = getBarrier();
-        long position = barrier.await(5, TimeUnit.SECONDS);
+        long position = barrier.await(20, TimeUnit.SECONDS);
         if (position == -1){
             position = barrier.getPosition() + ctx.getSsdPos();
         }
