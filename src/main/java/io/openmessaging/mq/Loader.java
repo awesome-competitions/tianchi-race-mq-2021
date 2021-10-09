@@ -96,7 +96,11 @@ public class Loader {
                 int queueId = buffer.getShort();
                 long offset = buffer.getInt();
                 int size = buffer.getShort();
-                if (buffer.remaining() < size || size == 0){
+                if (topic == 0 || size == 0){
+                    startPos = endPos;
+                    break;
+                }
+                if (buffer.remaining() < size){
                     buffer.position(buffer.position() - 9);
                     break;
                 }
