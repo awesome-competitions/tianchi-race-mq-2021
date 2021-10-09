@@ -28,18 +28,20 @@ public class Queue {
     }
 
     public boolean write(FileWrapper aof, long position, ByteBuffer buffer){
-        Data data = cache.allocate(buffer.limit());
-        if(data != null){
-            data.set(buffer);
-            records.put(offset, data);
-            return true;
-        }
-        data = Buffers.allocateReadBuffer();
+        Data data = Buffers.allocateReadBuffer();
         if (data != null){
             data.set(buffer);
             records.put(offset, data);
             return true;
         }
+
+        data = cache.allocate(buffer.limit());
+        if(data != null){
+            data.set(buffer);
+            records.put(offset, data);
+            return true;
+        }
+
 //        data = new Dram(buffer.limit());
 //        data.set(buffer);
         data = new SSD(aof, position, buffer.limit());
