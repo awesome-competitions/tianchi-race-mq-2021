@@ -61,7 +61,7 @@ public class Cache {
             Threads.get().blockPosIncrement();
         }
         if (memPos == -1){
-            Data data = getIdles(cap).poll();
+            Data data = poll();
             if (data == null){
                 Monitor.missingIdleCount ++;
             }else{
@@ -70,15 +70,6 @@ public class Cache {
             return data;
         }
         return new PMem(localBlock(), memPos, cap);
-    }
-
-    public Data take(int cap){
-        try {
-            return getIdles(cap).take();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     public void recycle(Data data){
@@ -98,6 +89,22 @@ public class Cache {
         }else{
             return idles4;
         }
+    }
+
+    private Data poll(){
+        Data data = idles4.poll();
+        if (data != null){
+            return data;
+        }
+        data = idles3.poll();
+        if (data != null){
+            return data;
+        }
+        data = idles2.poll();
+        if (data != null){
+            return data;
+        }
+        return idles1.poll();
     }
 
 }
