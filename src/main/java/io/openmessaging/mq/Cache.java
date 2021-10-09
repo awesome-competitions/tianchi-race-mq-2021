@@ -2,11 +2,17 @@ package io.openmessaging.mq;
 
 import com.intel.pmem.llpl.Heap;
 import io.openmessaging.consts.Const;
+import io.openmessaging.utils.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Cache {
 
@@ -19,6 +25,8 @@ public class Cache {
     private final LinkedBlockingQueue<Data> idles3 = new LinkedBlockingQueue<>();
     private final LinkedBlockingQueue<Data> idles4 = new LinkedBlockingQueue<>();
 
+    private final ThreadLocal<Integer> blockPos = new ThreadLocal<>();
+
     private static final long BLOCK_SIZE = Const.G * 5;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Cache.class);
@@ -29,6 +37,7 @@ public class Cache {
             this.blocks.add(applyBlock(Const.G * 5));
             startProducer();
         }
+        Buffers.initBuffers();
     }
 
     private void startProducer(){
@@ -46,8 +55,8 @@ public class Cache {
     }
 
     public Block localBlock(){
-        if (Threads.get().getBlockPos() < blocks.size()){
-            return blocks.get(Threads.get().getBlockPos());
+        if (blockPos.get() < blocks.size()){
+            return blocks.get(blockPos.get());
         }
         return null;
     }
@@ -56,12 +65,15 @@ public class Cache {
         if (heap == null){
             return new Dram(cap);
         }
+        if (blockPos.get() == null){
+            blockPos.set(0);
+        }
         long memPos = -1;
-        while (Threads.get().getBlockPos() < blocks.size() && (memPos = localBlock().allocate(cap)) == -1){
-            Threads.get().blockPosIncrement();
+        while (blockPos.get() < blocks.size() && (memPos = localBlock().allocate(cap)) == -1){
+            blockPos.set(blockPos.get() + 1);
         }
         if (memPos == -1){
-            Data data = poll();
+            Data data = getIdles(cap).poll();
             if (data == null){
                 Monitor.missingIdleCount ++;
             }else{
@@ -70,6 +82,15 @@ public class Cache {
             return data;
         }
         return new PMem(localBlock(), memPos, cap);
+    }
+
+    public Data take(int cap){
+        try {
+            return getIdles(cap).take();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public void recycle(Data data){
@@ -89,22 +110,6 @@ public class Cache {
         }else{
             return idles4;
         }
-    }
-
-    private Data poll(){
-        Data data = idles4.poll();
-        if (data != null){
-            return data;
-        }
-        data = idles3.poll();
-        if (data != null){
-            return data;
-        }
-        data = idles2.poll();
-        if (data != null){
-            return data;
-        }
-        return idles1.poll();
     }
 
 }
