@@ -79,7 +79,7 @@ public class Loader {
 
         ByteBuffer tmp = ByteBuffer.allocate((int) (Const.K * 17));
 
-        int batch = (int) (Const.M * 256);
+        int batch = (int) (Const.M * 32);
         ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
         long endPos = (long) (position + Const.G * 6);
         long startPos = position;
@@ -100,7 +100,12 @@ public class Loader {
                     buffer.position(buffer.position() - 9);
                     break;
                 }
-                Queue queue = queues.get(topic).get(queueId);
+                Map<Integer, Queue> map = queues.get(topic);
+                if (map == null){
+                    buffer.position(buffer.position() + size);
+                    continue;
+                }
+                Queue queue = map.get(queueId);
                 if (queue == null || queue.getRecords().get(offset) instanceof PMem || queue.getNextReadOffset() > offset){
                     buffer.position(buffer.position() + size);
                     continue;

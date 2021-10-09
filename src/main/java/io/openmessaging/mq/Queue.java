@@ -37,7 +37,10 @@ public class Queue {
             records.put(offset, data);
             return true;
         }
-        records.put(offset, new SSD(aof, position, buffer.limit()));
+//        data = new Dram(buffer.limit());
+//        data.set(buffer);
+        data = new SSD(aof, position, buffer.limit());
+        records.put(offset, data);
         return false;
     }
 

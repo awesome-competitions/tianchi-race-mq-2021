@@ -31,6 +31,7 @@ public class Dram extends Data {
         buffer.get(bytes);
         this.data = ByteBuffer.wrap(bytes);
         this.capacity = bytes.length;
+        Monitor.writeDramCount ++;
     }
 
     @Override
