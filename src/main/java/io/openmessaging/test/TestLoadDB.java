@@ -41,63 +41,40 @@ public class TestLoadDB {
 
     public static void main(String[] args) throws InterruptedException, IOException {
         cleanDB();
-        MessageQueue mMapMessageQueue = getMq(1);
-        List<Supplier<?>> suppliers = new ArrayList<>();
-        Map<Long, Integer> results = new ConcurrentHashMap<>();
-
-        LinkedBlockingQueue<Integer> msgQueue = new LinkedBlockingQueue<>();
-        for (int i = 0; i < BATCH; i ++){
-            msgQueue.add(i);
-        }
-
-        long start = System.currentTimeMillis();
-        for (int i = 0; i < PARALLEL_SIZE; i ++){
-            suppliers.add(test(msgQueue, mMapMessageQueue, results,"topic3", 1));
-        }
-        final CountDownLatch cdl = new CountDownLatch(suppliers.size());
-        ExecutorService POOLS = Executors.newFixedThreadPool(suppliers.size());
-        for (Supplier<?> supplier : suppliers){
-            POOLS.execute(()->{try{supplier.get();} finally {cdl.countDown(); }});
-        }
-        cdl.await();
+        MessageQueue mq = getMq(1);
+        String topic = "topic1";
 
         for (int i = 0; i < BATCH; i ++){
-            Map<Integer, ByteBuffer> data = mMapMessageQueue.getRange("topic3", 1, i, 1);
-            if (! Objects.equals(new String(data.get(0).array()), String.valueOf(results.get((long) i)))){
-                throw new RuntimeException("err at " + i);
-            }
+            mq.append(topic, 1, ByteBuffer.wrap(("" + i).getBytes()));
         }
-        long end = System.currentTimeMillis();
-        System.out.println("p1 spend time " + (end - start) + "ms");
 
-
-        MessageQueue mMapMessageQueueNew = getMq(1);
         for (int i = 0; i < BATCH; i ++){
-            Map<Integer, ByteBuffer> data = mMapMessageQueueNew.getRange("topic3", 1, i, 1);
-            if (data.isEmpty()){
-                throw new RuntimeException("err at " + i);
-            }
-            if (! Objects.equals(new String(data.get(0).array()), String.valueOf(results.get((long) i)))){
-                throw new RuntimeException("err at " + i);
+            Map<Integer, ByteBuffer> data = mq.getRange(topic, 1, i, 1);
+            byte[] bytes = new byte[data.get(0).limit()];
+            data.get(0).get(bytes);
+            if (!Arrays.equals(bytes, ("" + i).getBytes())){
+                System.out.println("topic " + topic + ", queue " + 1 + " read fail at " + i);
+                break;
             }
         }
 
+        mq = getMq(1);
+        for (int i = 0; i < BATCH; i ++){
+            Map<Integer, ByteBuffer> data = mq.getRange(topic, 1, i, 1);
+            byte[] bytes = new byte[data.get(0).limit()];
+            data.get(0).get(bytes);
+            if (!Arrays.equals(bytes, ("" + i).getBytes())){
+                System.out.println("topic " + topic + ", queue " + 1 + " read fail at " + i);
+                break;
+            }
+        }
 
-        long offset = mMapMessageQueueNew.append("topic3", 1, ByteBuffer.wrap("hello".getBytes(StandardCharsets.UTF_8)));
-        Map<Integer, ByteBuffer> values = mMapMessageQueueNew.getRange("topic3", 1, offset, 1);
-        System.out.println(offset + ":" + new String(values.get(0).array()));
-
-        POOLS.shutdown();
+//        long offset = mMapMessageQueueNew.append("topic3", 1, ByteBuffer.wrap("hello".getBytes(StandardCharsets.UTF_8)));
+//        Map<Integer, ByteBuffer> values = mMapMessageQueueNew.getRange("topic3", 1, offset, 1);
+//        System.out.println(offset + ":" + new String(values.get(0).array()));
+//
+//        POOLS.shutdown();
     }
 
-    public static Supplier<?> test(LinkedBlockingQueue<Integer> msgQueue, MessageQueue mq, Map<Long, Integer> results, String topic, Integer queueId){
-        return ()->{
-            Integer msg = null;
-            while((msg = msgQueue.poll()) != null){
-                long offset = mq.append(topic, queueId, ByteBuffer.wrap(String.valueOf(msg).getBytes()));
-                results.put(offset, msg);
-            }
-            return null;
-        };
-    }
+
 }

@@ -55,7 +55,11 @@ public class Mq extends MessageQueue{
             ByteBuffer data = ByteBuffer.allocate(size);
             aof.read(position, data);
             data.flip();
-            _append(topic, queueId, position, data);
+
+            Queue queue = getQueue(topic, queueId);
+            queue.nextOffset();
+            queue.write(aof, position, data);
+
             position += size;
         }
     }
@@ -76,30 +80,17 @@ public class Mq extends MessageQueue{
 
     FileWrapper createAof(String name) throws IOException {
         FileWrapper aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + name, "rw"));
-//        loadAof(aof);
+        loadAof(aof);
         return aof;
     }
 
     void initPools() throws IOException {
-        FileWrapper aof1 = createAof("aof1");
-        FileWrapper aof2 = createAof("aof2");
-        FileWrapper aof3 = createAof("aof3");
-        FileWrapper aof4 = createAof("aof4");
-        Barrier barrier = new Barrier(10, aof1, new Loader(aof1, cache, queues));
-        for (int j = 0; j < 10; j ++){
-            POOLS.add(barrier);
-        }
-        barrier = new Barrier(10, aof2, new Loader(aof2, cache, queues));
-        for (int j = 0; j < 10; j ++){
-            POOLS.add(barrier);
-        }
-        barrier = new Barrier(10, aof3, new Loader(aof3, cache, queues));
-        for (int j = 0; j < 10; j ++){
-            POOLS.add(barrier);
-        }
-        barrier = new Barrier(10, aof4, new Loader(aof4, cache, queues));
-        for (int j = 0; j < 10; j ++){
-            POOLS.add(barrier);
+        for (int i = 1; i <= 10; i ++){
+            FileWrapper aof = createAof("aof" + i);
+            Barrier barrier = new Barrier(config.getMaxCount(), aof);
+            for (int j = 0; j < config.getMaxCount(); j ++){
+                POOLS.add(barrier);
+            }
         }
     }
 
@@ -117,7 +108,7 @@ public class Mq extends MessageQueue{
     }
 
     public Queue getQueue(int topic, int queueId){
-        return queues.computeIfAbsent(topic, k -> new HashMap<>()).computeIfAbsent(queueId, k -> new Queue(getBarrier().getAof(), cache));
+        return queues.computeIfAbsent(topic, k -> new HashMap<>()).computeIfAbsent(queueId, k -> new Queue(cache));
     }
 
     public Config getConfig() {
@@ -130,11 +121,6 @@ public class Mq extends MessageQueue{
 
     public Map<Integer, ByteBuffer> getRange(String topic, int queueId, long offset, int fetchNum) {
         return getRange(getTopicId(topic), queueId, offset, fetchNum);
-    }
-
-    private void _append(int topic, int queueId, long position, ByteBuffer buffer){
-        Queue queue = getQueue(topic, queueId);
-        queue.write(position, buffer);
     }
 
     public long append(int topic, int queueId, ByteBuffer buffer)  {
@@ -163,17 +149,11 @@ public class Mq extends MessageQueue{
         if (position == -1){
             position = barrier.getPosition() + ctx.getSsdPos();
         }
-        queue.write(position, buffer);
-//        if(! queue.write(position, buffer)){
-//            barrier.getLoader().setPosition(position);
-//        }
+        queue.write(barrier.getAof(), position, buffer);
         return queue.getOffset();
     }
 
     public Map<Integer, ByteBuffer> getRange(int topic, int queueId, long offset, int fetchNum) {
-//        Barrier barrier = getBarrier();
-//        barrier.getLoader().start();
-
         Queue queue = getQueue(topic, queueId);
         List<ByteBuffer> buffers = queue.read(offset, fetchNum);
 

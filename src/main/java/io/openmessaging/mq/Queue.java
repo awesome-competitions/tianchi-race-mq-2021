@@ -12,15 +12,12 @@ public class Queue {
 
     private final Cache cache;
 
-    private final FileWrapper aof;
-
     private boolean reading;
 
     private volatile long nextReadOffset;
 
-    public Queue(FileWrapper aof, Cache cache) {
+    public Queue(Cache cache) {
         this.cache = cache;
-        this.aof = aof;
         this.offset = -1;
         this.records = new HashMap<>();
         Monitor.queueCount ++;
@@ -30,7 +27,7 @@ public class Queue {
         return ++ offset;
     }
 
-    public boolean write(long position, ByteBuffer buffer){
+    public boolean write(FileWrapper aof, long position, ByteBuffer buffer){
         Data data = cache.allocate(buffer.limit());
         if(data != null){
             data.set(buffer);

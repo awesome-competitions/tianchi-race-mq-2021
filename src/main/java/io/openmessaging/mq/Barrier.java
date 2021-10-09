@@ -17,11 +17,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Barrier {
 
-    private final Runnable action;
-
     private long position;
-
-    private final List<ByteBuffer> buffers;
 
     private final List<Threads.Context> contexts;
 
@@ -29,15 +25,12 @@ public class Barrier {
 
     private final FileWrapper aof;
 
-    private final Loader loader;
-
     public final static ByteBuffer[] EMPTY = new ByteBuffer[0];
 
-    public Barrier(int parties, FileWrapper aof, Loader loader) {
-        this.buffers = new ArrayList<>();
+    public Barrier(int parties, FileWrapper aof) {
         this.contexts = new ArrayList<>();
         this.aof = aof;
-        this.action = ()->{
+        this.barrier = new CyclicBarrier(parties, ()->{
             ByteBuffer[] bs = new ByteBuffer[contexts.size()];
             long pos = 0;
             for(int i = 0; i < contexts.size(); i ++){
@@ -55,9 +48,7 @@ public class Barrier {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        };
-        this.barrier = new CyclicBarrier(parties, this.action);
-        this.loader = loader;
+        });
     }
 
     public long await(long timeout, TimeUnit unit){
@@ -82,10 +73,6 @@ public class Barrier {
 
     public long getPosition() {
         return position;
-    }
-
-    public Loader getLoader() {
-        return loader;
     }
 
     public FileWrapper getAof() {
