@@ -31,7 +31,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
             Const.G * 60,
             10,
             (int) (Const.K * 256),
-            Const.MINUTE * 11 + Const.SECOND * 2
+            Const.MINUTE * 1 + Const.SECOND * 2
     ));
 //    private final MessageQueue queue = null;
 
