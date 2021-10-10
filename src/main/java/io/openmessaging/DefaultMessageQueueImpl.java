@@ -57,62 +57,54 @@ public class DefaultMessageQueueImpl extends MessageQueue{
     }
 
     public void test() throws IOException {
-//        RandomAccessFile randomAccessFile = new RandomAccessFile("/essd/aof.log", "rw");
-//        FileChannel channel = randomAccessFile.getChannel();
-//
-//        int batch = (int) (Const.K * 32);
-//        int count = (int) (Const.G * 10 / Const.K / 32);
-//
-//        ByteBuffer buffer = ByteBuffer.allocate(batch);
-//        for (int i = 0; i < buffer.capacity(); i ++){
-//            buffer.put((byte) 1);
-//        }
-//
-//        long start = System.currentTimeMillis();
-//        for (int i = 0; i < count; i ++){
-//            buffer.flip();
-//            channel.write(buffer);
-//            channel.force(false);
-//        }
-//        long end = System.currentTimeMillis();
-//        LOGGER.info("time {}", end - start);
-//        throw new RuntimeException("ex");
-
-        String path = "/pmem/nico";
-        long heapSize = Const.G * 20;
-
-        long start = System.currentTimeMillis();
-        Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
-        testHeapAllocateAndRW(1, heap);
-        long end = System.currentTimeMillis();
-
-        System.out.println("all spend " + (end - start));
+        testChan();
+        testLlpl();
         throw new RuntimeException("ex");
     }
-    long heapSize = Const.G * 10;
 
-    void testHeapAllocateAndRW(int id, Heap heap){
+    void testChan() throws IOException {
         long start = System.currentTimeMillis();
-        AnyMemoryBlock block = heap.allocateCompactMemoryBlock(heapSize);
+        RandomAccessFile randomAccessFile = new RandomAccessFile("/essd/aof.log", "rw");
+        FileChannel channel = randomAccessFile.getChannel();
+
+        int batch = (int) (Const.K * 32);
+        int count = (int) (Const.G * 10 / Const.K / 32);
+
+        ByteBuffer buffer = ByteBuffer.allocate(batch);
+        for (int i = 0; i < buffer.capacity(); i ++){
+            buffer.put((byte) 1);
+        }
+
+        for (int i = 0; i < count; i ++){
+            buffer.flip();
+            channel.write(buffer);
+        }
         long end = System.currentTimeMillis();
-        System.out.println(id + " allocate " + (end - start));
+        LOGGER.info("chan time {}", end - start);
+    }
+
+    void testLlpl(){
+        String path = "/pmem/nico";
+        long heapSize = Const.G * 20;
+        long start = System.currentTimeMillis();
+        Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
+        long end = System.currentTimeMillis();
+        System.out.println("create heap " + (end - start));
+
+        start = System.currentTimeMillis();
+        AnyMemoryBlock block = heap.allocateCompactMemoryBlock(Const.G * 10);
+        end = System.currentTimeMillis();
+        System.out.println("allocate " + (end - start));
 
         start = System.currentTimeMillis();
         byte[] bs = new byte[32 * 1024];
         Arrays.fill(bs, (byte) 1);
 
-        for (long i = 0; i < heapSize; i = i + 32 * 1024){
+        for (long i = 0; i < Const.G * 10; i = i + 32 * 1024){
             block.copyFromArray(bs, 0, i, bs.length);
         }
         end = System.currentTimeMillis();
-        System.out.println(id + " write " + (end - start));
-//
-//        start = System.currentTimeMillis();
-//        for (long i = 0; i < heapSize; i ++){
-//            block.getByte(i);
-//        }
-//        end = System.currentTimeMillis();
-//        System.out.println(id + " read " + (end - start));
+        System.out.println("write " + (end - start));
     }
 
     void testHeapAllocate(int id){
