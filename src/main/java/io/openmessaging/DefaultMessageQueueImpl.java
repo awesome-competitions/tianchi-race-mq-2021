@@ -57,7 +57,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
     }
 
     public void test() throws IOException {
-        RandomAccessFile randomAccessFile = new RandomAccessFile("/pmem/aof.log", "rw");
+        RandomAccessFile randomAccessFile = new RandomAccessFile("/essd/aof.log", "rw");
         FileChannel channel = randomAccessFile.getChannel();
 
         int batch = (int) (Const.K * 32);
