@@ -20,10 +20,7 @@ public class Cache {
 
     private final List<Block> blocks = new ArrayList<>(10);
 
-    private final LinkedBlockingQueue<Data> idles1 = new LinkedBlockingQueue<>();
-    private final LinkedBlockingQueue<Data> idles2 = new LinkedBlockingQueue<>();
-    private final LinkedBlockingQueue<Data> idles3 = new LinkedBlockingQueue<>();
-    private final LinkedBlockingQueue<Data> idles4 = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<Data> idles = new LinkedBlockingQueue<>();
 
     private final ThreadLocal<Integer> blockPos = new ThreadLocal<>();
 
@@ -62,6 +59,7 @@ public class Cache {
     }
 
     public Data allocate(int cap){
+        cap = (int) (Const.K * 17);
         if (heap == null){
             return new Dram(cap);
         }
@@ -73,7 +71,7 @@ public class Cache {
             blockPos.set(blockPos.get() + 1);
         }
         if (memPos == -1){
-            Data data = getIdles(cap).poll();
+            Data data = idles.poll();
             if (data == null){
                 Monitor.missingIdleCount ++;
             }else{
@@ -84,31 +82,10 @@ public class Cache {
         return new PMem(localBlock(), memPos, cap);
     }
 
-    public Data take(int cap){
-        try {
-            return getIdles(cap).take();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
     public void recycle(Data data){
         if (data instanceof PMem){
             data.clear();
-            getIdles(data.getCapacity()).add(data);
-        }
-    }
-
-    private LinkedBlockingQueue<Data> getIdles(int cap){
-        if (cap < Const.K * 4.5){
-            return idles1;
-        }else if (cap < Const.K * 9){
-            return idles2;
-        }else if (cap < Const.K * 13.5){
-            return idles3;
-        }else{
-            return idles4;
+            idles.add(data);
         }
     }
 
