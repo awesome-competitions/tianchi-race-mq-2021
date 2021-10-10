@@ -3,6 +3,7 @@ package io.openmessaging.mq;
 import com.intel.pmem.llpl.AnyMemoryBlock;
 import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,7 +12,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Block {
 
-    private final AnyMemoryBlock block;
+    private final FileWrapper fw;
 
     private final long capacity;
 
@@ -19,8 +20,8 @@ public class Block {
 
     private final Map<Long, Long> offsets;
 
-    public Block(AnyMemoryBlock block, long capacity) {
-        this.block = block;
+    public Block(FileWrapper fw, long capacity) {
+        this.fw = fw;
         this.capacity = capacity;
         this.memPos = new AtomicLong();
         this.offsets = new ConcurrentHashMap<>();
@@ -35,32 +36,23 @@ public class Block {
         return newPos - cap;
     }
 
-    public byte[] read(long position, int length){
-        byte[] bytes = new byte[length];
-        block.copyToArray(position, bytes, 0, length);
-        return bytes;
+    public ByteBuffer read(long position, int length){
+        ByteBuffer buffer = ByteBuffer.allocate(length);
+        try {
+            fw.read(position, buffer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        buffer.flip();
+        return buffer;
     }
 
-    public void write(long position, byte[] bytes, int len){
-        block.copyFromArray(bytes, 0, position, len);
-    }
-
-    public void register(long tid, long qid, long offset){
-        offsets.put(tid * 10000 + qid, offset);
-    }
-
-    public void unregister(long tid, long qid, long offset){
-        Long max = offsets.get(tid * 10000 + qid);
-        if (max != null && offset >= max){
-            offsets.remove(tid * 10000 + qid);
+    public void write(long position, ByteBuffer buffer){
+        try {
+            fw.write(position, buffer);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    public boolean isFree(){
-        return offsets.isEmpty();
-    }
-
-    public Map<Long, Long> getOffsets() {
-        return offsets;
-    }
 }

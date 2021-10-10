@@ -32,9 +32,8 @@ public class PMem extends Data {
     public ByteBuffer get() {
         Monitor.readMemCount ++;
         int extSize = ext == null ? 0 : ext.limit();
-        byte[] data = block.read(position, size - extSize);
+        ByteBuffer data = block.read(position, size - extSize);
         ByteBuffer buffer = Buffers.allocateBuffer();
-        buffer.limit(size);
         buffer.put(data);
         if (extSize > 0){
             buffer.put(ext);
@@ -47,12 +46,14 @@ public class PMem extends Data {
     public void set(ByteBuffer buffer) {
         Monitor.writeMemCount ++;
         this.size = buffer.limit();
-        block.write(position, buffer.array(), Math.min(buffer.limit(), capacity));
 
-        if (buffer.limit() > capacity){
-            ext = ByteBuffer.allocateDirect(buffer.limit() - capacity);
+        buffer.limit(Math.min(size, capacity));
+        block.write(position, buffer);
+
+        if (size > capacity){
+            buffer.limit(size);
+            ext = ByteBuffer.allocateDirect(buffer.remaining());
             Monitor.extSize += ext.capacity();
-            buffer.position(capacity);
             ext.put(buffer);
             ext.flip();
         }

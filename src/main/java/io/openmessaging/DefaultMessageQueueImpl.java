@@ -25,24 +25,24 @@ import java.util.concurrent.TimeUnit;
 
 public class DefaultMessageQueueImpl extends MessageQueue{
 
-//    private final MessageQueue queue = new Mq(new Config(
-//            "/essd/",
-//            "/pmem/nico",
-//            Const.G * 60,
-//            5,
-//            (int) (Const.K * 256),
-//            Const.MINUTE * 11 + Const.SECOND * 2
-//    ));
-    private final MessageQueue queue = null;
+    private final MessageQueue queue = new Mq(new Config(
+            "/essd/",
+            "/pmem/nico",
+            Const.G * 60,
+            5,
+            (int) (Const.K * 256),
+            Const.MINUTE * 1 + Const.SECOND * 2
+    ));
+//    private final MessageQueue queue = null;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMessageQueueImpl.class);
 
     public DefaultMessageQueueImpl() throws IOException {
-        try {
-            test();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            test();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     @Override
@@ -58,7 +58,6 @@ public class DefaultMessageQueueImpl extends MessageQueue{
 
     public void test() throws IOException {
 //        testChan60();
-        testllpl60();
 //        testChan();
 //        testLlpl();
         throw new RuntimeException("ex");
@@ -93,36 +92,6 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         LOGGER.info("chan time {}", end - start);
     }
 
-    void testllpl60() throws IOException {
-        long start = System.currentTimeMillis();
-        String path = "/pmem/nico";
-        long heapSize = Const.G * 60;
-        Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
-        long end = System.currentTimeMillis();
-        System.out.println("create heap " + (end - start));
-
-        start = System.currentTimeMillis();
-        AnyMemoryBlock block = heap.allocateCompactMemoryBlock(Const.G * 55);
-        end = System.currentTimeMillis();
-        System.out.println("allocate " + (end - start));
-
-        start = System.currentTimeMillis();
-        byte[] bs = new byte[32 * 1024];
-        Arrays.fill(bs, (byte) 1);
-
-        long size = 0;
-        for (long i = 0; i < Const.G * 55; i = i + 32 * 1024){
-            block.copyFromArray(bs, 0, i, bs.length);
-
-            size += bs.length;
-            if (size > Const.G){
-                LOGGER.info("1");
-                size = 0;
-            }
-        }
-        end = System.currentTimeMillis();
-        System.out.println("write " + (end - start));
-    }
 
     void testChan() throws IOException {
         long start = System.currentTimeMillis();
