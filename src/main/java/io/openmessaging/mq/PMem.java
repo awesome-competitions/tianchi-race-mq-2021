@@ -32,10 +32,12 @@ public class PMem extends Data {
     public ByteBuffer get() {
         Monitor.readMemCount ++;
         int extSize = ext == null ? 0 : ext.limit();
-        ByteBuffer data = block.read(position, size - extSize);
+
         ByteBuffer buffer = Buffers.allocateBuffer();
-        buffer.put(data);
+        buffer.limit(size - extSize);
+        block.read(position, buffer);
         if (extSize > 0){
+            buffer.limit(size);
             buffer.put(ext);
         }
         buffer.flip();

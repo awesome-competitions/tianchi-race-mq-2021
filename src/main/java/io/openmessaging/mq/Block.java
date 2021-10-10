@@ -36,15 +36,12 @@ public class Block {
         return newPos - cap;
     }
 
-    public ByteBuffer read(long position, int length){
-        ByteBuffer buffer = ByteBuffer.allocate(length);
+    public void read(long position, ByteBuffer buffer){
         try {
             fw.read(position, buffer);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        buffer.flip();
-        return buffer;
     }
 
     public void write(long position, ByteBuffer buffer){
