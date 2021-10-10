@@ -98,8 +98,11 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         System.out.println(id + " allocate " + (end - start));
 
         start = System.currentTimeMillis();
-        for (long i = 0; i < heapSize; i ++){
-            block.setByte(i, (byte) 1);
+        byte[] bs = new byte[32 * 1024];
+        Arrays.fill(bs, (byte) 1);
+
+        for (long i = 0; i < heapSize; i = i + 32 * 1024){
+            block.copyFromArray(bs, 0, i, bs.length);
         }
         end = System.currentTimeMillis();
         System.out.println(id + " write " + (end - start));
