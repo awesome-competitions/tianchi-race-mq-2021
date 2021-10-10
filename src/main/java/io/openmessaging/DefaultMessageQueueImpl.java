@@ -25,24 +25,24 @@ import java.util.concurrent.TimeUnit;
 
 public class DefaultMessageQueueImpl extends MessageQueue{
 
-    private final MessageQueue queue = new Mq(new Config(
-            "/essd/",
-            "/pmem/nico",
-            Const.G * 60,
-            5,
-            (int) (Const.K * 256),
-            Const.MINUTE * 11 + Const.SECOND * 2
-    ));
-//    private final MessageQueue queue = null;
+//    private final MessageQueue queue = new Mq(new Config(
+//            "/essd/",
+//            "/pmem/nico",
+//            Const.G * 60,
+//            5,
+//            (int) (Const.K * 256),
+//            Const.MINUTE * 11 + Const.SECOND * 2
+//    ));
+    private final MessageQueue queue = null;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMessageQueueImpl.class);
 
     public DefaultMessageQueueImpl() throws IOException {
-//        try {
-//            test();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            test();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -57,59 +57,57 @@ public class DefaultMessageQueueImpl extends MessageQueue{
     }
 
     public void test() throws IOException {
-//        RandomAccessFile randomAccessFile = new RandomAccessFile("/essd/aof.log", "rw");
-//        FileChannel channel = randomAccessFile.getChannel();
-//
-//        int batch = (int) (Const.K * 6.2);
-//        int count = (int) (Const.G * 10 / Const.K / 512);
-//
-//        ByteBuffer buffer = ByteBuffer.allocate(batch);
-//        for (int i = 0; i < buffer.capacity(); i ++){
-//            buffer.put((byte) 1);
-//        }
-//
-//        long start = System.currentTimeMillis();
-//        for (int i = 0; i < count; i ++){
-//            for (int j = 0; j < 80; j ++){
-//                buffer.flip();
-//                channel.write(buffer);
-//            }
-//            channel.force(false);
-//        }
-//        long end = System.currentTimeMillis();
-//        LOGGER.info("time {}", end - start);
-//        throw new RuntimeException("ex");
+        RandomAccessFile randomAccessFile = new RandomAccessFile("/pmem/aof.log", "rw");
+        FileChannel channel = randomAccessFile.getChannel();
+
+        int batch = (int) (Const.K * 32);
+        int count = (int) (Const.G * 10 / Const.K / 32);
+
+        ByteBuffer buffer = ByteBuffer.allocate(batch);
+        for (int i = 0; i < buffer.capacity(); i ++){
+            buffer.put((byte) 1);
+        }
+
+        long start = System.currentTimeMillis();
+        for (int i = 0; i < count; i ++){
+            buffer.flip();
+            channel.write(buffer);
+            channel.force(false);
+        }
+        long end = System.currentTimeMillis();
+        LOGGER.info("time {}", end - start);
+        throw new RuntimeException("ex");
 
 //        String path = "/pmem/nico";
 //        long heapSize = Const.G * 59;
 //        Heap heap = Heap.exists(path) ? Heap.openHeap(path) : Heap.createHeap(path, heapSize);
 
-        long start = System.currentTimeMillis();
+//        long start = System.currentTimeMillis();
 //        for (int i = 0; i < 10; i ++){
 //            testHeapAllocateAndRW(i, heap);
 //        }
 
-        CountDownLatch cdl = new CountDownLatch(40);
-        for (int i = 0; i < 40; i ++){
-            final int id = i;
-            new Thread(()->{
-                try{
-                    testHeapAllocate(id);
-                }finally {
-                    cdl.countDown();
-                }
-            }).start();
-        }
-
-        try {
-            cdl.await(5, TimeUnit.MINUTES);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        long end = System.currentTimeMillis();
-
-        System.out.println("all spend " + (end - start));
-        throw new RuntimeException("ex");
+//        CountDownLatch cdl = new CountDownLatch(40);
+//        for (int i = 0; i < 40; i ++){
+//            final int id = i;
+//            new Thread(()->{
+//                try{
+//                    testHeapAllocate(id);
+//                }finally {
+//                    cdl.countDown();
+//                }
+//            }).start();
+//        }
+//
+//        try {
+//            cdl.await(5, TimeUnit.MINUTES);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+//        long end = System.currentTimeMillis();
+//
+//        System.out.println("all spend " + (end - start));
+//        throw new RuntimeException("ex");
     }
     long heapSize = Const.G * 5;
     void testHeapAllocateAndRW(int id, Heap heap){
