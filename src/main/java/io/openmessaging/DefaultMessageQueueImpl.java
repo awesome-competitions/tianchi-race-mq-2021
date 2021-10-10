@@ -62,6 +62,35 @@ public class DefaultMessageQueueImpl extends MessageQueue{
         throw new RuntimeException("ex");
     }
 
+    void testChan60() throws IOException {
+        long start = System.currentTimeMillis();
+        RandomAccessFile randomAccessFile = new RandomAccessFile("/essd/aof.log", "rw");
+        FileChannel channel = randomAccessFile.getChannel();
+
+        int batch = (int) (Const.K * 32);
+        int count = (int) (Const.G * 59 / Const.K / 32);
+
+        long size = 0;
+
+        ByteBuffer buffer = ByteBuffer.allocate(batch);
+        for (int i = 0; i < buffer.capacity(); i ++){
+            buffer.put((byte) 1);
+        }
+
+        for (int i = 0; i < count; i ++){
+            buffer.flip();
+            channel.write(buffer);
+
+            size += buffer.limit();
+            if (size > Const.G){
+                LOGGER.info("1");
+                size = 0;
+            }
+        }
+        long end = System.currentTimeMillis();
+        LOGGER.info("chan time {}", end - start);
+    }
+
     void testChan() throws IOException {
         long start = System.currentTimeMillis();
         RandomAccessFile randomAccessFile = new RandomAccessFile("/essd/aof.log", "rw");
