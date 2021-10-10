@@ -65,7 +65,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
 
     void testChan60() throws IOException {
         long start = System.currentTimeMillis();
-        RandomAccessFile randomAccessFile = new RandomAccessFile("/essd/aof.log", "rw");
+        RandomAccessFile randomAccessFile = new RandomAccessFile("/pmem/aof.log", "rw");
         FileChannel channel = randomAccessFile.getChannel();
 
         int batch = (int) (Const.K * 32);
@@ -94,7 +94,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
 
     void testChan() throws IOException {
         long start = System.currentTimeMillis();
-        RandomAccessFile randomAccessFile = new RandomAccessFile("/essd/aof.log", "rw");
+        RandomAccessFile randomAccessFile = new RandomAccessFile("/pmem/aof.log", "rw");
         FileChannel channel = randomAccessFile.getChannel();
 
         int batch = (int) (Const.K * 32);
