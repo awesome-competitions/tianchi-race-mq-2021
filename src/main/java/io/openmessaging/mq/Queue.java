@@ -8,18 +8,16 @@ public class Queue {
 
     private long offset;
 
-    private final Map<Long, Data> records;
+    private final List<Data> records;
 
     private final Cache cache;
 
     private boolean reading;
 
-    private volatile long nextReadOffset;
-
     public Queue(Cache cache) {
         this.cache = cache;
         this.offset = -1;
-        this.records = new HashMap<>();
+        this.records = new ArrayList<>(200);
         Monitor.queueCount ++;
     }
 
@@ -28,34 +26,36 @@ public class Queue {
     }
 
     public boolean write(FileWrapper aof, long position, ByteBuffer buffer){
-        if (reading){
-            Data data = Buffers.allocateReadBuffer();
-            if (data != null){
-                data.set(buffer);
-                records.put(offset, data);
-                return true;
-            }
-            data = cache.allocate(buffer.limit());
-            if(data != null){
-                data.set(buffer);
-                records.put(offset, data);
-                return true;
-            }
+        Data data = Buffers.allocateReadBuffer();
+        if (data != null){
+            data.set(buffer);
+            records.add(data);
+            return true;
         }
-        records.put(offset, new SSD(aof, position, buffer.limit()));
+        data = cache.allocate(buffer.limit());
+        if(data != null){
+            data.set(buffer);
+            records.add(data);
+            return true;
+        }
+        records.add(new SSD(aof, position, buffer.limit()));
         return false;
     }
 
     public List<ByteBuffer> read(long offset, int num){
         if (!reading){
+            new Thread(()->{
+                for (long i = 0; i < offset; i ++){
+                    Data data = records.get((int) i);
+                    cache.recycle(data);
+                }
+            }).start();
             reading = true;
         }
         List<ByteBuffer> buffers = new ArrayList<>();
-        for (long i = offset; i < offset + num; i ++){
+        int end = (int) Math.min(offset + num, records.size());
+        for (int i = (int) offset; i < end; i ++){
             Data data = records.get(i);
-            if (data == null){
-                break;
-            }
             if (data instanceof PMem){
                 buffers.add(data.get());
                 cache.recycle(data);
@@ -66,7 +66,6 @@ public class Queue {
                 Buffers.recycle(data);
             }
         }
-        nextReadOffset = offset + buffers.size();
         return buffers;
     }
 
@@ -76,14 +75,6 @@ public class Queue {
 
     public void setOffset(long offset) {
         this.offset = offset;
-    }
-
-    public long getNextReadOffset() {
-        return nextReadOffset;
-    }
-
-    public Map<Long, Data> getRecords() {
-        return records;
     }
 
 }
