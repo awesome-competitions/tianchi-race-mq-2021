@@ -57,8 +57,9 @@ public class DefaultMessageQueueImpl extends MessageQueue{
     }
 
     public void test() throws IOException {
-        testChan();
-        testLlpl();
+        testChan60();
+//        testChan();
+//        testLlpl();
         throw new RuntimeException("ex");
     }
 
