@@ -24,7 +24,6 @@ public class Cache {
         if (heapDir != null){
             this.block = new Block(new FileWrapper(new RandomAccessFile(heapDir, "rw")), heapSize);
         }
-        Buffers.initBuffers();
     }
 
 
