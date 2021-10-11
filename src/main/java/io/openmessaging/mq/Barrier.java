@@ -25,26 +25,23 @@ public class Barrier {
 
     private final FileWrapper aof;
 
-    public final static ByteBuffer[] EMPTY = new ByteBuffer[0];
+    public final ByteBuffer[] buffers;
 
     public Barrier(int parties, FileWrapper aof) {
         this.contexts = new ArrayList<>();
         this.aof = aof;
+        this.buffers = new ByteBuffer[parties];
         this.barrier = new CyclicBarrier(parties, ()->{
-            ByteBuffer[] bs = new ByteBuffer[contexts.size()];
             long pos = 0;
             for(int i = 0; i < contexts.size(); i ++){
                 Threads.Context ctx = contexts.get(i);
-                bs[i] = ctx.getBuffer();
+                buffers[i] = ctx.getBuffer();
                 ctx.setSsdPos(pos);
                 pos += ctx.getBuffer().limit();
             }
             try {
-                position = aof.write(bs);
+                position = aof.write(buffers);
                 aof.force();
-                for (ByteBuffer b: bs){
-                    b.clear();
-                }
             } catch (IOException e) {
                 e.printStackTrace();
             }

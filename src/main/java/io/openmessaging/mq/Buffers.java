@@ -37,7 +37,7 @@ public class Buffers {
     }
 
     public static void initBuffers(){
-        for (int i = 0; i < 10000; i ++){
+        for (int i = 0; i < 5000; i ++){
             buffers.add(ByteBuffer.allocateDirect((int) (Const.K * 17)));
         }
         for (int i = 0; i < 60000; i ++){

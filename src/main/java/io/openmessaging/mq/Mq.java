@@ -134,7 +134,7 @@ public class Mq extends MessageQueue{
         long offset = queue.nextOffset();
 
         Threads.Context ctx = Threads.get();
-
+        ctx.getBuffer().clear();
         ByteBuffer data = ctx.getBuffer()
                 .put((byte) topic)
                 .putShort((short) queueId)
