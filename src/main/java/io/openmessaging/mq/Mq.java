@@ -144,7 +144,7 @@ public class Mq extends MessageQueue{
 
         Barrier barrier = getBarrier();
 
-        long position = barrier.write(buffer);
+        long position = barrier.write(data);
         barrier.await(30, TimeUnit.SECONDS);
 
         queue.write(barrier.getAof(), position, buffer);

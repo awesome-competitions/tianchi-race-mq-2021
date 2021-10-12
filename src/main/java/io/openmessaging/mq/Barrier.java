@@ -50,8 +50,7 @@ public class Barrier {
     }
 
     public long write(ByteBuffer buffer){
-        long pos = position.addAndGet(buffer.limit());
-        pos -= buffer.limit();
+        long pos = position.getAndAdd(buffer.limit());
         try {
             aof.write(pos, buffer);
         } catch (IOException e) {
