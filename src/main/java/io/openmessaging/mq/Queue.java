@@ -17,7 +17,7 @@ public class Queue {
     public Queue(Cache cache) {
         this.cache = cache;
         this.offset = -1;
-        this.records = new ArrayList<>(200);
+        this.records = new ArrayList<>(100);
         Monitor.queueCount ++;
     }
 
