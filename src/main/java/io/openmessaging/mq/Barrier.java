@@ -51,7 +51,7 @@ public class Barrier {
 
     public long write(ByteBuffer buffer){
         try {
-            return aof.write(buffer);
+            return aof.getChannel().write(buffer);
         } catch (IOException e) {
             e.printStackTrace();
         }
