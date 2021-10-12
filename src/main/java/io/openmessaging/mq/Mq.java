@@ -85,7 +85,7 @@ public class Mq extends MessageQueue{
     }
 
     void initPools() throws IOException {
-        int[] arr = new int[]{7,7,6,6,7,7};
+        int[] arr = new int[]{6,6,5,5,6,6,6};
         for (int i = 0; i < arr.length; i ++){
             Barrier barrier = new Barrier(arr[i], createAof("aof" + i));
             for (int j = 0; j < arr[i]; j ++){
@@ -100,9 +100,6 @@ public class Mq extends MessageQueue{
         if (barrier == null){
             barrier = POOLS.poll();
             ctx.setBarrier(barrier);
-            if (barrier != null){
-                barrier.register(ctx);
-            }
         }
         return barrier;
     }
@@ -134,21 +131,22 @@ public class Mq extends MessageQueue{
         long offset = queue.nextOffset();
 
         Threads.Context ctx = Threads.get();
-        ctx.getBuffer().clear();
-        ByteBuffer data = ctx.getBuffer()
-                .put((byte) topic)
-                .putShort((short) queueId)
-                .putInt((int) offset)
-                .putShort((short) buffer.limit())
-                .put(buffer);
+
+        ByteBuffer data = ctx.getBuffer();
+        data.clear();
+        data.put((byte) topic)
+            .putShort((short) queueId)
+            .putInt((int) offset)
+            .putShort((short) buffer.limit())
+            .put(buffer);
         data.flip();
         buffer.flip();
 
         Barrier barrier = getBarrier();
-        long position = barrier.await(30, TimeUnit.SECONDS);
-        if (position == -1){
-            position = barrier.getPosition() + ctx.getSsdPos();
-        }
+
+        long position = barrier.write(buffer);
+        barrier.await(30, TimeUnit.SECONDS);
+
         queue.write(barrier.getAof(), position, buffer);
         return queue.getOffset();
     }
