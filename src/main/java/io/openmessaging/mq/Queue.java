@@ -30,9 +30,9 @@ public class Queue {
         if (data == null){
             data = Buffers.allocateReadBuffer();
             if (data == null){
-                data = cache.allocate(buffer.limit());
-                if (data == null){
-                    if (reading){
+                if (reading){
+                    data = cache.allocate(buffer.limit());
+                    if (data == null){
                         data = Buffers.allocateExtraData();
                     }
                 }
