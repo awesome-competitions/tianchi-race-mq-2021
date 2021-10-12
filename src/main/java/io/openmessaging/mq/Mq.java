@@ -80,20 +80,22 @@ public class Mq extends MessageQueue{
 
     FileWrapper createAof(String name) throws IOException {
         FileWrapper aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + name, "rw"));
-//        loadAof(aof);
+        loadAof(aof);
         return aof;
     }
 
     void initPools() throws IOException {
         for (int i = 1; i <= 5; i ++){
-            Barrier barrier = new Barrier(7, createAof("aof" + i));
-            for (int j = 0; j < 7; j ++){
+            Barrier barrier = new Barrier(6, createAof("aof" + i));
+            for (int j = 0; j < 6; j ++){
                 POOLS.add(barrier);
             }
         }
-        Barrier barrier = new Barrier(5, createAof("aof" + 6));
-        for (int j = 0; j < 5; j ++){
-            POOLS.add(barrier);
+        for (int i = 6; i <= 7; i ++){
+            Barrier barrier = new Barrier(5, createAof("aof" + i));
+            for (int j = 0; j < 5; j ++){
+                POOLS.add(barrier);
+            }
         }
     }
 
