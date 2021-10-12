@@ -7,15 +7,16 @@ import org.slf4j.LoggerFactory;
 import java.io.FileNotFoundException;
 import java.io.RandomAccessFile;
 import java.util.LinkedList;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class Cache {
 
     private Block block;
 
-    private final LinkedList<Data> idles1 = new LinkedList<>();
-    private final LinkedList<Data> idles2 = new LinkedList<>();
-    private final LinkedList<Data> idles3 = new LinkedList<>();
-    private final LinkedList<Data> idles4 = new LinkedList<>();
+    private final LinkedBlockingQueue<Data> idles1 = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<Data> idles2 = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<Data> idles3 = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<Data> idles4 = new LinkedBlockingQueue<>();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Cache.class);
 
@@ -24,7 +25,6 @@ public class Cache {
             this.block = new Block(new FileWrapper(new RandomAccessFile(heapDir, "rw")), heapSize);
         }
     }
-
 
     public Data allocate(int cap){
         if (block == null){
@@ -48,7 +48,7 @@ public class Cache {
         getIdles(data.getCapacity()).add(data);
     }
 
-    private LinkedList<Data> getIdles(int cap){
+    private LinkedBlockingQueue<Data> getIdles(int cap){
         if (cap < Const.K * 4.5){
             return idles1;
         }else if (cap < Const.K * 9){
