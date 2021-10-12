@@ -85,15 +85,10 @@ public class Mq extends MessageQueue{
     }
 
     void initPools() throws IOException {
-        for (int i = 1; i <= 4; i ++){
-            Barrier barrier = new Barrier(7, createAof("aof" + i));
-            for (int j = 0; j < 7; j ++){
-                POOLS.add(barrier);
-            }
-        }
-        for (int i = 5; i <= 6; i ++){
-            Barrier barrier = new Barrier(6, createAof("aof" + i));
-            for (int j = 0; j < 6; j ++){
+        int[] arr = new int[]{6,6,5,5,6,6,6};
+        for (int i = 0; i < arr.length; i ++){
+            Barrier barrier = new Barrier(arr[i], createAof("aof" + i));
+            for (int j = 0; j < arr[i]; j ++){
                 POOLS.add(barrier);
             }
         }
