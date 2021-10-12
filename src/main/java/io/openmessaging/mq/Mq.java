@@ -91,11 +91,9 @@ public class Mq extends MessageQueue{
                 POOLS.add(barrier);
             }
         }
-        for (int i = 6; i <= 7; i ++){
-            Barrier barrier = new Barrier(5, createAof("aof" + i));
-            for (int j = 0; j < 5; j ++){
-                POOLS.add(barrier);
-            }
+        Barrier barrier = new Barrier(10, createAof("aof" + 6));
+        for (int j = 0; j < 10; j ++){
+            POOLS.add(barrier);
         }
     }
 
