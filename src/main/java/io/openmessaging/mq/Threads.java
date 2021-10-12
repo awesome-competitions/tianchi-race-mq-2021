@@ -49,7 +49,11 @@ public class Threads {
         }
 
         public Data allocateReadBuffer(){
-            return readBuffers.poll();
+            Data data = readBuffers.poll();
+            if (data != null){
+                Monitor.writeDramCount ++;
+            }
+            return data;
         }
 
         public void recycleReadBuffer(Data data){

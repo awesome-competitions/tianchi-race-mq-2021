@@ -18,7 +18,6 @@ public class Dram extends Data {
 
     @Override
     public ByteBuffer get() {
-        Monitor.writeDramCount ++;
         ByteBuffer buffer = Threads.get().allocateBuffer();
         buffer.limit(capacity);
         buffer.put(data);
