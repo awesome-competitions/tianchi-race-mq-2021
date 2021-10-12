@@ -34,11 +34,14 @@ public class Queue {
                 if (data == null){
                     if (reading){
                         data = Buffers.allocateExtraData();
-                    }else{
-                        data = new SSD(aof, position, buffer.limit());
                     }
                 }
             }
+        }
+        if (data != null){
+            data.set(buffer);
+        }else{
+            data = new SSD(aof, position, buffer.limit());
         }
         records.add(data);
         return false;
