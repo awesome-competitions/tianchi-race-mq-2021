@@ -50,13 +50,12 @@ public class Barrier {
     }
 
     public long write(ByteBuffer buffer){
-        long pos = position.getAndAdd(buffer.limit());
         try {
-            aof.write(pos, buffer);
+            return aof.write(buffer);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return pos;
+        return -1;
     }
 
     public FileWrapper getAof() {
