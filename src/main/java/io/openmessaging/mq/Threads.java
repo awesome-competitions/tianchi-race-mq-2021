@@ -4,6 +4,7 @@ import io.openmessaging.consts.Const;
 
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class Threads {
 
@@ -30,6 +31,11 @@ public class Threads {
 
         private final LinkedList<ByteBuffer> buffers;
 
+        private final LinkedList<Data> idles1 = new LinkedList<>();
+        private final LinkedList<Data> idles2 = new LinkedList<>();
+        private final LinkedList<Data> idles3 = new LinkedList<>();
+        private final LinkedList<Data> idles4 = new LinkedList<>();
+
         public ByteBuffer allocateBuffer(){
             ByteBuffer buffer = buffers.poll();
             if (buffer == null){
@@ -38,6 +44,18 @@ public class Threads {
             buffer.clear();
             buffers.add(buffer);
             return buffer;
+        }
+
+        public LinkedList<Data> getIdles(int cap){
+            if (cap < Const.K * 4.5){
+                return idles1;
+            }else if (cap < Const.K * 9){
+                return idles2;
+            }else if (cap < Const.K * 13.5){
+                return idles3;
+            }else{
+                return idles4;
+            }
         }
 
         public Context() {
