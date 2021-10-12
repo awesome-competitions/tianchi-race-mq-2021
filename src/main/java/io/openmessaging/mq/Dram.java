@@ -27,11 +27,9 @@ public class Dram extends Data {
 
     @Override
     public void set(ByteBuffer buffer) {
-        byte[] bytes = new byte[buffer.limit()];
-        buffer.get(bytes);
-        this.data = ByteBuffer.wrap(bytes);
-        this.capacity = bytes.length;
-        Monitor.writeDramCount ++;
+        this.data.put(buffer);
+        this.data.flip();
+        this.capacity = data.limit();
     }
 
     @Override

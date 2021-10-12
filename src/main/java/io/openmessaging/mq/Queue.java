@@ -38,6 +38,11 @@ public class Queue {
             records.add(data);
             return true;
         }
+        if (reading){
+            data = Buffers.allocateExtraData();
+            data.set(buffer);
+            return true;
+        }
         records.add(new SSD(aof, position, buffer.limit()));
         return false;
     }
@@ -47,7 +52,11 @@ public class Queue {
             new Thread(()->{
                 for (long i = 0; i < offset; i ++){
                     Data data = records.get((int) i);
-                    cache.recycle(data);
+                    if (data instanceof PMem){
+                        cache.recycle(data);
+                    }else if (data instanceof Dram){
+                        Buffers.recycle(data);
+                    }
                 }
             }).start();
             reading = true;
