@@ -26,28 +26,26 @@ public class Queue {
     }
 
     public boolean write(FileWrapper aof, long position, ByteBuffer buffer){
-        Data data = Buffers.allocateReadBuffer();
-        if (data != null){
-            data.set(buffer);
-            records.add(data);
-            return true;
+        Data data = Threads.get().allocateReadBuffer();
+        if (data == null){
+            data = Buffers.allocateReadBuffer();
+            if (data == null){
+                data = cache.allocate(buffer.limit());
+                if (data == null){
+                    if (reading){
+                        data = Buffers.allocateExtraData();
+                    }else{
+                        data = new SSD(aof, position, buffer.limit());
+                    }
+                }
+            }
         }
-        data = cache.allocate(buffer.limit());
-        if(data != null){
-            data.set(buffer);
-            records.add(data);
-            return true;
-        }
-        if (reading){
-            data = Buffers.allocateExtraData();
-            data.set(buffer);
-            return true;
-        }
-        records.add(new SSD(aof, position, buffer.limit()));
+        records.add(data);
         return false;
     }
 
     public List<ByteBuffer> read(long offset, int num){
+        Threads.Context ctx = Threads.get();
         if (!reading){
             new Thread(()->{
                 for (long i = 0; i < offset; i ++){
@@ -55,7 +53,7 @@ public class Queue {
                     if (data instanceof PMem){
                         cache.recycle(data);
                     }else if (data instanceof Dram){
-                        Buffers.recycle(data);
+                        ctx.recycleReadBuffer(data);
                     }
                 }
             }).start();
@@ -72,7 +70,7 @@ public class Queue {
                 buffers.add(data.get());
             }else if (data instanceof Dram){
                 buffers.add(data.get());
-                Buffers.recycle(data);
+                ctx.recycleReadBuffer(data);
             }
         }
         return buffers;

@@ -31,6 +31,8 @@ public class Threads {
 
         private final LinkedList<ByteBuffer> buffers;
 
+        private final LinkedList<Data> readBuffers;
+
         private final LinkedList<Data> idles1 = new LinkedList<>();
         private final LinkedList<Data> idles2 = new LinkedList<>();
         private final LinkedList<Data> idles3 = new LinkedList<>();
@@ -44,6 +46,15 @@ public class Threads {
             buffer.clear();
             buffers.add(buffer);
             return buffer;
+        }
+
+        public Data allocateReadBuffer(){
+            return readBuffers.poll();
+        }
+
+        public void recycleReadBuffer(Data data){
+            data.clear();
+            readBuffers.add(data);
         }
 
         public LinkedList<Data> getIdles(int cap){
@@ -61,6 +72,7 @@ public class Threads {
         public Context() {
             this.buffer = ByteBuffer.allocateDirect((int) (Const.K * 17) + 9);
             this.buffers = new LinkedList<>();
+            this.readBuffers = new LinkedList<>();
             for (int i = 0; i < 200; i ++){
                 buffers.add(ByteBuffer.allocateDirect((int) (Const.K * 17)));
             }

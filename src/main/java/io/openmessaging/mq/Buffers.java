@@ -17,10 +17,6 @@ public class Buffers {
         return null;
     }
 
-    public static void recycle(Data data){
-        data.clear();
-    }
-
     public static Data allocateExtraData(){
         return new Dram(allocateExtraBuffer());
     }
