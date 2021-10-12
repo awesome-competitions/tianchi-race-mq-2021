@@ -47,16 +47,14 @@ public class Queue {
     public List<ByteBuffer> read(long offset, int num){
         Threads.Context ctx = Threads.get();
         if (!reading){
-            new Thread(()->{
-                for (long i = 0; i < offset; i ++){
-                    Data data = records.get((int) i);
-                    if (data instanceof PMem){
-                        cache.recycle(data);
-                    }else if (data instanceof Dram){
-                        ctx.recycleReadBuffer(data);
-                    }
+            for (long i = 0; i < offset; i ++){
+                Data data = records.get((int) i);
+                if (data instanceof PMem){
+                    cache.recycle(data);
+                }else if (data instanceof Dram){
+                    ctx.recycleReadBuffer(data);
                 }
-            }).start();
+            }
             reading = true;
         }
         List<ByteBuffer> buffers = new ArrayList<>();
