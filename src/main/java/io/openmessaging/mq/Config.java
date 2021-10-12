@@ -8,15 +8,15 @@ public class Config {
     private final String heapDir;
     private final long heapSize;
     private final int maxCount;
-    private final int pageSize;
+    private final int batch;
     private final long liveTime;
 
-    public Config(String dataDir, String heapDir, long heapSize, int maxCount, int pageSize, long liveTime) {
+    public Config(String dataDir, String heapDir, long heapSize, int maxCount, int batch, long liveTime) {
         this.dataDir = dataDir;
         this.heapDir = heapDir;
         this.heapSize = heapSize;
         this.maxCount = maxCount;
-        this.pageSize = pageSize;
+        this.batch = batch;
         this.liveTime = liveTime;
     }
 
@@ -40,7 +40,7 @@ public class Config {
         return liveTime;
     }
 
-    public int getPageSize() {
-        return pageSize;
+    public int getBatch() {
+        return batch;
     }
 }
