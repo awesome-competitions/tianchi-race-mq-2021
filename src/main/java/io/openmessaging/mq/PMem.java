@@ -33,7 +33,7 @@ public class PMem extends Data {
         Monitor.readMemCount ++;
         int extSize = ext == null ? 0 : ext.limit();
 
-        ByteBuffer buffer = Buffers.allocateBuffer();
+        ByteBuffer buffer = Threads.get().allocateBuffer();
         buffer.limit(size - extSize);
         block.read(position, buffer);
         if (extSize > 0){

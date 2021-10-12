@@ -18,7 +18,7 @@ public class Dram extends Data {
 
     @Override
     public ByteBuffer get() {
-        ByteBuffer buffer = Buffers.allocateBuffer();
+        ByteBuffer buffer = Threads.get().allocateBuffer();
         buffer.limit(capacity);
         buffer.put(data);
         buffer.flip();

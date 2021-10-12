@@ -3,6 +3,7 @@ package io.openmessaging.mq;
 import io.openmessaging.consts.Const;
 
 import java.nio.ByteBuffer;
+import java.util.LinkedList;
 
 public class Threads {
 
@@ -27,8 +28,24 @@ public class Threads {
 
         private long ssdPos;
 
+        private final LinkedList<ByteBuffer> buffers;
+
+        public ByteBuffer allocateBuffer(){
+            ByteBuffer buffer = buffers.poll();
+            if (buffer == null){
+                buffer = Buffers.allocateExtraBuffer();
+            }
+            buffer.clear();
+            buffers.add(buffer);
+            return buffer;
+        }
+
         public Context() {
             this.buffer = ByteBuffer.allocateDirect((int) (Const.K * 17) + 9);
+            this.buffers = new LinkedList<>();
+            for (int i = 0; i < 200; i ++){
+                buffers.add(ByteBuffer.allocateDirect((int) (Const.K * 17)));
+            }
         }
 
         public ByteBuffer getBuffer() {
