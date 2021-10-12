@@ -50,7 +50,7 @@ public class Queue {
             for (long i = 0; i < offset; i ++){
                 Data data = records.get((int) i);
                 if (data instanceof PMem){
-                    cache.recycle(data);
+                    ctx.recyclePMem(data);
                 }else if (data instanceof Dram){
                     ctx.recycleReadBuffer(data);
                 }
@@ -63,7 +63,7 @@ public class Queue {
             Data data = records.get(i);
             if (data instanceof PMem){
                 buffers.add(data.get());
-                cache.recycle(data);
+                ctx.recyclePMem(data);
             }else if (data instanceof SSD){
                 buffers.add(data.get());
             }else if (data instanceof Dram){

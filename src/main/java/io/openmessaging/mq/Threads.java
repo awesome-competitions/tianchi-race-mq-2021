@@ -57,6 +57,11 @@ public class Threads {
             readBuffers.add(data);
         }
 
+        public void recyclePMem(Data data){
+            data.clear();
+            getIdles(data.getCapacity()).add(data);
+        }
+
         public LinkedList<Data> getIdles(int cap){
             if (cap < Const.K * 4.5){
                 return idles1;

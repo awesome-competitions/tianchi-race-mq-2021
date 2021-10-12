@@ -36,11 +36,5 @@ public class Cache {
         return new PMem(block, memPos, cap);
     }
 
-    public void recycle(Data data){
-        data.clear();
-        Threads.get().getIdles(data.getCapacity()).add(data);
-    }
-
-
 
 }
