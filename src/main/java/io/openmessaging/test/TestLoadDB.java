@@ -66,6 +66,8 @@ public class TestLoadDB {
             if (!Arrays.equals(bytes, ("" + i).getBytes())){
                 System.out.println("topic " + topic + ", queue " + 1 + " read fail at " + i);
                 break;
+            }else{
+                System.out.println("ok");
             }
         }
 
