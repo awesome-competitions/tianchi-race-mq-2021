@@ -135,17 +135,14 @@ public class Mq extends MessageQueue{
         long offset = queue.nextOffset();
 
         Barrier barrier = getBarrier();
-        int size = buffer.limit();
         long aos = barrier.write(topic, queueId, offset, buffer);
         long pos;
         try {
             barrier.await(10, TimeUnit.SECONDS);
             pos = barrier.getPosition() + aos;
         } catch (BrokenBarrierException e) {
-            buffer.position(0);
-            buffer.limit(size);
+            buffer.flip();
             pos = barrier.writeAndFsync(topic, queueId, offset, buffer);
-            e.printStackTrace();
         }
         Data pMem = null;
         if (barrier.isWriteAep()){
