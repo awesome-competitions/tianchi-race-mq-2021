@@ -24,20 +24,13 @@ public class Cache {
     }
 
     public Data allocate(int cap){
-        if (block == null){
-            return new Dram(cap);
+        Data data = Threads.get().allocatePMem(cap);
+        if (data == null){
+            Monitor.missingIdleCount ++;
+        }else{
+            Monitor.allocateIdleCount ++;
         }
-        long memPos = block.allocate(cap);
-        if (memPos == -1){
-            Data data = Threads.get().getIdles(cap).poll();
-            if (data == null){
-                Monitor.missingIdleCount ++;
-            }else{
-                Monitor.allocateIdleCount ++;
-            }
-            return data;
-        }
-        return new PMem(block, memPos, cap);
+        return data;
     }
 
 

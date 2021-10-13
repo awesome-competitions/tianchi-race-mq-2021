@@ -61,6 +61,10 @@ public class Threads {
             readBuffers.add(data);
         }
 
+        public Data allocatePMem(int cap){
+            return getIdles(cap).poll();
+        }
+
         public void recyclePMem(Data data){
             data.clear();
             getIdles(data.getCapacity()).add(data);
