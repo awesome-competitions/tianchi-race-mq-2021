@@ -20,6 +20,8 @@ public class Block {
 
     private final Map<Long, Long> offsets;
 
+    private boolean completed;
+
     public Block(FileWrapper fw, long capacity) {
         this.fw = fw;
         this.capacity = capacity;
@@ -28,9 +30,13 @@ public class Block {
     }
 
     public long allocate(int cap){
+        if (completed){
+            return -1;
+        }
         long newPos = memPos.addAndGet(cap);
         if (newPos > this.capacity){
             memPos.addAndGet(-cap);
+            completed = true;
             return -1;
         }
         return newPos - cap;
