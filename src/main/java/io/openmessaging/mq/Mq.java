@@ -132,6 +132,10 @@ public class Mq extends MessageQueue{
 
         Barrier barrier = getBarrier();
         barrier.write(topic, queueId, offset, buffer);
+
+        buffer.flip();
+        long aepPos = cache.getBlock().allocate(buffer.limit());
+        cache.getBlock().write(aepPos, buffer);
         try {
             barrier.await(30, TimeUnit.SECONDS);
         } catch (BrokenBarrierException e) {
