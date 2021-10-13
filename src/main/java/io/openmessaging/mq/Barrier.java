@@ -39,7 +39,9 @@ public class Barrier {
                 position = aof.writeWithoutSync(block);
                 aof.force();
 
-                aep.getFw().getChannel().transferFrom(aof.getChannel(), position, block.limit());
+//                aep.getFw().getChannel().transferFrom(aof.getChannel(), position, block.limit());
+                block.flip();
+                aep.getFw().writeWithoutSync(block);
 
                 block.clear();
             } catch (IOException e) {
