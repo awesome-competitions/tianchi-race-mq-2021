@@ -87,4 +87,7 @@ public class Queue {
         this.offset = offset;
     }
 
+    public List<Data> getRecords() {
+        return records;
+    }
 }
