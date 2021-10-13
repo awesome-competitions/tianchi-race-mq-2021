@@ -27,14 +27,21 @@ public class Barrier {
 
     private final ByteBuffer block;
 
-    public Barrier(int parties, FileWrapper aof) {
+    private final Block aep;
+
+    public Barrier(int parties, FileWrapper aof, Block aep) {
         this.aof = aof;
+        this.aep = aep;
         this.block = ByteBuffer.allocateDirect((int) (Const.K * 1024));
         this.barrier = new CyclicBarrier(parties, ()->{
             try {
                 block.flip();
                 position = aof.writeWithoutSync(block);
                 aof.force();
+
+                block.flip();
+                aep.getFw().write(block);
+
                 block.clear();
             } catch (IOException e) {
                 e.printStackTrace();

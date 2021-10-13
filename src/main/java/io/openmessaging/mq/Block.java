@@ -52,4 +52,7 @@ public class Block {
         }
     }
 
+    public FileWrapper getFw() {
+        return fw;
+    }
 }
