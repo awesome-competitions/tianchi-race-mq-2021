@@ -17,7 +17,7 @@ public class Queue {
     public Queue(Cache cache) {
         this.cache = cache;
         this.offset = -1;
-        this.records = new ArrayList<>(100);
+        this.records = new ArrayList<>();
         Monitor.queueCount ++;
     }
 
@@ -25,17 +25,16 @@ public class Queue {
         return ++ offset;
     }
 
-    public boolean write(FileWrapper aof, long position, ByteBuffer buffer){
+    public boolean write(FileWrapper aof, long position, ByteBuffer buffer, Data pMem){
+        if (pMem != null){
+            records.add(pMem);
+            return false;
+        }
         Data data = Threads.get().allocateReadBuffer();
         if (data == null){
             data = Buffers.allocateReadBuffer();
-            if (data == null){
-                if (reading){
-                    data = cache.allocate(buffer.limit());
-                    if (data == null){
-                        data = Buffers.allocateExtraData();
-                    }
-                }
+            if (data == null && reading){
+                data = Buffers.allocateExtraData();
             }
         }
         if (data != null){

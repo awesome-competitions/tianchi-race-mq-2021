@@ -58,7 +58,7 @@ public class Mq extends MessageQueue{
 
             Queue queue = getQueue(topic, queueId);
             queue.nextOffset();
-            queue.write(aof, position, data);
+            queue.write(aof, position, data, null);
 
             position += size;
         }
@@ -136,12 +136,22 @@ public class Mq extends MessageQueue{
         long offset = queue.nextOffset();
 
         Barrier barrier = getBarrier();
-        barrier.write(topic, queueId, offset, buffer);
+        long aos = barrier.write(topic, queueId, offset, buffer);
+        long pos;
         try {
             barrier.await(30, TimeUnit.SECONDS);
+            pos = barrier.getPosition() + aos;
         } catch (BrokenBarrierException e) {
+            buffer.flip();
+            pos = barrier.writeAndFsync(topic, queueId, offset, buffer);
             e.printStackTrace();
         }
+        Data pMem = null;
+        if (barrier.isWriteAep()){
+            pMem = new PMem(barrier.getAep(), barrier.getAepPosition() + aos + 9, buffer.limit());
+        }
+        buffer.flip();
+        queue.write(barrier.getAof(), pos, buffer, pMem);
         return queue.getOffset();
     }
 

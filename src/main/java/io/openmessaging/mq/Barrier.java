@@ -43,8 +43,6 @@ public class Barrier {
                 position = aof.writeWithoutSync(block);
                 aof.force();
 
-//                aep.getFw().getChannel().transferFrom(aof.getChannel(), position, block.limit());
-
                 writeAep = aep.allocate(block.limit()) != -1;
                 if (writeAep){
                     block.flip();
@@ -76,9 +74,16 @@ public class Barrier {
         return pos;
     }
 
-    public long writeAndFsync(ByteBuffer buffer){
+    public long writeAndFsync(int topic, int queueId, long offset, ByteBuffer buffer){
         try {
-            return aof.write(buffer);
+            ByteBuffer data = ByteBuffer.allocate((int) (Const.K * 17 + 9));
+            data.put((byte) topic)
+                    .putShort((short) queueId)
+                    .putInt((int) offset)
+                    .putShort((short) buffer.limit())
+                    .put(buffer);
+            data.flip();
+            return aof.write(data);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -99,5 +104,9 @@ public class Barrier {
 
     public boolean isWriteAep() {
         return writeAep;
+    }
+
+    public Block getAep() {
+        return aep;
     }
 }
