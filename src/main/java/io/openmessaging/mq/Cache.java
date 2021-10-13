@@ -19,6 +19,10 @@ public class Cache {
         }
     }
 
+    public Block getBlock() {
+        return block;
+    }
+
     public Data allocate(int cap){
         if (block == null){
             return new Dram(cap);

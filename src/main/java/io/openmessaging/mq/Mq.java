@@ -130,29 +130,11 @@ public class Mq extends MessageQueue{
         Queue queue = getQueue(topic, queueId);
         long offset = queue.nextOffset();
 
-        Threads.Context ctx = Threads.get();
-
-        ByteBuffer data = ctx.getBuffer();
-        data.clear();
-        data.put((byte) topic)
-            .putShort((short) queueId)
-            .putInt((int) offset)
-            .putShort((short) buffer.limit())
-            .put(buffer);
-        data.flip();
-        buffer.flip();
-
         Barrier barrier = getBarrier();
-
-        long aos = barrier.write(data);
-        long pos = 0;
-        queue.write(barrier.getAof(), pos, buffer);
+        barrier.write(topic, queueId, offset, buffer);
         try {
             barrier.await(30, TimeUnit.SECONDS);
-            pos = barrier.getPosition() + aos;
         } catch (BrokenBarrierException e) {
-            data.flip();
-            pos = barrier.writeAndFsync(data);
             e.printStackTrace();
         }
         return queue.getOffset();

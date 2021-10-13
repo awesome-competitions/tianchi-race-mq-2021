@@ -50,9 +50,13 @@ public class Barrier {
         }
     }
 
-    public synchronized long write(ByteBuffer buffer){
+    public synchronized long write(int topic, int queueId, long offset, ByteBuffer buffer){
         long pos = block.position();
-        block.put(buffer);
+        block.put((byte) topic)
+                .putShort((short) queueId)
+                .putInt((int) offset)
+                .putShort((short) buffer.limit())
+                .put(buffer);
         return pos;
     }
 
