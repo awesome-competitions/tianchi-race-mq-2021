@@ -43,12 +43,10 @@ public class Barrier {
                 position = aof.writeWithoutSync(block);
                 aof.force();
 
-                if (aep != null){
-                    writeAep = aep.allocate(block.limit()) != -1;
-                    if (writeAep){
-                        block.flip();
-                        aepPosition = aep.getFw().write(block);
-                    }
+                writeAep = aep.allocate(block.limit()) != -1;
+                if (writeAep){
+                    block.flip();
+                    aepPosition = aep.getFw().write(block);
                 }
 
                 block.clear();
