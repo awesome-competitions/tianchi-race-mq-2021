@@ -21,6 +21,8 @@ public class Barrier {
 
     private long position;
 
+    private long aepPosition;
+
     private final CyclicBarrier barrier;
 
     private final FileWrapper aof;
@@ -28,6 +30,8 @@ public class Barrier {
     private final ByteBuffer block;
 
     private final Block aep;
+
+    private boolean writeAep;
 
     public Barrier(int parties, FileWrapper aof, Block aep) {
         this.aof = aof;
@@ -40,8 +44,12 @@ public class Barrier {
                 aof.force();
 
 //                aep.getFw().getChannel().transferFrom(aof.getChannel(), position, block.limit());
-                block.flip();
-                aep.getFw().write(block);
+
+                writeAep = aep.allocate(block.limit()) != -1;
+                if (writeAep){
+                    block.flip();
+                    aepPosition = aep.getFw().write(block);
+                }
 
                 block.clear();
             } catch (IOException e) {
@@ -83,5 +91,13 @@ public class Barrier {
 
     public FileWrapper getAof() {
         return aof;
+    }
+
+    public long getAepPosition() {
+        return aepPosition;
+    }
+
+    public boolean isWriteAep() {
+        return writeAep;
     }
 }
