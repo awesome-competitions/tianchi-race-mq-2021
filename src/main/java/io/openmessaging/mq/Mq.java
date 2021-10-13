@@ -58,7 +58,7 @@ public class Mq extends MessageQueue{
 
             Queue queue = getQueue(topic, queueId);
             queue.nextOffset();
-            queue.write(aof, position, data, null);
+            queue.write(aof, position - 9, data, null);
 
             position += size;
         }
