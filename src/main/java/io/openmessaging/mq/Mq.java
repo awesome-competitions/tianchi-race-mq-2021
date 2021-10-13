@@ -139,7 +139,7 @@ public class Mq extends MessageQueue{
         long aos = barrier.write(topic, queueId, offset, buffer);
         long pos;
         try {
-            barrier.await(30, TimeUnit.SECONDS);
+            barrier.await(10, TimeUnit.SECONDS);
             pos = barrier.getPosition() + aos;
         } catch (BrokenBarrierException e) {
             buffer.flip();
