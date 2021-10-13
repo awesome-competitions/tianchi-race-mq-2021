@@ -7,12 +7,9 @@ import java.nio.ByteBuffer;
 public class Buffers {
 
     public static Data allocateReadBuffer(){
-        if (Monitor.writeDramCount < 70000){
+        if (Monitor.writeDramCount < 80000){
             Monitor.writeDramCount ++;
             return new Dram(ByteBuffer.allocateDirect((int) (Const.K * 17)));
-        }else if (Monitor.writeDramCount < 120000){
-            Monitor.writeDramCount ++;
-            return new Dram(ByteBuffer.allocate((int) (Const.K * 17)));
         }
         return null;
     }
