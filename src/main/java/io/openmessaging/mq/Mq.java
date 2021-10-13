@@ -85,7 +85,7 @@ public class Mq extends MessageQueue{
     }
 
     void initPools() throws IOException {
-        int[] arr = new int[]{6,6,6,6,6,5,5};
+        int[] arr = new int[]{40};
         for (int i = 0; i < arr.length; i ++){
             Barrier barrier = new Barrier(arr[i], createAof("aof" + i));
             for (int j = 0; j < arr[i]; j ++){
@@ -144,10 +144,17 @@ public class Mq extends MessageQueue{
 
         Barrier barrier = getBarrier();
 
-        long position = barrier.write(data);
-        barrier.await(30, TimeUnit.SECONDS);
-
-        queue.write(barrier.getAof(), position, buffer);
+        long aos = barrier.write(data);
+        long pos;
+        try {
+            barrier.await(30, TimeUnit.SECONDS);
+            pos = barrier.getPosition() + aos;
+        } catch (BrokenBarrierException e) {
+            data.flip();
+            pos = barrier.writeAndFsync(data);
+            e.printStackTrace();
+        }
+        queue.write(barrier.getAof(), pos, buffer);
         return queue.getOffset();
     }
 

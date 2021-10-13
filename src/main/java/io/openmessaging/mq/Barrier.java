@@ -1,5 +1,6 @@
 package io.openmessaging.mq;
 
+import io.openmessaging.consts.Const;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,44 +19,54 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Barrier {
 
-    private AtomicLong position;
+    private long position;
 
     private final CyclicBarrier barrier;
 
     private final FileWrapper aof;
 
+    private final ByteBuffer block;
+
     public Barrier(int parties, FileWrapper aof) {
         this.aof = aof;
-        this.position = new AtomicLong();
+        this.block = ByteBuffer.allocateDirect((int) (Const.K * 1024));
         this.barrier = new CyclicBarrier(parties, ()->{
             try {
+                block.flip();
+                position = aof.writeWithoutSync(block);
                 aof.force();
+                block.clear();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         });
     }
 
-    public void await(long timeout, TimeUnit unit){
+    public void await(long timeout, TimeUnit unit) throws BrokenBarrierException {
         try {
             this.barrier.await(timeout, unit);
         } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
-            e.printStackTrace();
-            try {
-                aof.force();
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
-            }
+            throw new BrokenBarrierException();
         }
     }
 
-    public long write(ByteBuffer buffer){
+    public synchronized long write(ByteBuffer buffer){
+        long pos = block.position();
+        block.put(buffer);
+        return pos;
+    }
+
+    public long writeAndFsync(ByteBuffer buffer){
         try {
             return aof.write(buffer);
         } catch (IOException e) {
             e.printStackTrace();
         }
         return -1;
+    }
+
+    public long getPosition() {
+        return position;
     }
 
     public FileWrapper getAof() {

@@ -25,6 +25,12 @@ public class FileWrapper {
         return pos;
     }
 
+    public long writeWithoutSync(ByteBuffer buffer) throws IOException {
+        long pos = channel.position();
+        channel.write(buffer);
+        return pos;
+    }
+
     public synchronized long write(ByteBuffer buffer) throws IOException {
         long pos = channel.position();
         channel.write(buffer);
