@@ -16,7 +16,7 @@ public class Mq extends MessageQueue{
 
     private final Config config;
 
-    private final Map<Integer, Map<Integer, Queue>> queues;
+    private final Queue[][] queues;
 
     private final Cache cache;
 
@@ -27,7 +27,7 @@ public class Mq extends MessageQueue{
     public Mq(Config config) throws IOException {
         LOGGER.info("Mq init");
         this.config = config;
-        this.queues = new ConcurrentHashMap<>();
+        this.queues = new Queue[100][2000];
         this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
         initPools();
         startKiller();
@@ -105,7 +105,12 @@ public class Mq extends MessageQueue{
     }
 
     public Queue getQueue(int topic, int queueId){
-        return queues.computeIfAbsent(topic, k -> new HashMap<>()).computeIfAbsent(queueId, k -> new Queue(cache));
+        Queue queue = queues[topic][queueId];
+        if (queue == null){
+            queue = new Queue(cache);
+            queues[topic][queueId] = queue;
+        }
+        return queue;
     }
 
     public Config getConfig() {
@@ -258,7 +263,7 @@ public class Mq extends MessageQueue{
             case "topic100":return 100;
             case "topic101":return 101;
             case "topic102":return 102;
-            default: return 103;
+            default: return 0;
         }
     }
 
