@@ -84,7 +84,9 @@ public class Barrier {
                     .putShort((short) buffer.limit())
                     .put(buffer);
             data.flip();
-            return aof.write(data);
+            long pos = aof.write(data);
+            aof.force();
+            return pos;
         } catch (IOException e) {
             e.printStackTrace();
         }
