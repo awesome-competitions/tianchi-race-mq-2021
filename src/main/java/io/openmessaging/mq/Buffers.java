@@ -10,11 +10,10 @@ public class Buffers {
         if (Monitor.writeDramCount < 70000){
             Monitor.writeDramCount ++;
             return new Dram(ByteBuffer.allocateDirect((int) (Const.K * 17)));
+        }else if (Monitor.writeDramCount < 100000){
+            Monitor.writeDramCount ++;
+            return new Dram(ByteBuffer.allocate((int) (Const.K * 17)));
         }
-//        else if (Monitor.writeDramCount < 0000){
-//            Monitor.writeDramCount ++;
-//            return new Dram(ByteBuffer.allocate((int) (Const.K * 17)));
-//        }
         return null;
     }
 

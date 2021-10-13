@@ -60,6 +60,7 @@ public class Barrier {
         try {
             this.barrier.await(timeout, unit);
         } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
+            clearBlock();
             throw new BrokenBarrierException();
         }
     }
@@ -88,6 +89,10 @@ public class Barrier {
             e.printStackTrace();
         }
         return -1;
+    }
+
+    public void clearBlock(){
+        block.clear();
     }
 
     public long getPosition() {
