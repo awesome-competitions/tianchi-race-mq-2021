@@ -31,7 +31,7 @@ public class Barrier {
 
     private boolean writeAep;
 
-    private static final ExecutorService ES = Executors.newFixedThreadPool(10);
+    private static final ExecutorService ES = Executors.newFixedThreadPool(200);
 
     public Barrier(int parties, FileWrapper aof, Block aep) {
         this.aof = aof;
