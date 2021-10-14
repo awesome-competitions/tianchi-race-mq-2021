@@ -3,8 +3,11 @@ package io.openmessaging.mq;
 import io.openmessaging.consts.Const;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class Buffers {
+
+    public static final LinkedBlockingQueue<ByteBuffer> AEP_BUFFERS = new LinkedBlockingQueue<>();
 
     public static Data allocateReadBuffer(){
         if (Monitor.writeDramCount < 80000){

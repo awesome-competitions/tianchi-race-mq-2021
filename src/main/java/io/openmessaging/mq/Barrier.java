@@ -45,7 +45,10 @@ public class Barrier {
                 writeAep = aepPosition != -1;
                 if (writeAep){
                     block.flip();
-                    ByteBuffer blockBak = ByteBuffer.allocateDirect((int) (Const.K * 256));
+                    ByteBuffer blockBak = Buffers.AEP_BUFFERS.poll();
+                    if (blockBak == null){
+                        blockBak = ByteBuffer.allocateDirect((int) (Const.K * 256));
+                    }
                     blockBak.put(block);
                     blockBak.flip();
                     Mq.AEP_TASKS.add(new AepTask(aepPosition, aep, blockBak));

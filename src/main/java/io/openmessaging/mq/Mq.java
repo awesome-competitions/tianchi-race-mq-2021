@@ -88,7 +88,8 @@ public class Mq extends MessageQueue{
                 while (true){
                     task = AEP_TASKS.take();
                     task.getBlock().write(task.getPosition(), task.getData());
-                    BufferUtils.clean(task.getData());
+                    task.getData().clear();
+                    Buffers.AEP_BUFFERS.add(task.getData());
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
