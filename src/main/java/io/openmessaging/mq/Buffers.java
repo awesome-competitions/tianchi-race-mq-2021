@@ -10,9 +10,12 @@ public class Buffers {
     public static final LinkedBlockingQueue<ByteBuffer> AEP_BUFFERS = new LinkedBlockingQueue<>();
 
     public static Data allocateReadBuffer(){
-        if (Monitor.writeDramCount < 60000){
+        if (Monitor.writeDramCount < 80000){
             Monitor.writeDramCount ++;
             return new Dram(ByteBuffer.allocateDirect((int) (Const.K * 17)));
+        }else if (Monitor.writeDramCount < 140000){
+            Monitor.writeDramCount ++;
+            return new Dram(ByteBuffer.allocate((int) (Const.K * 17)));
         }
         return null;
     }
