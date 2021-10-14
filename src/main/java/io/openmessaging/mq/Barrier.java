@@ -1,6 +1,7 @@
 package io.openmessaging.mq;
 
 import io.openmessaging.consts.Const;
+import io.openmessaging.utils.BufferUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,10 +10,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
@@ -33,6 +31,8 @@ public class Barrier {
 
     private boolean writeAep;
 
+    private static final ExecutorService ES = Executors.newFixedThreadPool(10);
+
     public Barrier(int parties, FileWrapper aof, Block aep) {
         this.aof = aof;
         this.aep = aep;
@@ -43,10 +43,23 @@ public class Barrier {
                 position = aof.writeWithoutSync(block);
                 aof.force();
 
-                writeAep = aep.allocate(block.limit()) != -1;
+                aepPosition = aep.allocate(block.limit());
+                writeAep = aepPosition != -1;
                 if (writeAep){
                     block.flip();
-                    aepPosition = aep.getFw().write(block);
+                    ByteBuffer blockBak = ByteBuffer.allocateDirect((int) (Const.K * 256));
+                    blockBak.put(block);
+                    blockBak.flip();
+                    ES.execute(()->{
+                        try {
+                            aep.getFw().write(aepPosition, blockBak);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }finally {
+                            BufferUtils.clean(blockBak);
+                        }
+                    });
+
                 }
 
                 block.clear();
