@@ -178,16 +178,7 @@ public class Mq extends MessageQueue{
 
     public Map<Integer, ByteBuffer> getRange(int topic, int queueId, long offset, int fetchNum) {
         Queue queue = getQueue(topic, queueId);
-        ByteBuffer[] buffers = queue.read(offset, fetchNum);
-
-        Map<Integer, ByteBuffer> results = Threads.get().getResults();
-        if (buffers.length == 0){
-            return EMPTY;
-        }
-        for (int i = 0; i < buffers.length; i ++){
-            results.put(i, buffers[i]);
-        }
-        return results;
+        return queue.read(offset, fetchNum);
     }
 
     public int getTopicId(String topic){
