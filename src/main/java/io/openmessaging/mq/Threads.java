@@ -29,7 +29,7 @@ public class Threads {
 
         private long ssdPos;
 
-        private final LinkedList<ByteBuffer> buffers;
+        private final LinkedBlockingQueue<ByteBuffer> buffers;
 
         private final LinkedList<Data> readBuffers;
 
@@ -84,9 +84,9 @@ public class Threads {
 
         public Context() {
             this.buffer = ByteBuffer.allocateDirect((int) (Const.K * 17) + 9);
-            this.buffers = new LinkedList<>();
+            this.buffers = new LinkedBlockingQueue<>();
             this.readBuffers = new LinkedList<>();
-            for (int i = 0; i < 500; i ++){
+            for (int i = 0; i < 300; i ++){
                 buffers.add(ByteBuffer.allocateDirect((int) (Const.K * 17)));
             }
         }
