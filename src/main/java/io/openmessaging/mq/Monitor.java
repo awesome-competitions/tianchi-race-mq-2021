@@ -28,6 +28,7 @@ public class Monitor {
                 ", swapSSDToPmemCount: " + swapSSDToPmemCount +
                 ", allocateIdleCount: " + allocateIdleCount +
                 ", missingIdleCount: " + missingIdleCount +
+                ", aep tasks: " + Mq.AEP_TASKS.size() +
                 ", extSize: " + extSize
                 ;
     }

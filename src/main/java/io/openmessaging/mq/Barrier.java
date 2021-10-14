@@ -31,8 +31,6 @@ public class Barrier {
 
     private boolean writeAep;
 
-    private static final ExecutorService ES = Executors.newFixedThreadPool(200);
-
     public Barrier(int parties, FileWrapper aof, Block aep) {
         this.aof = aof;
         this.aep = aep;
@@ -50,18 +48,8 @@ public class Barrier {
                     ByteBuffer blockBak = ByteBuffer.allocateDirect((int) (Const.K * 256));
                     blockBak.put(block);
                     blockBak.flip();
-                    ES.execute(()->{
-                        try {
-                            aep.getFw().write(aepPosition, blockBak);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }finally {
-                            BufferUtils.clean(blockBak);
-                        }
-                    });
-
+                    Mq.AEP_TASKS.add(new AepTask(aepPosition, aep, blockBak));
                 }
-
                 block.clear();
             } catch (IOException e) {
                 e.printStackTrace();

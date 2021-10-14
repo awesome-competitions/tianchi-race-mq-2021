@@ -1,6 +1,7 @@
 package io.openmessaging.mq;
 
 import io.openmessaging.MessageQueue;
+import io.openmessaging.utils.BufferUtils;
 import io.openmessaging.utils.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,8 @@ public class Mq extends MessageQueue{
 
     private final LinkedBlockingQueue<Barrier> POOLS = new LinkedBlockingQueue<>();
 
+    public final static LinkedBlockingQueue<AepTask> AEP_TASKS = new LinkedBlockingQueue<>();
+
     public Mq(Config config) throws IOException {
         LOGGER.info("Mq init");
         this.config = config;
@@ -31,6 +34,7 @@ public class Mq extends MessageQueue{
         this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
         initPools();
         startKiller();
+        startAepTask();
         LOGGER.info("Mq completed");
     }
 
@@ -70,6 +74,21 @@ public class Mq extends MessageQueue{
                     Thread.sleep(config.getLiveTime());
                     LOGGER.info("killed: " + Monitor.information());
                     System.exit(-1);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    void startAepTask(){
+        new Thread(()->{
+            try {
+                AepTask task;
+                while (true){
+                    task = AEP_TASKS.take();
+                    task.getBlock().write(task.getPosition(), task.getData());
+                    BufferUtils.clean(task.getData());
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
