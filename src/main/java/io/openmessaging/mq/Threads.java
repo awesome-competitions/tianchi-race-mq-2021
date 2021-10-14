@@ -86,7 +86,7 @@ public class Threads {
             this.buffer = ByteBuffer.allocateDirect((int) (Const.K * 17) + 9);
             this.buffers = new LinkedList<>();
             this.readBuffers = new LinkedList<>();
-            for (int i = 0; i < 300; i ++){
+            for (int i = 0; i < 500; i ++){
                 buffers.add(ByteBuffer.allocateDirect((int) (Const.K * 17)));
             }
         }

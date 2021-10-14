@@ -175,14 +175,14 @@ public class Mq extends MessageQueue{
 
     public Map<Integer, ByteBuffer> getRange(int topic, int queueId, long offset, int fetchNum) {
         Queue queue = getQueue(topic, queueId);
-        List<ByteBuffer> buffers = queue.read(offset, fetchNum);
+        ByteBuffer[] buffers = queue.read(offset, fetchNum);
 
         Map<Integer, ByteBuffer> results = new HashMap<>();
-        if (CollectionUtils.isEmpty(buffers)){
+        if (buffers.length == 0){
             return results;
         }
-        for (int i = 0; i < buffers.size(); i ++){
-            results.put(i, buffers.get(i));
+        for (int i = 0; i < buffers.length; i ++){
+            results.put(i, buffers[i]);
         }
         return results;
     }
