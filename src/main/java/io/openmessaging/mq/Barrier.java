@@ -34,7 +34,7 @@ public class Barrier {
     public Barrier(int parties, FileWrapper aof, Block aep) {
         this.aof = aof;
         this.aep = aep;
-        this.block = ByteBuffer.allocateDirect((int) (Const.K * 256));
+        this.block = ByteBuffer.allocateDirect((int) (Const.K * 350));
         this.barrier = new CyclicBarrier(parties, ()->{
             try {
                 block.flip();
@@ -47,7 +47,7 @@ public class Barrier {
                     block.flip();
                     ByteBuffer blockBak = Buffers.AEP_BUFFERS.poll();
                     if (blockBak == null){
-                        blockBak = ByteBuffer.allocateDirect((int) (Const.K * 256));
+                        blockBak = ByteBuffer.allocateDirect((int) (Const.K * 350));
                     }
                     blockBak.put(block);
                     blockBak.flip();
