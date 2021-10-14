@@ -3,6 +3,9 @@ package io.openmessaging.mq;
 
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Queue {
 
@@ -25,18 +28,30 @@ public class Queue {
         return ++ offset;
     }
 
-    public void write(FileWrapper aof, long position, ByteBuffer buffer, Data pMem){
+    private static final ExecutorService ES = Executors.newFixedThreadPool(1000);
+
+    public boolean write(FileWrapper aof, long position, ByteBuffer buffer, Data pMem){
         if (pMem != null){
             records.add(pMem);
-            return;
+            return false;
         }
-        Data data = cache.allocate(buffer.limit());
+        Data data =  Buffers.allocateReadBuffer();
+        if (data == null){
+            data = Threads.get().allocateReadBuffer();
+            if (data == null){
+                data = cache.allocate(buffer.limit());
+                if (data == null && reading){
+                    data = Buffers.allocateExtraData();
+                }
+            }
+        }
         if (data != null){
             data.set(buffer);
-            records.add(data);
-            return;
+        }else{
+            data = new SSD(aof, position, buffer.limit());
         }
-        records.add(new SSD(aof, position, buffer.limit()));
+        records.add(data);
+        return false;
     }
 
     public List<ByteBuffer> read(long offset, int num){
@@ -54,17 +69,30 @@ public class Queue {
             }).start();
             reading = true;
         }
-        List<ByteBuffer> buffers = new ArrayList<>();
+
         int end = (int) Math.min(offset + num, records.size());
+        int size = (int) (end - offset);
+        List<ByteBuffer> buffers = new ArrayList<>(size);
+
+        CountDownLatch cdl = new CountDownLatch(size);
+        for (int i = (int) offset; i < end; i ++){
+            final int index = i;
+            ES.execute(()->{
+                Data data = records.get(index);
+                buffers.set((int) (index - offset), data.get());
+                cdl.countDown();
+            });
+        }
+        try {
+            cdl.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         for (int i = (int) offset; i < end; i ++){
             Data data = records.get(i);
             if (data instanceof PMem){
-                buffers.add(data.get());
                 ctx.recyclePMem(data);
-            }else if (data instanceof SSD){
-                buffers.add(data.get());
             }else if (data instanceof Dram){
-                buffers.add(data.get());
                 ctx.recycleReadBuffer(data);
             }
         }
