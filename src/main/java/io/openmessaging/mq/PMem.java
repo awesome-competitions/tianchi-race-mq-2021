@@ -30,10 +30,15 @@ public class PMem extends Data {
 
     @Override
     public ByteBuffer get() {
+        return get(Threads.get());
+    }
+
+    @Override
+    public ByteBuffer get(Threads.Context ctx) {
         Monitor.readMemCount ++;
         int extSize = ext == null ? 0 : ext.limit();
 
-        ByteBuffer buffer = Threads.get().allocateBuffer();
+        ByteBuffer buffer = ctx.allocateBuffer();
         buffer.limit(size - extSize);
         block.read(position, buffer);
         if (extSize > 0){

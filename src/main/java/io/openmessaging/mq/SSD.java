@@ -19,7 +19,12 @@ public class SSD extends Data{
 
     @Override
     public ByteBuffer get() {
-        ByteBuffer buffer = Threads.get().allocateBuffer();
+        return get(Threads.get());
+    }
+
+    @Override
+    public ByteBuffer get(Threads.Context ctx) {
+        ByteBuffer buffer = ctx.allocateBuffer();
         buffer.limit(capacity);
         try {
             Monitor.readSSDCount ++;

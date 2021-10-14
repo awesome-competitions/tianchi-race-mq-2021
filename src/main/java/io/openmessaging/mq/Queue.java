@@ -76,7 +76,7 @@ public class Queue {
             final int index = i;
             ES.execute(()->{
                 Data data = records.get(index);
-                buffers[(int) (index - offset)] = data.get();
+                buffers[(int) (index - offset)] = data.get(ctx);
                 cdl.countDown();
             });
         }

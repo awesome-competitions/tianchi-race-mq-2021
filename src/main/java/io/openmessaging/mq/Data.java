@@ -16,6 +16,8 @@ public abstract class Data {
 
     public abstract ByteBuffer get();
 
+    public abstract ByteBuffer get(Threads.Context ctx);
+
     public abstract void set(ByteBuffer buffer);
 
     public abstract void clear();
