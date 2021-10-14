@@ -55,8 +55,6 @@ public class Queue {
 
     public Map<Integer, ByteBuffer> read(long offset, int num){
         Threads.Context ctx = Threads.get();
-        Map<Integer, ByteBuffer> results = ctx.getResults();
-        results.clear();
         if (!reading){
             new Thread(()->{
                 for (long i = 0; i < offset; i ++){
@@ -70,6 +68,7 @@ public class Queue {
             }).start();
             reading = true;
         }
+        Map<Integer, ByteBuffer> results = new HashMap<>();
         int end = (int) Math.min(offset + num, records.size());
         for (int i = (int) offset; i < end; i ++){
             Data data = records.get(i);

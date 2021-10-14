@@ -48,7 +48,7 @@ public class Barrier {
                         block.flip();
                         ByteBuffer blockBak = Buffers.AEP_BUFFERS.poll();
                         if (blockBak == null){
-                            blockBak = ByteBuffer.allocateDirect((int) (Const.K * 350));
+                            blockBak = ByteBuffer.allocateDirect((int) (Const.K * 150));
                         }
                         blockBak.put(block);
                         blockBak.flip();
