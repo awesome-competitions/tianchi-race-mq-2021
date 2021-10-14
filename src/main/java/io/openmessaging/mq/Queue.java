@@ -73,7 +73,7 @@ public class Queue {
         int end = (int) Math.min(offset + num, records.size());
         for (int i = (int) offset; i < end; i ++){
             Data data = records.get(i);
-            results.put((int) (offset - i), data.get());
+            results.put((int) (i - offset), data.get());
             if (data instanceof PMem){
                 ctx.recyclePMem(data);
             }else if (data instanceof Dram){
