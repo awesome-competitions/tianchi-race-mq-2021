@@ -25,41 +25,36 @@ public class Queue {
         return ++ offset;
     }
 
-    public boolean write(FileWrapper aof, long position, ByteBuffer buffer, Data pMem){
+    public void write(FileWrapper aof, long position, ByteBuffer buffer, Data pMem){
         if (pMem != null){
             records.add(pMem);
-            return false;
+            return;
         }
-        Data data = Threads.get().allocateReadBuffer();
-        if (data == null){
+        Data data = cache.allocate(buffer.limit());
+        if (data == null && reading){
             data = Buffers.allocateReadBuffer();
-            if (data == null){
-                data = cache.allocate(buffer.limit());
-                if (data == null && reading){
-                    data = Buffers.allocateExtraData();
-                }
-            }
         }
         if (data != null){
             data.set(buffer);
-        }else{
-            data = new SSD(aof, position, buffer.limit());
+            records.add(data);
+            return;
         }
-        records.add(data);
-        return false;
+        records.add(new SSD(aof, position, buffer.limit()));
     }
 
     public List<ByteBuffer> read(long offset, int num){
         Threads.Context ctx = Threads.get();
         if (!reading){
-            for (long i = 0; i < offset; i ++){
-                Data data = records.get((int) i);
-                if (data instanceof PMem){
-                    ctx.recyclePMem(data);
-                }else if (data instanceof Dram){
-                    ctx.recycleReadBuffer(data);
+            new Thread(()->{
+                for (long i = 0; i < offset; i ++){
+                    Data data = records.get((int) i);
+                    if (data instanceof PMem){
+                        ctx.recyclePMem(data);
+                    }else if (data instanceof Dram){
+                        ctx.recycleReadBuffer(data);
+                    }
                 }
-            }
+            }).start();
             reading = true;
         }
         List<ByteBuffer> buffers = new ArrayList<>();
