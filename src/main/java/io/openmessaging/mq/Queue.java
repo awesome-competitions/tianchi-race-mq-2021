@@ -29,7 +29,7 @@ public class Queue {
         return ++ offset;
     }
 
-    public static final ThreadPoolExecutor ES = (ThreadPoolExecutor) Executors.newFixedThreadPool(2000);
+    public static final ThreadPoolExecutor ES = (ThreadPoolExecutor) Executors.newFixedThreadPool(256);
 
     public boolean write(FileWrapper aof, long position, ByteBuffer buffer, Data pMem){
         if (pMem != null){
