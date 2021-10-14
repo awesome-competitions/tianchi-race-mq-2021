@@ -41,17 +41,19 @@ public class Barrier {
                 position = aof.writeWithoutSync(block);
                 aof.force();
 
-                aepPosition = aep.allocate(block.limit());
-                writeAep = aepPosition != -1;
-                if (writeAep){
-                    block.flip();
-                    ByteBuffer blockBak = Buffers.AEP_BUFFERS.poll();
-                    if (blockBak == null){
-                        blockBak = ByteBuffer.allocateDirect((int) (Const.K * 350));
+                if (Monitor.writeDramCount > Buffers.THRESHOLD_SIZE){
+                    aepPosition = aep.allocate(block.limit());
+                    writeAep = aepPosition != -1;
+                    if (writeAep){
+                        block.flip();
+                        ByteBuffer blockBak = Buffers.AEP_BUFFERS.poll();
+                        if (blockBak == null){
+                            blockBak = ByteBuffer.allocateDirect((int) (Const.K * 350));
+                        }
+                        blockBak.put(block);
+                        blockBak.flip();
+                        Mq.AEP_TASKS.add(new AepTask(aepPosition, aep, blockBak));
                     }
-                    blockBak.put(block);
-                    blockBak.flip();
-                    Mq.AEP_TASKS.add(new AepTask(aepPosition, aep, blockBak));
                 }
                 block.clear();
             } catch (IOException e) {
