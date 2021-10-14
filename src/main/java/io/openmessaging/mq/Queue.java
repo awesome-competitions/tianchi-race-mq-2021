@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class Queue {
 
@@ -28,7 +29,7 @@ public class Queue {
         return ++ offset;
     }
 
-    private static final ExecutorService ES = Executors.newFixedThreadPool(1000);
+    public static final ThreadPoolExecutor ES = (ThreadPoolExecutor) Executors.newFixedThreadPool(2000);
 
     public boolean write(FileWrapper aof, long position, ByteBuffer buffer, Data pMem){
         if (pMem != null){
