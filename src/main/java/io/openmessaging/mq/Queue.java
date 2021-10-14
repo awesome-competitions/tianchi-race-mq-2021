@@ -29,8 +29,6 @@ public class Queue {
         return ++ offset;
     }
 
-    public static final ThreadPoolExecutor ES = (ThreadPoolExecutor) Executors.newFixedThreadPool(256);
-
     public boolean write(FileWrapper aof, long position, ByteBuffer buffer, Data pMem){
         if (pMem != null){
             records.add(pMem);
@@ -58,8 +56,9 @@ public class Queue {
     public Map<Integer, ByteBuffer> read(long offset, int num){
         Threads.Context ctx = Threads.get();
         Map<Integer, ByteBuffer> results = ctx.getResults();
+        results.clear();
         if (!reading){
-            ES.execute(()->{
+            new Thread(()->{
                 for (long i = 0; i < offset; i ++){
                     Data data = records.get((int) i);
                     if (data instanceof PMem){
@@ -68,28 +67,13 @@ public class Queue {
                         ctx.recycleReadBuffer(data);
                     }
                 }
-            });
+            }).start();
             reading = true;
         }
-
         int end = (int) Math.min(offset + num, records.size());
-        int size = (int) (end - offset);
-        CountDownLatch cdl = new CountDownLatch(size);
-        for (int i = (int) offset; i < end; i ++){
-            final int index = i;
-            ES.execute(()->{
-                Data data = records.get(index);
-                results.put((int) (index - offset), data.get(ctx));
-                cdl.countDown();
-            });
-        }
-        try {
-            cdl.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         for (int i = (int) offset; i < end; i ++){
             Data data = records.get(i);
+            results.put((int) (offset - i), data.get());
             if (data instanceof PMem){
                 ctx.recyclePMem(data);
             }else if (data instanceof Dram){
