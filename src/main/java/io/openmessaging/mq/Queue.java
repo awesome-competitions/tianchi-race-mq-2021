@@ -55,29 +55,31 @@ public class Queue {
         return false;
     }
 
-    public ByteBuffer[] read(long offset, int num){
+    public Map<Integer, ByteBuffer> read(long offset, int num){
         Threads.Context ctx = Threads.get();
+        Map<Integer, ByteBuffer> results = ctx.getResults();
         if (!reading){
-            for (long i = 0; i < offset; i ++){
-                Data data = records.get((int) i);
-                if (data instanceof PMem){
-                    ctx.recyclePMem(data);
-                }else if (data instanceof Dram){
-                    ctx.recycleReadBuffer(data);
+            ES.execute(()->{
+                for (long i = 0; i < offset; i ++){
+                    Data data = records.get((int) i);
+                    if (data instanceof PMem){
+                        ctx.recyclePMem(data);
+                    }else if (data instanceof Dram){
+                        ctx.recycleReadBuffer(data);
+                    }
                 }
-            }
+            });
             reading = true;
         }
 
         int end = (int) Math.min(offset + num, records.size());
         int size = (int) (end - offset);
-        ByteBuffer[] buffers = new ByteBuffer[size];
         CountDownLatch cdl = new CountDownLatch(size);
         for (int i = (int) offset; i < end; i ++){
             final int index = i;
             ES.execute(()->{
                 Data data = records.get(index);
-                buffers[(int) (index - offset)] = data.get(ctx);
+                results.put((int) (index - offset), data.get(ctx));
                 cdl.countDown();
             });
         }
@@ -94,7 +96,7 @@ public class Queue {
                 ctx.recycleReadBuffer(data);
             }
         }
-        return buffers;
+        return results;
     }
 
     public long getOffset() {

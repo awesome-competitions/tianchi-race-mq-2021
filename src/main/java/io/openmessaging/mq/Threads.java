@@ -3,7 +3,9 @@ package io.openmessaging.mq;
 import io.openmessaging.consts.Const;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class Threads {
@@ -28,6 +30,8 @@ public class Threads {
         private int blockPos;
 
         private long ssdPos;
+
+        private Map<Integer, ByteBuffer> results;
 
         private final LinkedBlockingQueue<ByteBuffer> buffers;
 
@@ -86,6 +90,7 @@ public class Threads {
             this.buffer = ByteBuffer.allocateDirect((int) (Const.K * 17) + 9);
             this.buffers = new LinkedBlockingQueue<>();
             this.readBuffers = new LinkedList<>();
+            this.results = new HashMap<>();
             for (int i = 0; i < 300; i ++){
                 buffers.add(ByteBuffer.allocateDirect((int) (Const.K * 17)));
             }
@@ -125,6 +130,10 @@ public class Threads {
 
         public void setSsdPos(long ssdPos) {
             this.ssdPos = ssdPos;
+        }
+
+        public Map<Integer, ByteBuffer> getResults() {
+            return results;
         }
     }
 }

@@ -27,6 +27,8 @@ public class Mq extends MessageQueue{
 
     public final static LinkedBlockingQueue<AepTask> AEP_TASKS = new LinkedBlockingQueue<>();
 
+    public final static Map<Integer, ByteBuffer> EMPTY = new HashMap<>();
+
     public Mq(Config config) throws IOException {
         LOGGER.info("Mq init");
         this.config = config;
@@ -173,13 +175,14 @@ public class Mq extends MessageQueue{
         return queue.getOffset();
     }
 
+
     public Map<Integer, ByteBuffer> getRange(int topic, int queueId, long offset, int fetchNum) {
         Queue queue = getQueue(topic, queueId);
         ByteBuffer[] buffers = queue.read(offset, fetchNum);
 
-        Map<Integer, ByteBuffer> results = new HashMap<>();
+        Map<Integer, ByteBuffer> results = Threads.get().getResults();
         if (buffers.length == 0){
-            return results;
+            return EMPTY;
         }
         for (int i = 0; i < buffers.length; i ++){
             results.put(i, buffers[i]);
