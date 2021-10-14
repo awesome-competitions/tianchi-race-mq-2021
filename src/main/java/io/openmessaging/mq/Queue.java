@@ -31,9 +31,6 @@ public class Queue {
             return;
         }
         Data data = cache.allocate(buffer.limit());
-        if (data == null && reading){
-            data = Buffers.allocateReadBuffer();
-        }
         if (data != null){
             data.set(buffer);
             records.add(data);
