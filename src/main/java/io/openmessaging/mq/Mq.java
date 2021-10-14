@@ -104,7 +104,7 @@ public class Mq extends MessageQueue{
     }
 
     void initPools() throws IOException {
-        int[] arr = new int[]{20,20};
+        int[] arr = new int[]{5,5,5,5,5,5,5,5};
         for (int i = 0; i < arr.length; i ++){
             Barrier barrier = new Barrier(arr[i], createAof("aof" + i), cache.getBlock());
             for (int j = 0; j < arr[i]; j ++){
