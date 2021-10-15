@@ -54,7 +54,7 @@ public class Threads {
         }
 
         public Data allocateReadBuffer(int cap){
-            Data data = getReadBufferGreed(cap).poll();
+            Data data = getReadBuffer(cap).poll();
             if (data != null){
                 Monitor.writeDramCount ++;
             }
