@@ -10,6 +10,12 @@ public abstract class Data {
 
     protected long position;
 
+    protected boolean isPMem;
+
+    protected boolean isDram;
+
+    protected boolean isSSD;
+
     public Data(int capacity) {
         this.capacity = capacity;
     }
@@ -36,6 +42,18 @@ public abstract class Data {
 
     public void setCapacity(int capacity) {
         this.capacity = capacity;
+    }
+
+    public boolean isPMem() {
+        return isPMem;
+    }
+
+    public boolean isDram() {
+        return isDram;
+    }
+
+    public boolean isSSD() {
+        return isSSD;
     }
 
     @Override

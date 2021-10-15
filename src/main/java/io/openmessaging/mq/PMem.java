@@ -26,6 +26,7 @@ public class PMem extends Data {
         this.position = position;
         this.block = block;
         this.size = capacity;
+        this.isPMem = true;
     }
 
     @Override

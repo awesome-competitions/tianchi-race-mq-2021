@@ -11,14 +11,11 @@ public class Queue {
 
     private final List<Data> records;
 
-    private final Cache cache;
-
     private boolean reading;
 
     public static final ThreadPoolExecutor TPE = (ThreadPoolExecutor) Executors.newFixedThreadPool(1000);
 
-    public Queue(Cache cache) {
-        this.cache = cache;
+    public Queue() {
         this.offset = -1;
         this.records = new ArrayList<>();
         Monitor.queueCount ++;
@@ -28,28 +25,25 @@ public class Queue {
         return ++ offset;
     }
 
-    public boolean write(FileWrapper aof, long position, ByteBuffer buffer, Data pMem){
+    public void write(FileWrapper aof, long position, ByteBuffer buffer, Data pMem){
         if (pMem != null){
             records.add(pMem);
-            return false;
+            return;
         }
+        Threads.Context ctx = Threads.get();
         Data data =  Buffers.allocateReadBuffer();
         if (data == null){
-            data = Threads.get().allocateReadBuffer();
-//            if (data == null){
-//                data = cache.allocate(buffer.limit());
-//                if (data == null && reading){
-//                    data = Buffers.allocateExtraData();
-//                }
-//            }
+            data = ctx.allocateReadBuffer();
+            if (data == null){
+                data = ctx.allocatePMem(buffer.limit());
+            }
         }
         if (data != null){
             data.set(buffer);
-        }else{
-            data = new SSD(aof, position, buffer.limit());
+            records.add(data);
+            return;
         }
-        records.add(data);
-        return false;
+        records.add(new SSD(aof, position, buffer.limit()));
     }
 
     public Map<Integer, ByteBuffer> read(long offset, int num){
@@ -58,9 +52,9 @@ public class Queue {
             new Thread(()->{
                 for (long i = 0; i < offset; i ++){
                     Data data = records.get((int) i);
-                    if (data instanceof PMem){
+                    if (data.isPMem()){
                         ctx.recyclePMem(data);
-                    }else if (data instanceof Dram){
+                    }else if (data.isDram()){
                         ctx.recycleReadBuffer(data);
                     }
                 }
@@ -76,9 +70,9 @@ public class Queue {
             final int index = i;
             TPE.execute(()->{
                 results.put((int) (index - offset), data.get(ctx));
-                if (data instanceof PMem){
+                if (data.isPMem()){
                     ctx.recyclePMem(data);
-                }else if (data instanceof Dram){
+                }else if (data.isDram()){
                     ctx.recycleReadBuffer(data);
                 }
                 cdl.countDown();

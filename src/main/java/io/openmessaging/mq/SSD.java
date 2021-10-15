@@ -15,6 +15,7 @@ public class SSD extends Data{
         super(capacity);
         this.fw = fw;
         this.position = position;
+        this.isSSD = true;
     }
 
     @Override

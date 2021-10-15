@@ -19,7 +19,7 @@ public class Mq extends MessageQueue{
 
     private final Queue[][] queues;
 
-    private final Cache cache;
+    private final Block block;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
 
@@ -27,13 +27,11 @@ public class Mq extends MessageQueue{
 
     public final static LinkedBlockingQueue<AepTask> AEP_TASKS = new LinkedBlockingQueue<>();
 
-    public final static Map<Integer, ByteBuffer> EMPTY = new HashMap<>();
-
     public Mq(Config config) throws IOException {
         LOGGER.info("Mq init");
         this.config = config;
         this.queues = new Queue[100][2000];
-        this.cache = new Cache(config.getHeapDir(), config.getHeapSize());
+        this.block = new Block(new FileWrapper(new RandomAccessFile(config.getHeapDir(), "rw")), config.getHeapSize());
         initPools();
         startKiller();
         startAepTask();
@@ -108,7 +106,7 @@ public class Mq extends MessageQueue{
     void initPools() throws IOException {
         int[] arr = new int[]{10,10,10,10};
         for (int i = 0; i < arr.length; i ++){
-            Barrier barrier = new Barrier(arr[i], createAof("aof" + i), cache.getBlock());
+            Barrier barrier = new Barrier(arr[i], createAof("aof" + i), block);
             for (int j = 0; j < arr[i]; j ++){
                 POOLS.add(barrier);
             }
@@ -128,7 +126,7 @@ public class Mq extends MessageQueue{
     public Queue getQueue(int topic, int queueId){
         Queue queue = queues[topic][queueId];
         if (queue == null){
-            queue = new Queue(cache);
+            queue = new Queue();
             queues[topic][queueId] = queue;
         }
         return queue;

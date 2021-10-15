@@ -11,8 +11,6 @@ public class Monitor {
     public static long writeExtraDramCount = 0;
     public static long readSSDCount = 0;
     public static long swapSSDToPmemCount = 0;
-    public static long allocateIdleCount = 0;
-    public static long missingIdleCount = 0;
     public static long extSize = 0;
 
 
@@ -26,8 +24,6 @@ public class Monitor {
                 ", writeExtraDramCount: " + writeExtraDramCount +
                 ", readSSDCount: " + readSSDCount +
                 ", swapSSDToPmemCount: " + swapSSDToPmemCount +
-                ", allocateIdleCount: " + allocateIdleCount +
-                ", missingIdleCount: " + missingIdleCount +
                 ", aep tasks: " + Mq.AEP_TASKS.size() +
                 ", get tasks: " + Queue.TPE.getActiveCount() +
                 ", extSize: " + extSize
