@@ -7,6 +7,8 @@ public class Dram extends Data {
 
     private ByteBuffer data;
 
+    private int size;
+
     public Dram(ByteBuffer data) {
         super(data.capacity());
         this.data = data;
@@ -21,7 +23,7 @@ public class Dram extends Data {
     @Override
     public ByteBuffer get(Threads.Context ctx) {
         ByteBuffer buffer = ctx.allocateBuffer();
-        buffer.limit(capacity);
+        buffer.limit(size);
         buffer.put(data);
         buffer.flip();
         return buffer;
@@ -31,7 +33,7 @@ public class Dram extends Data {
     public void set(ByteBuffer buffer) {
         this.data.put(buffer);
         this.data.flip();
-        this.capacity = data.limit();
+        this.size = data.limit();
     }
 
     @Override
