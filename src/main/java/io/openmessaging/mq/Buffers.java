@@ -10,7 +10,7 @@ public class Buffers {
 
     public static final LinkedBlockingQueue<ByteBuffer> AEP_BUFFERS = new LinkedBlockingQueue<>();
 
-    public static final int MAX_SIZE = 80000;
+    public static final int MAX_SIZE = 120000;
     public static final int THRESHOLD_SIZE = MAX_SIZE - 1000;
 
     public static Data allocateReadBuffer(){

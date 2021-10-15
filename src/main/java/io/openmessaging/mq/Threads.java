@@ -66,7 +66,7 @@ public class Threads {
         }
 
         public Data allocatePMem(int cap){
-            return getIdles(cap).poll();
+            return getIdlesGreed(cap).poll();
         }
 
         public void recyclePMem(Data data){
@@ -75,15 +75,11 @@ public class Threads {
         }
 
         public LinkedBlockingQueue<Data> getIdles(int cap){
-            if (cap < Const.K * 4.5){
-                return idles1;
-            }else if (cap < Const.K * 9){
-                return idles2;
-            }else if (cap < Const.K * 13.5){
-                return idles3;
-            }else{
-                return idles4;
-            }
+            return cap < Const.K * 4.5 ? idles1 : cap < Const.K * 9 ? idles2 : cap < Const.K * 13.5 ? idles3 : idles4;
+        }
+
+        public LinkedBlockingQueue<Data> getIdlesGreed(int cap){
+            return cap < Const.K * 4.5 ? idles2 : cap < Const.K * 9 ? idles3 : idles4;
         }
 
         public Context() {
