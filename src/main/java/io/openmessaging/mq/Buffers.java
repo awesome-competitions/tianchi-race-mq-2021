@@ -10,8 +10,8 @@ public class Buffers {
 
     public static final LinkedBlockingQueue<ByteBuffer> AEP_BUFFERS = new LinkedBlockingQueue<>();
 
-    public static final long DIRECT_SIZE = (long) (Const.G * 1.65);
-    public static final long HEAP_SIZE = (long) (Const.G * 2.85);
+    public static final long DIRECT_SIZE = (long) (Const.G * 1.75);
+    public static final long HEAP_SIZE = (long) (Const.G * 3);
     public static final long MAX_SIZE = DIRECT_SIZE + HEAP_SIZE;
     public static final long THRESHOLD_SIZE = MAX_SIZE - Const.M;
 
