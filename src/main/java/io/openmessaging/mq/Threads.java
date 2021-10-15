@@ -87,7 +87,7 @@ public class Threads {
             this.buffers = new LinkedBlockingQueue<>();
             this.readBuffers = new LinkedBlockingQueue<>();
             this.results = new HashMap<>();
-            for (int i = 0; i < 300; i ++){
+            for (int i = 0; i < 105; i ++){
                 buffers.add(ByteBuffer.allocateDirect((int) (Const.K * 17)));
             }
         }
