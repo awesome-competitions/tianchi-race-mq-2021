@@ -15,7 +15,7 @@ public class Queue {
 
     private boolean reading;
 
-    public static final ThreadPoolExecutor TPE = (ThreadPoolExecutor) Executors.newFixedThreadPool(100);
+    public static final ThreadPoolExecutor TPE = (ThreadPoolExecutor) Executors.newFixedThreadPool(200);
 
     public Queue(Cache cache) {
         this.cache = cache;
