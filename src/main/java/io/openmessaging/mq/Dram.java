@@ -1,6 +1,7 @@
 package io.openmessaging.mq;
 
 
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 
 public class Dram extends Data {
@@ -31,7 +32,13 @@ public class Dram extends Data {
 
     @Override
     public void set(ByteBuffer buffer) {
-        this.data.put(buffer);
+        try{
+            this.data.put(buffer);
+        }catch (BufferOverflowException e){
+            System.out.println(buffer);
+            System.out.println(this.data);
+            throw e;
+        }
         this.data.flip();
         this.size = data.limit();
     }
