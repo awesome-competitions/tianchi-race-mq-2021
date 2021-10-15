@@ -26,7 +26,7 @@ public class Monitor {
                 ", readSSDCount: " + readSSDCount +
                 ", aep tasks: " + Mq.AEP_TASKS.size() +
                 ", get tasks: " + Queue.TPE.getActiveCount() +
-                ", heap free: " + runtime.freeMemory() +
+                ", heap max: " + runtime.maxMemory() +
                 ", heap used: " + (runtime.totalMemory() - runtime.freeMemory()) +
                 ", extSize: " + extSize
                 ;
