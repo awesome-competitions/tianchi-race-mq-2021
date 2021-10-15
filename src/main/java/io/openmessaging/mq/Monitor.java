@@ -29,6 +29,7 @@ public class Monitor {
                 ", allocateIdleCount: " + allocateIdleCount +
                 ", missingIdleCount: " + missingIdleCount +
                 ", aep tasks: " + Mq.AEP_TASKS.size() +
+                ", get tasks: " + Queue.TPE.getActiveCount() +
                 ", extSize: " + extSize
                 ;
     }

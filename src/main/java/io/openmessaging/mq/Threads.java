@@ -35,12 +35,12 @@ public class Threads {
 
         private final LinkedBlockingQueue<ByteBuffer> buffers;
 
-        private final LinkedList<Data> readBuffers;
+        private final LinkedBlockingQueue<Data> readBuffers;
 
-        private final LinkedList<Data> idles1 = new LinkedList<>();
-        private final LinkedList<Data> idles2 = new LinkedList<>();
-        private final LinkedList<Data> idles3 = new LinkedList<>();
-        private final LinkedList<Data> idles4 = new LinkedList<>();
+        private final LinkedBlockingQueue<Data> idles1 = new LinkedBlockingQueue<>();
+        private final LinkedBlockingQueue<Data> idles2 = new LinkedBlockingQueue<>();
+        private final LinkedBlockingQueue<Data> idles3 = new LinkedBlockingQueue<>();
+        private final LinkedBlockingQueue<Data> idles4 = new LinkedBlockingQueue<>();
 
         public ByteBuffer allocateBuffer(){
             ByteBuffer buffer = buffers.poll();
@@ -74,7 +74,7 @@ public class Threads {
             getIdles(data.getCapacity()).add(data);
         }
 
-        public LinkedList<Data> getIdles(int cap){
+        public LinkedBlockingQueue<Data> getIdles(int cap){
             if (cap < Const.K * 4.5){
                 return idles1;
             }else if (cap < Const.K * 9){
@@ -89,7 +89,7 @@ public class Threads {
         public Context() {
             this.buffer = ByteBuffer.allocateDirect((int) (Const.K * 17) + 9);
             this.buffers = new LinkedBlockingQueue<>();
-            this.readBuffers = new LinkedList<>();
+            this.readBuffers = new LinkedBlockingQueue<>();
             this.results = new HashMap<>();
             for (int i = 0; i < 300; i ++){
                 buffers.add(ByteBuffer.allocateDirect((int) (Const.K * 17)));

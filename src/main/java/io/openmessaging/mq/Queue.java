@@ -3,10 +3,7 @@ package io.openmessaging.mq;
 
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 
 public class Queue {
 
@@ -17,6 +14,8 @@ public class Queue {
     private final Cache cache;
 
     private boolean reading;
+
+    public static final ThreadPoolExecutor TPE = (ThreadPoolExecutor) Executors.newFixedThreadPool(100);
 
     public Queue(Cache cache) {
         this.cache = cache;
@@ -68,16 +67,27 @@ public class Queue {
             }).start();
             reading = true;
         }
-        Map<Integer, ByteBuffer> results = new HashMap<>();
+        Map<Integer, ByteBuffer> results = new ConcurrentHashMap<>();
         int end = (int) Math.min(offset + num, records.size());
+        int size = (int) (end - offset);
+        CountDownLatch cdl = new CountDownLatch(size);
         for (int i = (int) offset; i < end; i ++){
             Data data = records.get(i);
-            results.put((int) (i - offset), data.get());
-            if (data instanceof PMem){
-                ctx.recyclePMem(data);
-            }else if (data instanceof Dram){
-                ctx.recycleReadBuffer(data);
-            }
+            final int index = i;
+            TPE.execute(()->{
+                results.put((int) (index - offset), data.get());
+                if (data instanceof PMem){
+                    ctx.recyclePMem(data);
+                }else if (data instanceof Dram){
+                    ctx.recycleReadBuffer(data);
+                }
+                cdl.countDown();
+            });
+        }
+        try {
+            cdl.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         return results;
     }
