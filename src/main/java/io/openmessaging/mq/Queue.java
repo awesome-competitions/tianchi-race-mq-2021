@@ -75,7 +75,7 @@ public class Queue {
             Data data = records.get(i);
             final int index = i;
             TPE.execute(()->{
-                results.put((int) (index - offset), data.get());
+                results.put((int) (index - offset), data.get(ctx));
                 if (data instanceof PMem){
                     ctx.recyclePMem(data);
                 }else if (data instanceof Dram){
