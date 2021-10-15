@@ -10,18 +10,20 @@ public class Buffers {
 
     public static final LinkedBlockingQueue<ByteBuffer> AEP_BUFFERS = new LinkedBlockingQueue<>();
 
-    public static final int DIRECT_SIZE = 115000;
-    public static final int HEAP_SIZE = 170000;
-    public static final int MAX_SIZE = DIRECT_SIZE + HEAP_SIZE;
-    public static final int THRESHOLD_SIZE = MAX_SIZE - 50;
+    public static final long DIRECT_SIZE = (long) (Const.G * 1.65);
+    public static final long HEAP_SIZE = (long) (Const.G * 2.85);
+    public static final long MAX_SIZE = DIRECT_SIZE + HEAP_SIZE;
+    public static final long THRESHOLD_SIZE = MAX_SIZE - Const.M;
 
-    public static Data allocateReadBuffer(){
-        if (Monitor.writeDramCount < DIRECT_SIZE){
+    public static Data allocateReadBuffer(int cap){
+        if (Monitor.writeDramSize < DIRECT_SIZE){
             Monitor.writeDramCount ++;
-            return new Dram(ByteBuffer.allocateDirect((int) (Const.K * 17)));
-        }else if (Monitor.writeDramCount < MAX_SIZE){
+            Monitor.writeDramSize += cap;
+            return new Dram(ByteBuffer.allocateDirect(cap));
+        }else if (Monitor.writeDramSize < MAX_SIZE){
             Monitor.writeDramCount ++;
-            return new Dram(ByteBuffer.allocate((int) (Const.K * 17)));
+            Monitor.writeDramSize += cap;
+            return new Dram(ByteBuffer.allocate(cap));
         }
         return null;
     }

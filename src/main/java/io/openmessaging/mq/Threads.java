@@ -31,11 +31,12 @@ public class Threads {
 
         private long ssdPos;
 
-        private Map<Integer, ByteBuffer> results;
+        private final LinkedBlockingQueue<ByteBuffer> buffers = new LinkedBlockingQueue<>();
 
-        private final LinkedBlockingQueue<ByteBuffer> buffers;
-
-        private final LinkedBlockingQueue<Data> readBuffers;
+        private final LinkedBlockingQueue<Data> readBuffers1 = new LinkedBlockingQueue<>();
+        private final LinkedBlockingQueue<Data> readBuffers2 = new LinkedBlockingQueue<>();
+        private final LinkedBlockingQueue<Data> readBuffers3 = new LinkedBlockingQueue<>();
+        private final LinkedBlockingQueue<Data> readBuffers4 = new LinkedBlockingQueue<>();
 
         private final LinkedBlockingQueue<Data> idles1 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> idles2 = new LinkedBlockingQueue<>();
@@ -52,8 +53,8 @@ public class Threads {
             return buffer;
         }
 
-        public Data allocateReadBuffer(){
-            Data data = readBuffers.poll();
+        public Data allocateReadBuffer(int cap){
+            Data data = getReadBufferGreed(cap).poll();
             if (data != null){
                 Monitor.writeDramCount ++;
             }
@@ -62,7 +63,7 @@ public class Threads {
 
         public void recycleReadBuffer(Data data){
             data.clear();
-            readBuffers.add(data);
+            getReadBuffer(data.getCapacity()).add(data);
         }
 
         public Data allocatePMem(int cap){
@@ -82,11 +83,16 @@ public class Threads {
             return cap < Const.K * 4.5 ? idles2 : cap < Const.K * 9 ? idles3 : idles4;
         }
 
+        public LinkedBlockingQueue<Data> getReadBuffer(int cap){
+            return cap < Const.K * 4.5 ? readBuffers1 : cap < Const.K * 9 ? readBuffers2 : cap < Const.K * 13.5 ? readBuffers3 : readBuffers4;
+        }
+
+        public LinkedBlockingQueue<Data> getReadBufferGreed(int cap){
+            return cap < Const.K * 4.5 ? readBuffers2 : cap < Const.K * 9 ? readBuffers3 : readBuffers4;
+        }
+
         public Context() {
             this.buffer = ByteBuffer.allocateDirect((int) (Const.K * 17) + 9);
-            this.buffers = new LinkedBlockingQueue<>();
-            this.readBuffers = new LinkedBlockingQueue<>();
-            this.results = new HashMap<>();
             for (int i = 0; i < 105; i ++){
                 buffers.add(ByteBuffer.allocateDirect((int) (Const.K * 17)));
             }
@@ -128,8 +134,5 @@ public class Threads {
             this.ssdPos = ssdPos;
         }
 
-        public Map<Integer, ByteBuffer> getResults() {
-            return results;
-        }
     }
 }

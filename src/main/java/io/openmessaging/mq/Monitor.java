@@ -12,6 +12,7 @@ public class Monitor {
     public static long readMemCount = 0;
     public static long writeMemCount = 0;
     public static long writeDramCount = 0;
+    public static long writeDramSize = 0;
     public static long writeExtraDramCount = 0;
     public static long readSSDCount = 0;
     public static long extSize = 0;

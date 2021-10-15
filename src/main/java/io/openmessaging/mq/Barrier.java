@@ -41,7 +41,7 @@ public class Barrier {
                 position = aof.writeWithoutSync(block);
                 aof.force();
 
-                if (Monitor.writeDramCount > Buffers.THRESHOLD_SIZE){
+                if (Monitor.writeDramSize > Buffers.THRESHOLD_SIZE){
                     aepPosition = aep.allocate(block.limit());
                     writeAep = aepPosition != -1;
                     if (writeAep){

@@ -31,11 +31,11 @@ public class Queue {
             return;
         }
         Threads.Context ctx = Threads.get();
-        Data data = ctx.allocateReadBuffer();
+        Data data = ctx.allocateReadBuffer(buffer.limit());
         if (data == null){
             data = ctx.allocatePMem(buffer.limit());
             if (data == null){
-                data = Buffers.allocateReadBuffer();
+                data = Buffers.allocateReadBuffer(buffer.limit());
             }
         }
         if (data != null){
