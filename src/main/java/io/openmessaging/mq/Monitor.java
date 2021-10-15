@@ -1,5 +1,7 @@
 package io.openmessaging.mq;
 
+import io.openmessaging.consts.Const;
+
 public class Monitor {
 
     public static Runtime runtime = Runtime.getRuntime();
@@ -26,8 +28,8 @@ public class Monitor {
                 ", readSSDCount: " + readSSDCount +
                 ", aep tasks: " + Mq.AEP_TASKS.size() +
                 ", get tasks: " + Queue.TPE.getActiveCount() +
-                ", heap max: " + runtime.maxMemory() +
-                ", heap used: " + (runtime.totalMemory() - runtime.freeMemory()) +
+                ", heap max: " + runtime.maxMemory() / Const.M +
+                ", heap used: " + (runtime.totalMemory() - runtime.freeMemory()) / Const.M +
                 ", extSize: " + extSize
                 ;
     }
