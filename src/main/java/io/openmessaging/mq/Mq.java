@@ -124,11 +124,26 @@ public class Mq extends MessageQueue{
 
     void initPools() throws IOException {
         int[] arr = new int[]{10,10,10,10};
+        CountDownLatch cdl = new CountDownLatch(arr.length);
         for (int i = 0; i < arr.length; i ++){
-            Barrier barrier = new Barrier(arr[i], createAof("aof" + i), block);
-            for (int j = 0; j < arr[i]; j ++){
-                POOLS.add(barrier);
-            }
+            final int index = i;
+            new Thread(()->{
+                try {
+                    Barrier barrier = new Barrier(arr[index], createAof("aof" + index), block);
+                    for (int j = 0; j < arr[index]; j ++){
+                        POOLS.add(barrier);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }finally {
+                    cdl.countDown();
+                }
+            }).start();
+        }
+        try {
+            cdl.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
