@@ -74,7 +74,7 @@ public class Mq extends MessageQueue{
             int size = (int) (Const.G * 50 / batch);
             ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
             for (int i = 0; i < batch; i ++){
-                buffer.put((byte) 1);
+                buffer.put((byte) 0);
             }
             for (int i = 0; i < size; i ++){
                 buffer.flip();
