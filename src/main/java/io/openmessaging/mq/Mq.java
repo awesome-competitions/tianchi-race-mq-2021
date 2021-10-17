@@ -70,8 +70,8 @@ public class Mq extends MessageQueue{
             count ++;
         }
         if (count == 0){
-            int batch = (int) (Const.K * 1024);
-            int size = (int) (Const.G * 20 / batch);
+            int batch = (int) (Const.M * 4);
+            int size = (int) (Const.G * 32 / batch);
             ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
             for (int i = 0; i < batch; i ++){
                 buffer.put((byte) 0);
