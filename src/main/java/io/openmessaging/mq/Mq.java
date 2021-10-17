@@ -1,6 +1,7 @@
 package io.openmessaging.mq;
 
 import io.openmessaging.MessageQueue;
+import io.openmessaging.consts.Const;
 import io.openmessaging.utils.BufferUtils;
 import io.openmessaging.utils.CollectionUtils;
 import org.slf4j.Logger;
@@ -40,6 +41,7 @@ public class Mq extends MessageQueue{
 
     void loadAof(FileWrapper aof) throws IOException {
         long position = 0;
+        int count = 0;
         ByteBuffer header = ByteBuffer.allocate(9);
         while(true){
             aof.read(position, header);
@@ -64,6 +66,22 @@ public class Mq extends MessageQueue{
             queue.nextOffset();
             queue.getRecords().add(new SSD(aof, position - 9, size));
             position += size;
+
+            count ++;
+        }
+        if (count == 0){
+            int batch = (int) (Const.K * 256);
+            int size = (int) (Const.G * 50 / batch);
+            ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
+            for (int i = 0; i < batch; i ++){
+                buffer.put((byte) 1);
+            }
+            for (int i = 0; i < size; i ++){
+                buffer.flip();
+                aof.getChannel().write(buffer);
+            }
+            aof.force();
+            aof.getChannel().position(0);
         }
     }
 
@@ -102,6 +120,7 @@ public class Mq extends MessageQueue{
         loadAof(aof);
         return aof;
     }
+
 
     void initPools() throws IOException {
         int[] arr = new int[]{10,10,10,10};
