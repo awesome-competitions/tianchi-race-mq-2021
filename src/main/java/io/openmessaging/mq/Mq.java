@@ -38,7 +38,6 @@ public class Mq extends MessageQueue{
         this.config = config;
         this.queues = new Queue[100][2000];
         this.block = new Block(new FileWrapper(new RandomAccessFile(config.getHeapDir(), "rw")), config.getHeapSize());
-
         preAllocate(block.getFw().getChannel(), Const.G * 60);
         initPools();
         startKiller();
@@ -48,7 +47,6 @@ public class Mq extends MessageQueue{
 
     void loadAof(FileWrapper aof) throws IOException {
         long position = 0;
-        int count = 0;
         ByteBuffer header = ByteBuffer.allocate(9);
 
         while(true){
@@ -74,7 +72,6 @@ public class Mq extends MessageQueue{
             queue.nextOffset();
             queue.getRecords().add(new SSD(aof, position - 9, size));
             position += size;
-            count ++;
         }
         preAllocate(aof.getChannel(),  Const.G * 32);
     }
