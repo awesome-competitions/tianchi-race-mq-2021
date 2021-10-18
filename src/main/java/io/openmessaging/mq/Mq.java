@@ -76,25 +76,25 @@ public class Mq extends MessageQueue{
             position += size;
             count ++;
         }
-        if (count == 0 && aof.getChannel().size() == 0){
-            preAllocate(aof.getChannel(),  Const.G * 32);
-        }
+        preAllocate(aof.getChannel(),  Const.G * 32);
     }
 
     void preAllocate(FileChannel channel, long allocateSize) throws IOException {
-        int batch = (int) (Const.M * 4);
-        int size = (int) (allocateSize / batch);
-        ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
-        for (int i = 0; i < batch; i ++){
-            buffer.put((byte) 0);
+        if (channel.size() == 0){
+            int batch = (int) (Const.M * 4);
+            int size = (int) (allocateSize / batch);
+            ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
+            for (int i = 0; i < batch; i ++){
+                buffer.put((byte) 0);
+            }
+            for (int i = 0; i < size; i ++){
+                buffer.flip();
+                channel.write(buffer);
+            }
+            channel.force(true);
+            channel.position(0);
+            BufferUtils.clean(buffer);
         }
-        for (int i = 0; i < size; i ++){
-            buffer.flip();
-            channel.write(buffer);
-        }
-        channel.force(true);
-        channel.position(0);
-        BufferUtils.clean(buffer);
     }
 
     void startKiller(){
