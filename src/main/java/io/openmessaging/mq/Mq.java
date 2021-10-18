@@ -85,7 +85,7 @@ public class Mq extends MessageQueue{
                 buffer.flip();
                 aof.getChannel().write(buffer);
             }
-            aof.force();
+            aof.getChannel().force(true);
             aof.getChannel().position(0);
             BufferUtils.clean(buffer);
         }
