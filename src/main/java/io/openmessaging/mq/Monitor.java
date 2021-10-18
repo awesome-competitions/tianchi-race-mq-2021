@@ -13,7 +13,7 @@ public class Monitor {
     public static long writeMemCount = 0;
     public static long writeDramCount = 0;
     public static long writeDramSize = 0;
-    public static long missingMemSize = 0;
+    public static long missingDramSize = 0;
     public static long writeExtraDramCount = 0;
     public static long readSSDCount = 0;
     public static long extSize = 0;
@@ -26,7 +26,7 @@ public class Monitor {
                 ", readMemCount: " + readMemCount +
                 ", writeMemCount: " + writeMemCount +
                 ", writeDramCount: " + writeDramCount +
-                ", missingMemSize: " + missingMemSize +
+                ", missingDramSize: " + missingDramSize +
                 ", writeExtraDramCount: " + writeExtraDramCount +
                 ", readSSDCount: " + readSSDCount +
                 ", aep tasks: " + Mq.AEP_TASKS.size() +

@@ -34,6 +34,7 @@ public class Queue {
         Threads.Context ctx = Threads.get();
         Data data = ctx.allocateReadBuffer(buffer.limit());
         if (data == null){
+            Monitor.missingDramSize ++;
             data = ctx.allocatePMem(buffer.limit());
             if (data == null){
                 data = Buffers.allocateReadBuffer(buffer.limit());
@@ -44,7 +45,7 @@ public class Queue {
             records.add(data);
             return;
         }
-        Monitor.missingMemSize ++;
+
         records.add(new SSD(aof, position, buffer.limit()));
     }
 
