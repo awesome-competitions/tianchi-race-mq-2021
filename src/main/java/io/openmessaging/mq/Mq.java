@@ -72,7 +72,7 @@ public class Mq extends MessageQueue{
             queue.getRecords().add(new SSD(aof, position - 9, size));
             position += size;
         }
-//        preAllocate(aof.getChannel());
+        preAllocate(aof.getChannel());
     }
 
     void preAllocate(FileChannel channel) throws IOException {
@@ -125,7 +125,7 @@ public class Mq extends MessageQueue{
 
     FileWrapper createAof(String name) throws IOException {
         FileWrapper aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + name, "rw"));
-        loadAof(aof);
+//        loadAof(aof);
         return aof;
     }
 
