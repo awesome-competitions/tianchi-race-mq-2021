@@ -89,6 +89,7 @@ public class Mq extends MessageQueue{
             }
             aof.force();
             aof.getChannel().position(0);
+            BufferUtils.clean(buffer);
         }
     }
 
