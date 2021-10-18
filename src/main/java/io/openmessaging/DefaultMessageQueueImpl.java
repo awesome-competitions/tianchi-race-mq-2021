@@ -25,14 +25,22 @@ import java.util.concurrent.TimeUnit;
 
 public class DefaultMessageQueueImpl extends MessageQueue{
 
-    private final MessageQueue queue = new Mq(new Config(
-            "/essd/",
-            "/pmem/nico",
-            Const.G * 60,
-            40,
-            10,
-            Const.SECOND * 3000
-    ));
+    private static MessageQueue queue;
+
+    static {
+        try {
+            queue = new Mq(new Config(
+                    "/essd/",
+                    "/pmem/nico",
+                    Const.G * 60,
+                    40,
+                    10,
+                    Const.SECOND * 3000
+            ));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 //    private final MessageQueue queue = null;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMessageQueueImpl.class);
