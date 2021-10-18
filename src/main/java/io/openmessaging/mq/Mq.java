@@ -31,8 +31,6 @@ public class Mq extends MessageQueue{
 
     public final static LinkedBlockingQueue<AepTask> AEP_TASKS = new LinkedBlockingQueue<>();
 
-    private boolean preAllocated;
-
     public Mq(Config config) throws IOException {
         LOGGER.info("Mq init");
         this.config = config;
@@ -78,7 +76,7 @@ public class Mq extends MessageQueue{
     void preAllocate(FileChannel channel) throws IOException {
         if (channel.size() == 0){
             int batch = (int) (Const.M * 4);
-            int size = (int) (Const.G * 32 / batch);
+            int size = (int) (Const.G * 33 / batch);
             ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
             for (int i = 0; i < batch; i ++){
                 buffer.put((byte) 0);
