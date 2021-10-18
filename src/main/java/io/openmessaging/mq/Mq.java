@@ -47,6 +47,7 @@ public class Mq extends MessageQueue{
         long position = 0;
         int count = 0;
         ByteBuffer header = ByteBuffer.allocate(9);
+
         while(true){
             aof.read(position, header);
             position += 9;
@@ -62,9 +63,6 @@ public class Mq extends MessageQueue{
             if (size == 0){
                 break;
             }
-
-            preAllocated = true;
-
             ByteBuffer data = ByteBuffer.allocate(size);
             aof.read(position, data);
             data.flip();
@@ -75,7 +73,7 @@ public class Mq extends MessageQueue{
             position += size;
             count ++;
         }
-        if (count == 0 && !preAllocated){
+        if (count == 0 && aof.getChannel().size() == 0){
             LOGGER.info("aof {}", name);
             int batch = (int) (Const.M * 4);
             int size = (int) (Const.G * 31.3 / batch);
