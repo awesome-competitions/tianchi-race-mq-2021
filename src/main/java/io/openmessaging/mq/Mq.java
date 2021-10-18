@@ -74,7 +74,7 @@ public class Mq extends MessageQueue{
         }
         if (count == 0){
             int batch = (int) (Const.M * 4);
-            int size = (int) (Const.G * 31 / batch);
+            int size = (int) (Const.G * 28 / batch);
             ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
             for (int i = 0; i < batch; i ++){
                 buffer.put((byte) 0);
