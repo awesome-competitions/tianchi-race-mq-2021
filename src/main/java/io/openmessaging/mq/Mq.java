@@ -43,7 +43,7 @@ public class Mq extends MessageQueue{
         LOGGER.info("Mq completed");
     }
 
-    void loadAof(FileWrapper aof) throws IOException {
+    void loadAof(FileWrapper aof, String name) throws IOException {
         long position = 0;
         int count = 0;
         ByteBuffer header = ByteBuffer.allocate(9);
@@ -76,6 +76,7 @@ public class Mq extends MessageQueue{
             count ++;
         }
         if (count == 0 && !preAllocated){
+            LOGGER.info("aof {}", name);
             int batch = (int) (Const.M * 4);
             int size = (int) (Const.G * 31.3 / batch);
             ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
@@ -124,7 +125,7 @@ public class Mq extends MessageQueue{
 
     FileWrapper createAof(String name) throws IOException {
         FileWrapper aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + name, "rw"));
-        loadAof(aof);
+        loadAof(aof, name);
         return aof;
     }
 
