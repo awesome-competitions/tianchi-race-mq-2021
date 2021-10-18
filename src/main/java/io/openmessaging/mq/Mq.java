@@ -30,7 +30,7 @@ public class Mq extends MessageQueue{
 
     public final static LinkedBlockingQueue<AepTask> AEP_TASKS = new LinkedBlockingQueue<>();
 
-    private static final ReentrantLock LOCK = new ReentrantLock();
+    private boolean preAllocated;
 
     public Mq(Config config) throws IOException {
         LOGGER.info("Mq init");
@@ -63,7 +63,8 @@ public class Mq extends MessageQueue{
                 break;
             }
 
-            LOCK.lock();
+            preAllocated = true;
+
             ByteBuffer data = ByteBuffer.allocate(size);
             aof.read(position, data);
             data.flip();
@@ -73,12 +74,10 @@ public class Mq extends MessageQueue{
             queue.getRecords().add(new SSD(aof, position - 9, size));
             position += size;
             count ++;
-
-            LOCK.unlock();
         }
-        if (count == 0){
+        if (count == 0 && !preAllocated){
             int batch = (int) (Const.M * 4);
-            int size = (int) (Const.G * 26 / batch);
+            int size = (int) (Const.G * 31.3 / batch);
             ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
             for (int i = 0; i < batch; i ++){
                 buffer.put((byte) 0);
@@ -132,26 +131,15 @@ public class Mq extends MessageQueue{
 
     void initPools() {
         int[] arr = new int[]{10,10,10,10};
-        CountDownLatch cdl = new CountDownLatch(arr.length);
         for (int i = 0; i < arr.length; i ++){
-            final int index = i;
-            new Thread(()->{
-                try {
-                    Barrier barrier = new Barrier(arr[index], createAof("aof" + index), block);
-                    for (int j = 0; j < arr[index]; j ++){
-                        POOLS.add(barrier);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    cdl.countDown();
+            try {
+                Barrier barrier = new Barrier(arr[i], createAof("aof" + i), block);
+                for (int j = 0; j < arr[i]; j ++){
+                    POOLS.add(barrier);
                 }
-            }).start();
-        }
-        try {
-            cdl.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
