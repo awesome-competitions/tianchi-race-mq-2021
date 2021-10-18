@@ -11,6 +11,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
@@ -37,13 +38,15 @@ public class Mq extends MessageQueue{
         this.config = config;
         this.queues = new Queue[100][2000];
         this.block = new Block(new FileWrapper(new RandomAccessFile(config.getHeapDir(), "rw")), config.getHeapSize());
+
+        preAllocate(block.getFw().getChannel(), Const.G * 60);
         initPools();
         startKiller();
         startAepTask();
         LOGGER.info("Mq completed");
     }
 
-    void loadAof(FileWrapper aof, String name) throws IOException {
+    void loadAof(FileWrapper aof) throws IOException {
         long position = 0;
         int count = 0;
         ByteBuffer header = ByteBuffer.allocate(9);
@@ -74,21 +77,24 @@ public class Mq extends MessageQueue{
             count ++;
         }
         if (count == 0 && aof.getChannel().size() == 0){
-            LOGGER.info("aof {}", name);
-            int batch = (int) (Const.M * 4);
-            int size = (int) (Const.G * 31.3 / batch);
-            ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
-            for (int i = 0; i < batch; i ++){
-                buffer.put((byte) 0);
-            }
-            for (int i = 0; i < size; i ++){
-                buffer.flip();
-                aof.getChannel().write(buffer);
-            }
-            aof.getChannel().force(true);
-            aof.getChannel().position(0);
-            BufferUtils.clean(buffer);
+            preAllocate(aof.getChannel(),  Const.G * 32);
         }
+    }
+
+    void preAllocate(FileChannel channel, long allocateSize) throws IOException {
+        int batch = (int) (Const.M * 4);
+        int size = (int) (allocateSize / batch);
+        ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
+        for (int i = 0; i < batch; i ++){
+            buffer.put((byte) 0);
+        }
+        for (int i = 0; i < size; i ++){
+            buffer.flip();
+            channel.write(buffer);
+        }
+        channel.force(true);
+        channel.position(0);
+        BufferUtils.clean(buffer);
     }
 
     void startKiller(){
@@ -123,7 +129,7 @@ public class Mq extends MessageQueue{
 
     FileWrapper createAof(String name) throws IOException {
         FileWrapper aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + name, "rw"));
-        loadAof(aof, name);
+        loadAof(aof);
         return aof;
     }
 
