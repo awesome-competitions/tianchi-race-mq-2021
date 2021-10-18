@@ -4,6 +4,7 @@ package io.openmessaging.mq;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Queue {
 
@@ -13,11 +14,14 @@ public class Queue {
 
     private boolean reading;
 
+    private ReentrantLock lock;
+
     public static final ThreadPoolExecutor TPE = (ThreadPoolExecutor) Executors.newFixedThreadPool(1000);
 
     public Queue() {
         this.offset = -1;
         this.records = new ArrayList<>();
+        this.lock = new ReentrantLock();
         Monitor.queueCount ++;
     }
 
@@ -96,5 +100,9 @@ public class Queue {
 
     public List<Data> getRecords() {
         return records;
+    }
+
+    public ReentrantLock getLock() {
+        return lock;
     }
 }

@@ -13,6 +13,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.Lock;
 
 public class Mq extends MessageQueue{
 
@@ -63,15 +64,17 @@ public class Mq extends MessageQueue{
             data.flip();
 
             Queue queue = getQueue(topic, queueId);
+            Lock lock = queue.getLock();
+            lock.lock();
             queue.nextOffset();
             queue.getRecords().add(new SSD(aof, position - 9, size));
+            lock.unlock();
             position += size;
-
             count ++;
         }
         if (count == 0){
             int batch = (int) (Const.M * 4);
-            int size = (int) (Const.G * 30 / batch);
+            int size = (int) (Const.G * 31 / batch);
             ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
             for (int i = 0; i < batch; i ++){
                 buffer.put((byte) 0);
@@ -124,15 +127,26 @@ public class Mq extends MessageQueue{
 
     void initPools() {
         int[] arr = new int[]{10,10,10,10};
+        CountDownLatch cdl = new CountDownLatch(arr.length);
         for (int i = 0; i < arr.length; i ++){
-            try {
-                Barrier barrier = new Barrier(arr[i], createAof("aof" + i), block);
-                for (int j = 0; j < arr[i]; j ++){
-                    POOLS.add(barrier);
+            final int index = i;
+            new Thread(()->{
+                try {
+                    Barrier barrier = new Barrier(arr[index], createAof("aof" + index), block);
+                    for (int j = 0; j < arr[index]; j ++){
+                        POOLS.add(barrier);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    cdl.countDown();
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            }).start();
+        }
+        try {
+            cdl.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
