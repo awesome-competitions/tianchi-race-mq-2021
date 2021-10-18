@@ -14,6 +14,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Mq extends MessageQueue{
 
@@ -28,6 +29,8 @@ public class Mq extends MessageQueue{
     private final LinkedBlockingQueue<Barrier> POOLS = new LinkedBlockingQueue<>();
 
     public final static LinkedBlockingQueue<AepTask> AEP_TASKS = new LinkedBlockingQueue<>();
+
+    private static final ReentrantLock LOCK = new ReentrantLock();
 
     public Mq(Config config) throws IOException {
         LOGGER.info("Mq init");
@@ -59,18 +62,19 @@ public class Mq extends MessageQueue{
             if (size == 0){
                 break;
             }
+
+            LOCK.lock();
             ByteBuffer data = ByteBuffer.allocate(size);
             aof.read(position, data);
             data.flip();
 
             Queue queue = getQueue(topic, queueId);
-            Lock lock = queue.getLock();
-            lock.lock();
             queue.nextOffset();
             queue.getRecords().add(new SSD(aof, position - 9, size));
-            lock.unlock();
             position += size;
             count ++;
+
+            LOCK.unlock();
         }
         if (count == 0){
             int batch = (int) (Const.M * 4);

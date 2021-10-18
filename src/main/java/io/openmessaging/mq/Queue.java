@@ -14,14 +14,11 @@ public class Queue {
 
     private boolean reading;
 
-    private ReentrantLock lock;
-
     public static final ThreadPoolExecutor TPE = (ThreadPoolExecutor) Executors.newFixedThreadPool(1000);
 
     public Queue() {
         this.offset = -1;
         this.records = new ArrayList<>();
-        this.lock = new ReentrantLock();
         Monitor.queueCount ++;
     }
 
@@ -102,7 +99,4 @@ public class Queue {
         return records;
     }
 
-    public ReentrantLock getLock() {
-        return lock;
-    }
 }
