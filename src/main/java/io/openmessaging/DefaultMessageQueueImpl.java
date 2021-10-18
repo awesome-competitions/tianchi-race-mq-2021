@@ -32,7 +32,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
             queue = new Mq(new Config(
                     "/essd/",
                     "/pmem/nico",
-                    (long) (Const.G * 62.5),
+                    (long) (Const.G * 62),
                     40,
                     10,
                     Const.SECOND * 3000
