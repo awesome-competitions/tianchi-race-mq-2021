@@ -38,6 +38,9 @@ public class Barrier {
         this.barrier = new CyclicBarrier(parties, ()->{
             try {
                 int dif = (int) ((Const.K * 4) - block.position() % (Const.K * 4));
+                if (dif <= 9){
+                    dif += Const.K * 4;
+                }
                 block.put((byte) 110)
                         .putShort((short) 1)
                         .putInt((int) 1)
