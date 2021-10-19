@@ -33,7 +33,7 @@ public class Threads {
 
         private long ssdPos;
 
-        private final Map<Integer, ByteBuffer> results = new ConcurrentHashMap<>();
+        private final Map<Integer, ByteBuffer> results = new ArrayMap();
 
         private final Semaphore semaphore = new Semaphore(0);
 

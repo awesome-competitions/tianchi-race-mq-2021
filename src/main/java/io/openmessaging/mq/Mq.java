@@ -3,19 +3,15 @@ package io.openmessaging.mq;
 import io.openmessaging.MessageQueue;
 import io.openmessaging.consts.Const;
 import io.openmessaging.utils.BufferUtils;
-import io.openmessaging.utils.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Mq extends MessageQueue{
 

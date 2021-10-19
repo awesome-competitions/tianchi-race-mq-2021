@@ -4,7 +4,6 @@ package io.openmessaging.mq;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Queue {
 
@@ -64,9 +63,11 @@ public class Queue {
             }).start();
             reading = true;
         }
-        Map<Integer, ByteBuffer> results = ctx.getResults();
+
         int end = (int) Math.min(offset + num, records.size());
         int size = (int) (end - offset);
+        Map<Integer, ByteBuffer> results = ctx.getResults();
+        ((ArrayMap) results).setMaxIndex(size - 1);
         Semaphore semaphore = ctx.getSemaphore();
         for (int i = (int) offset; i < end; i ++){
             Data data = records.get(i);
@@ -85,9 +86,6 @@ public class Queue {
             semaphore.acquire(size);
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
-        for (int i = end; i < offset + num + 1; i ++){
-            results.put(i, null);
         }
         return results;
     }
