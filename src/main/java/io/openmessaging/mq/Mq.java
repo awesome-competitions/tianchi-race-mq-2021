@@ -32,6 +32,7 @@ public class Mq extends MessageQueue{
         this.config = config;
         this.queues = new Queue[100][2000];
         this.block = new Block(new FileWrapper(new RandomAccessFile(config.getHeapDir(), "rw")), config.getHeapSize());
+        preAllocate(block.getFw().getChannel(), config.getHeapSize());
         initQueues();
         initPools();
         startKiller();
@@ -76,13 +77,13 @@ public class Mq extends MessageQueue{
             }
             position += size;
         }
-        preAllocate(aof.getChannel());
+        preAllocate(aof.getChannel(), Const.G * 7);
     }
 
-    void preAllocate(FileChannel channel) throws IOException {
+    void preAllocate(FileChannel channel, long allocateSize) throws IOException {
         if (channel.size() == 0){
             int batch = (int) (Const.M * 4);
-            int size = (int) (Const.G * 7 / batch);
+            int size = (int) (allocateSize / batch);
             ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
             for (int i = 0; i < batch; i ++){
                 buffer.put((byte) 0);

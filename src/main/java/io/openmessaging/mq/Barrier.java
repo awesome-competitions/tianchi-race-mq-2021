@@ -41,6 +41,7 @@ public class Barrier {
                 if (dif <= 9){
                     dif += Const.K * 4;
                 }
+                int oldPos = block.position();
                 block.put((byte) 110)
                         .putShort((short) 1)
                         .putInt((int) 1)
@@ -51,10 +52,11 @@ public class Barrier {
                 aof.force();
 
                 if (Monitor.writeDramSize > Buffers.THRESHOLD_SIZE){
+                    block.flip();
+                    block.limit(oldPos);
                     aepPosition = aep.allocate(block.limit());
                     writeAep = aepPosition != -1;
                     if (writeAep){
-                        block.flip();
                         ByteBuffer blockBak = Buffers.AEP_BUFFERS.poll();
                         if (blockBak == null){
                             Monitor.writeExtraDramCount ++;
