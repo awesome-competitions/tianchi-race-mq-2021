@@ -37,6 +37,7 @@ public class Barrier {
         this.block = ByteBuffer.allocateDirect((int) (Const.K * 180));
         this.barrier = new CyclicBarrier(parties, ()->{
             try {
+                block.position((int) (block.position() + (Const.K * 4) - block.position() % (Const.K * 4)));
                 block.flip();
                 position = aof.writeWithoutSync(block);
                 aof.force();
