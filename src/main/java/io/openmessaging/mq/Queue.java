@@ -31,16 +31,13 @@ public class Queue {
             return;
         }
         Threads.Context ctx = Threads.get();
-        Data data = null;
-        if (reading && offset - nextReadOffset < 15){
-            data = ctx.allocateReadBuffer(buffer.limit());
-        }
+        Data data = ctx.allocateReadBuffer(buffer.limit());
         if (data == null){
             Monitor.missingDramSize ++;
             data = ctx.allocatePMem(buffer.limit());
-        }
-        if (data == null){
-            data = Buffers.allocateReadBuffer(buffer.limit());
+            if (data == null){
+                data = Buffers.allocateReadBuffer(buffer.limit());
+            }
         }
         if (data != null){
             data.set(buffer);
