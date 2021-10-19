@@ -81,7 +81,7 @@ public class Mq extends MessageQueue{
     void preAllocate(FileChannel channel) throws IOException {
         if (channel.size() == 0){
             int batch = (int) (Const.M * 4);
-            int size = (int) (Const.G * 33 / batch);
+            int size = (int) (Const.G * 7 / batch);
             ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
             for (int i = 0; i < batch; i ++){
                 buffer.put((byte) 0);
@@ -128,13 +128,13 @@ public class Mq extends MessageQueue{
 
     FileWrapper createAof(String name) throws IOException {
         FileWrapper aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + name, "rw"));
-//        loadAof(aof);
+        loadAof(aof);
         return aof;
     }
 
 
     void initPools() {
-        int[] arr = new int[]{10,10,10,10};
+        int[] arr = new int[]{20,20};
         for (int i = 0; i < arr.length; i ++){
             try {
                 Barrier barrier = new Barrier(arr[i], createAof("aof" + i), block);
