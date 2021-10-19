@@ -30,7 +30,6 @@ public class Monitor {
                 ", writeExtraDramCount: " + writeExtraDramCount +
                 ", readSSDCount: " + readSSDCount +
                 ", aep tasks: " + Mq.AEP_TASKS.size() +
-                ", get tasks: " + Queue.TPE.getActiveCount() +
                 ", heap max: " + runtime.maxMemory() / Const.M +
                 ", heap used: " + (runtime.totalMemory() - runtime.freeMemory()) / Const.M +
                 ", extSize: " + extSize

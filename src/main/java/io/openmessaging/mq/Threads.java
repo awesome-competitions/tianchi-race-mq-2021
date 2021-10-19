@@ -31,7 +31,7 @@ public class Threads {
 
         private long ssdPos;
 
-        public final ThreadPoolExecutor pools = (ThreadPoolExecutor) Executors.newFixedThreadPool(20);
+        public final ThreadPoolExecutor pools = (ThreadPoolExecutor) Executors.newFixedThreadPool(30);
 
         private final Map<Integer, ByteBuffer> results = new ArrayMap();
 
