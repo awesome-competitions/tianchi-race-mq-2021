@@ -36,10 +36,19 @@ public class Mq extends MessageQueue{
         this.config = config;
         this.queues = new Queue[100][2000];
         this.block = new Block(new FileWrapper(new RandomAccessFile(config.getHeapDir(), "rw")), config.getHeapSize());
+        initQueues();
         initPools();
         startKiller();
         startAepTask();
         LOGGER.info("Mq completed");
+    }
+
+    void initQueues(){
+        for (int i = 0; i < 100; i ++){
+            for (int j = 0; j < 2000; j ++){
+                this.queues[i][j] = new Queue();
+            }
+        }
     }
 
     void loadAof(FileWrapper aof) throws IOException {

@@ -18,7 +18,7 @@ public class Queue {
 
     public Queue() {
         this.offset = -1;
-        this.records = new ArrayList<>();
+        this.records = new ArrayList<>(100);
         Monitor.queueCount ++;
     }
 
@@ -67,7 +67,7 @@ public class Queue {
         Map<Integer, ByteBuffer> results = new ConcurrentHashMap<>();
         int end = (int) Math.min(offset + num, records.size());
         int size = (int) (end - offset);
-        CountDownLatch cdl = new CountDownLatch(size);
+        Semaphore semaphore = ctx.getSemaphore();
         for (int i = (int) offset; i < end; i ++){
             Data data = records.get(i);
             final int index = i;
@@ -78,11 +78,11 @@ public class Queue {
                 }else if (data.isDram()){
                     ctx.recycleReadBuffer(data);
                 }
-                cdl.countDown();
+                semaphore.release(1);
             });
         }
         try {
-            cdl.await();
+            semaphore.acquire(size);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
