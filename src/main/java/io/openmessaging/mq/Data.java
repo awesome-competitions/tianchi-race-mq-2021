@@ -56,11 +56,4 @@ public abstract class Data {
         return isSSD;
     }
 
-    @Override
-    public String toString() {
-        return "Data{" +
-                "capacity=" + capacity +
-                ", position=" + position +
-                '}';
-    }
 }

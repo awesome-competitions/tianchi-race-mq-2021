@@ -1,17 +1,8 @@
 package io.openmessaging.mq;
 
-import com.intel.pmem.llpl.AnyMemoryBlock;
-import com.intel.pmem.llpl.Heap;
 import io.openmessaging.utils.BufferUtils;
-import io.openmessaging.utils.CollectionUtils;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.*;
 
 public class PMem extends Data {
 

@@ -45,7 +45,7 @@ public class Mq extends MessageQueue{
 
     void initQueues(){
         for (int i = 0; i < 100; i ++){
-            for (int j = 0; j < 2000; j ++){
+            for (int j = 0; j < 1900; j ++){
                 this.queues[i][j] = new Queue();
             }
         }

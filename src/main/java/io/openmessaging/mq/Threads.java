@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 
@@ -31,6 +32,8 @@ public class Threads {
         private int blockPos;
 
         private long ssdPos;
+
+        private final Map<Integer, ByteBuffer> results = new ConcurrentHashMap<>();
 
         private final Semaphore semaphore = new Semaphore(0);
 
@@ -139,6 +142,10 @@ public class Threads {
 
         public Semaphore getSemaphore() {
             return semaphore;
+        }
+
+        public Map<Integer, ByteBuffer> getResults() {
+            return results;
         }
     }
 }
