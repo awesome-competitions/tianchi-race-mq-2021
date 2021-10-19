@@ -60,4 +60,8 @@ public class Dram extends Data {
         ext = null;
         data.clear();
     }
+
+    public ByteBuffer getData() {
+        return data;
+    }
 }

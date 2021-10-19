@@ -1,6 +1,8 @@
 package io.openmessaging.mq;
 
 import io.openmessaging.consts.Const;
+import io.openmessaging.utils.BufferUtils;
+import sun.nio.ch.DirectBuffer;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -22,8 +24,6 @@ public class Threads {
     }
 
     public static class Context{
-
-        private ByteBuffer buffer;
 
         private Barrier barrier;
 
@@ -69,7 +69,15 @@ public class Threads {
 
         public void recycleReadBuffer(Data data){
             data.clear();
-            getReadBuffer(data.getCapacity()).add(data);
+            LinkedBlockingQueue<Data> buffers = getReadBuffer(data.getCapacity());
+            if (buffers != null){
+                buffers.add(data);
+            }else{
+                ByteBuffer buffer = ((Dram) data).getData();
+                if (buffer instanceof DirectBuffer){
+                    BufferUtils.clean(buffer);
+                }
+            }
         }
 
         public Data allocatePMem(int cap){
@@ -90,7 +98,7 @@ public class Threads {
         }
 
         public LinkedBlockingQueue<Data> getReadBuffer(int cap){
-            return cap < Const.K * 4.5 ? readBuffers1 : cap < Const.K * 9 ? readBuffers2 : cap < Const.K * 13.5 ? readBuffers3 : readBuffers4;
+            return cap < Const.K * 4.5 ? null : cap < Const.K * 9 ? readBuffers2 : cap < Const.K * 13.5 ? readBuffers3 : readBuffers4;
         }
 
         public LinkedBlockingQueue<Data> getReadBufferGreed(int cap){
@@ -98,18 +106,9 @@ public class Threads {
         }
 
         public Context() {
-            this.buffer = ByteBuffer.allocateDirect((int) (Const.K * 17) + 9);
-            for (int i = 0; i < 105; i ++){
+            for (int i = 0; i < 50; i ++){
                 buffers.add(ByteBuffer.allocateDirect((int) (Const.K * 17)));
             }
-        }
-
-        public ByteBuffer getBuffer() {
-            return buffer;
-        }
-
-        public void setBuffer(ByteBuffer buffer) {
-            this.buffer = buffer;
         }
 
         public Barrier getBarrier() {
