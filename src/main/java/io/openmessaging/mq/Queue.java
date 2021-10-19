@@ -13,8 +13,6 @@ public class Queue {
 
     private boolean reading;
 
-    public static final ThreadPoolExecutor TPE = (ThreadPoolExecutor) Executors.newFixedThreadPool(1000);
-
     public Queue() {
         this.offset = -1;
         this.records = new ArrayList<>();
@@ -72,7 +70,7 @@ public class Queue {
         for (int i = (int) offset; i < end; i ++){
             Data data = records.get(i);
             final int index = i;
-            TPE.execute(()->{
+            ctx.getPools().execute(()->{
                 results.put((int) (index - offset), data.get(ctx));
                 if (data.isPMem()){
                     ctx.recyclePMem(data);

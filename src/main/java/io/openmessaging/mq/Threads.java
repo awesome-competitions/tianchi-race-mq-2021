@@ -6,9 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 
 public class Threads {
 
@@ -32,6 +30,8 @@ public class Threads {
         private int blockPos;
 
         private long ssdPos;
+
+        public final ThreadPoolExecutor pools = (ThreadPoolExecutor) Executors.newFixedThreadPool(20);
 
         private final Map<Integer, ByteBuffer> results = new ArrayMap();
 
@@ -146,6 +146,10 @@ public class Threads {
 
         public Map<Integer, ByteBuffer> getResults() {
             return results;
+        }
+
+        public ThreadPoolExecutor getPools() {
+            return pools;
         }
     }
 }
