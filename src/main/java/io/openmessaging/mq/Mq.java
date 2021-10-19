@@ -69,10 +69,11 @@ public class Mq extends MessageQueue{
             ByteBuffer data = ByteBuffer.allocate(size);
             aof.read(position, data);
             data.flip();
-
-            Queue queue = getQueue(topic, queueId);
-            queue.nextOffset();
-            queue.getRecords().add(new SSD(aof, position - 9, size));
+            if (topic < 101){
+                Queue queue = getQueue(topic, queueId);
+                queue.nextOffset();
+                queue.getRecords().add(new SSD(aof, position - 9, size));
+            }
             position += size;
         }
         preAllocate(aof.getChannel());
