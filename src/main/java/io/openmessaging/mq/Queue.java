@@ -18,7 +18,7 @@ public class Queue {
 
     public Queue() {
         this.offset = -1;
-        this.records = new ArrayList<>(100);
+        this.records = new ArrayList<>(0);
         Monitor.queueCount ++;
     }
 
