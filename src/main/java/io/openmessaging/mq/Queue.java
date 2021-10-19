@@ -13,6 +13,8 @@ public class Queue {
 
     private boolean reading;
 
+    private long nextReadOffset;
+
     public Queue() {
         this.offset = -1;
         this.records = new ArrayList<>(30);
@@ -29,20 +31,22 @@ public class Queue {
             return;
         }
         Threads.Context ctx = Threads.get();
-        Data data = ctx.allocateReadBuffer(buffer.limit());
+        Data data = null;
+        if (reading && offset - nextReadOffset < 3){
+            data = ctx.allocateReadBuffer(buffer.limit());
+        }
         if (data == null){
             Monitor.missingDramSize ++;
             data = ctx.allocatePMem(buffer.limit());
-            if (data == null){
-                data = Buffers.allocateReadBuffer(buffer.limit());
-            }
+        }
+        if (data == null){
+            data = Buffers.allocateReadBuffer(buffer.limit());
         }
         if (data != null){
             data.set(buffer);
             records.add(data);
             return;
         }
-
         records.add(new SSD(aof, position, buffer.limit()));
     }
 
@@ -62,12 +66,12 @@ public class Queue {
             reading = true;
         }
 
-        int end = (int) Math.min(offset + num, records.size());
-        int size = (int) (end - offset);
+        nextReadOffset = (int) Math.min(offset + num, records.size());
+        int size = (int) (nextReadOffset - offset);
         Map<Integer, ByteBuffer> results = ctx.getResults();
         ((ArrayMap) results).setMaxIndex(size - 1);
         Semaphore semaphore = ctx.getSemaphore();
-        for (int i = (int) offset; i < end; i ++){
+        for (int i = (int) offset; i < nextReadOffset; i ++){
             Data data = records.get(i);
             final int index = i;
             ctx.getPools().execute(()->{
