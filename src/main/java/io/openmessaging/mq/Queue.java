@@ -32,7 +32,7 @@ public class Queue {
         }
         Threads.Context ctx = Threads.get();
         Data data = null;
-        if (reading && offset - nextReadOffset < 10){
+        if (reading && offset - nextReadOffset < 15){
             data = ctx.allocateReadBuffer(buffer.limit());
         }
         if (data == null){
