@@ -77,7 +77,7 @@ public class Mq extends MessageQueue{
             }
             position += size;
         }
-        preAllocate(aof.getChannel(), Const.G * 7);
+        preAllocate(aof.getChannel(), Const.G * 33);
     }
 
     void preAllocate(FileChannel channel, long allocateSize) throws IOException {
