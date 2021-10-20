@@ -44,7 +44,6 @@ public class Threads {
         private final LinkedBlockingQueue<Data> readBuffers3 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> readBuffers4 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> readBuffers5 = new LinkedBlockingQueue<>();
-        private final LinkedBlockingQueue<Data> readBuffers6 = new LinkedBlockingQueue<>();
 
         private final LinkedBlockingQueue<Data> idles1 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> idles2 = new LinkedBlockingQueue<>();
@@ -64,7 +63,7 @@ public class Threads {
         public Data allocateReadBuffer(int cap){
             Data data = getReadBufferGreed(cap).poll();
             if (data == null){
-                data = getReadBufferGreed((int) (cap + Const.K * 2.8)).poll();
+                data = getReadBufferGreed((int) (cap + Const.K * 3.4)).poll();
             }
             if (data != null){
                 Monitor.writeDramCount ++;
@@ -103,24 +102,15 @@ public class Threads {
         }
 
         public LinkedBlockingQueue<Data> getReadBuffer(int cap){
-            return cap < Const.K * 2.8 ?
-            null : cap < Const.K * 5.6 ?
-             readBuffers2 : cap < Const.K * 8.4 ?
-              readBuffers3: cap < Const.K * 11.2 ?
-              readBuffers4: cap < Const.K * 14 ?
-              readBuffers5 : readBuffers6;
+            return cap < Const.K * 3.4 ? null : cap < Const.K * 6.8 ? readBuffers2 : cap < Const.K * 10.2 ? readBuffers3 : cap < Const.K * 13.6 ? readBuffers4: readBuffers5;
         }
 
         public LinkedBlockingQueue<Data> getReadBufferGreed(int cap){
-            return cap < Const.K * 2.8 ?
-                readBuffers2 : cap < Const.K * 5.6 ?
-                 readBuffers3 : cap < Const.K * 8.4 ?
-                  readBuffers4: cap < Const.K * 11.2 ?
-                  readBuffers5: readBuffers6;
+            return cap < Const.K * 3.4 ? readBuffers2 : cap < Const.K * 6.8 ? readBuffers3 : cap < Const.K * 10.2 ? readBuffers4 : readBuffers5;
         }
 
         public Context() {
-            for (int i = 0; i < 40; i ++){
+            for (int i = 0; i < 50; i ++){
                 buffers.add(ByteBuffer.allocateDirect((int) (Const.K * 17)));
             }
         }
