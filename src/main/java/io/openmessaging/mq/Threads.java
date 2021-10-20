@@ -65,12 +65,6 @@ public class Threads {
             Data data = getReadBufferGreed(cap).poll();
             if (data == null){
                 data = getReadBufferGreed((int) (cap + Const.K * 2.8)).poll();
-                if (data == null){
-                    data = getReadBufferGreed((int) (cap + Const.K * 2.8 * 2)).poll();
-                    if (data == null){
-                        data = getReadBufferGreed((int) (cap + Const.K * 2.8 * 3)).poll();
-                    }
-                }
             }
             if (data != null){
                 Monitor.writeDramCount ++;
