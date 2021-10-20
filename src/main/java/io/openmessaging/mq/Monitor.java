@@ -23,8 +23,8 @@ public class Monitor {
         return "queueCount: " + queueCount +
                 ", appendSize: " + appendSize +
                 ", appendCount: " + appendCount +
-                ", readMemCount: " + readMemCount +
-                ", writeMemCount: " + writeMemCount +
+                ", readAepCount: " + readMemCount +
+                ", writeAepCount: " + writeMemCount +
                 ", writeDramCount: " + writeDramCount +
                 ", missingDramSize: " + missingDramSize +
                 ", writeExtraDramCount: " + writeExtraDramCount +
