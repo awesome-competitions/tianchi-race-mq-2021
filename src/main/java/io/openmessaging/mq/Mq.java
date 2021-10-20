@@ -129,7 +129,7 @@ public class Mq extends MessageQueue{
 
     FileWrapper createAof(String name) throws IOException {
         FileWrapper aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + name, "rw"));
-//        loadAof(aof);
+        loadAof(aof);
         return aof;
     }
 
