@@ -122,7 +122,7 @@ public class Threads {
         }
 
         public Context() {
-            for (int i = 0; i < 50; i ++){
+            for (int i = 0; i < 40; i ++){
                 buffers.add(ByteBuffer.allocateDirect((int) (Const.K * 17)));
             }
         }
