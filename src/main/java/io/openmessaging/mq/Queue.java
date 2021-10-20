@@ -53,14 +53,16 @@ public class Queue {
     public Map<Integer, ByteBuffer> read(long offset, int num){
         Threads.Context ctx = Threads.get();
         if (!reading){
-            for (long i = 0; i < offset; i ++){
-                Data data = records.get((int) i);
-                if (data.isPMem()){
-                    ctx.recyclePMem(data);
-                }else if (data.isDram()){
-                    ctx.recycleReadBuffer(data);
+            new Thread(()->{
+                for (long i = 0; i < offset; i ++){
+                    Data data = records.get((int) i);
+                    if (data.isPMem()){
+                        ctx.recyclePMem(data);
+                    }else if (data.isDram()){
+                        ctx.recycleReadBuffer(data);
+                    }
                 }
-            }
+            }).start();
             reading = true;
         }
 
