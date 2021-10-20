@@ -109,9 +109,8 @@ public class Threads {
         }
 
         public LinkedBlockingQueue<Data> getReadBuffer(int cap){
-            return cap < Const.K * 1 ?
-            null : cap < Const.K * 2.8 ?
-            readBuffers1 : cap < Const.K * 5.6 ?
+            return cap < Const.K * 2.8 ?
+            null : cap < Const.K * 5.6 ?
              readBuffers2 : cap < Const.K * 8.4 ?
               readBuffers3: cap < Const.K * 11.2 ?
               readBuffers4: cap < Const.K * 14 ?
@@ -119,8 +118,7 @@ public class Threads {
         }
 
         public LinkedBlockingQueue<Data> getReadBufferGreed(int cap){
-            return cap < Const.K * 1 ?
-                readBuffers1 : cap < Const.K * 2.8 ?
+            return cap < Const.K * 2.8 ?
                 readBuffers2 : cap < Const.K * 5.6 ?
                  readBuffers3 : cap < Const.K * 8.4 ?
                   readBuffers4: cap < Const.K * 11.2 ?

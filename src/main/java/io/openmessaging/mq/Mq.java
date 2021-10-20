@@ -180,10 +180,12 @@ public class Mq extends MessageQueue{
     }
 
     public long append(int topic, int queueId, ByteBuffer buffer)  {
-        Monitor.appendCount ++;
-        Monitor.appendSize += buffer.limit();
-        if (Monitor.appendCount % 100000 == 0){
-            LOGGER.info(Monitor.information());
+        if(Thread.currentThread().getId() == 1){
+            Monitor.appendCount ++;
+            Monitor.appendSize += buffer.limit();
+            if (Monitor.appendCount % 10000 == 0){
+                LOGGER.info(Monitor.information());
+            }
         }
 
         Queue queue = getQueue(topic, queueId);
