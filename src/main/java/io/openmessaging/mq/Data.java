@@ -1,9 +1,10 @@
 package io.openmessaging.mq;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import sun.misc.Contended;
 
+import java.nio.ByteBuffer;
+
+@Contended
 public abstract class Data {
 
     protected int capacity;

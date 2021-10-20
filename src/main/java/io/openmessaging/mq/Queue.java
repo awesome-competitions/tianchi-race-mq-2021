@@ -1,10 +1,13 @@
 package io.openmessaging.mq;
 
 
+import sun.misc.Contended;
+
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 
+@Contended
 public class Queue {
 
     private long offset;
@@ -50,16 +53,14 @@ public class Queue {
     public Map<Integer, ByteBuffer> read(long offset, int num){
         Threads.Context ctx = Threads.get();
         if (!reading){
-            new Thread(()->{
-                for (long i = 0; i < offset; i ++){
-                    Data data = records.get((int) i);
-                    if (data.isPMem()){
-                        ctx.recyclePMem(data);
-                    }else if (data.isDram()){
-                        ctx.recycleReadBuffer(data);
-                    }
+            for (long i = 0; i < offset; i ++){
+                Data data = records.get((int) i);
+                if (data.isPMem()){
+                    ctx.recyclePMem(data);
+                }else if (data.isDram()){
+                    ctx.recycleReadBuffer(data);
                 }
-            }).start();
+            }
             reading = true;
         }
 

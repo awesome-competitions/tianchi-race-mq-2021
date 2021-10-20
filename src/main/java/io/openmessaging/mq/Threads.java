@@ -43,6 +43,7 @@ public class Threads {
         private final LinkedBlockingQueue<Data> readBuffers2 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> readBuffers3 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> readBuffers4 = new LinkedBlockingQueue<>();
+        private final LinkedBlockingQueue<Data> readBuffers5 = new LinkedBlockingQueue<>();
 
         private final LinkedBlockingQueue<Data> idles1 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> idles2 = new LinkedBlockingQueue<>();
@@ -61,6 +62,9 @@ public class Threads {
 
         public Data allocateReadBuffer(int cap){
             Data data = getReadBufferGreed(cap).poll();
+            if (data == null){
+                data = getReadBufferGreed((int) (cap + Const.K * 3.4)).poll();
+            }
             if (data != null){
                 Monitor.writeDramCount ++;
             }
@@ -98,11 +102,11 @@ public class Threads {
         }
 
         public LinkedBlockingQueue<Data> getReadBuffer(int cap){
-            return cap < Const.K * 4.5 ? null : cap < Const.K * 9 ? readBuffers2 : cap < Const.K * 13.5 ? readBuffers3 : readBuffers4;
+            return cap < Const.K * 3.4 ? null : cap < Const.K * 6.8 ? readBuffers2 : cap < Const.K * 10.2 ? readBuffers3 : cap < Const.K * 13.6 ? readBuffers4: readBuffers5;
         }
 
         public LinkedBlockingQueue<Data> getReadBufferGreed(int cap){
-            return cap < Const.K * 4.5 ? readBuffers2 : cap < Const.K * 9 ? readBuffers3 : readBuffers4;
+            return cap < Const.K * 3.4 ? readBuffers2 : cap < Const.K * 6.8 ? readBuffers3 : cap < Const.K * 10.2 ? readBuffers4 : readBuffers5;
         }
 
         public Context() {
