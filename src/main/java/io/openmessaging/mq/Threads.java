@@ -85,7 +85,7 @@ public class Threads {
             LinkedBlockingQueue<Data> buffers = getReadBuffer(data.getCapacity());
             if (buffers != null){
                 buffers.add(data);
-            }else if (data.getCapacity() > Const.K * 1.5){
+            }else if (data.getCapacity() > Const.K * 2){
                 readBuffers1.add(data);
             }else{
                 ByteBuffer buffer = ((Dram) data).getData();
