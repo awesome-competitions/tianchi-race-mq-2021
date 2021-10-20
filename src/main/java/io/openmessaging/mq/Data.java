@@ -1,10 +1,7 @@
 package io.openmessaging.mq;
 
-import sun.misc.Contended;
-
 import java.nio.ByteBuffer;
 
-@Contended
 public abstract class Data {
 
     protected int capacity;

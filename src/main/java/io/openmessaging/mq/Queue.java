@@ -1,13 +1,9 @@
 package io.openmessaging.mq;
 
-
-import sun.misc.Contended;
-
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 
-@Contended
 public class Queue {
 
     private long offset;
