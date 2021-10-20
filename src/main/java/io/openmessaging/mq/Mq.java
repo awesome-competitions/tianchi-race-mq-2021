@@ -32,7 +32,6 @@ public class Mq extends MessageQueue{
         this.config = config;
         this.queues = new Queue[100][2000];
         this.block = new Block(new FileWrapper(new RandomAccessFile(config.getHeapDir(), "rw")), config.getHeapSize());
-        preAllocate(block.getFw().getChannel(), config.getHeapSize());
         initQueues();
         initPools();
         startKiller();
@@ -77,7 +76,7 @@ public class Mq extends MessageQueue{
             }
             position += size;
         }
-        preAllocate(aof.getChannel(), Const.G * 33);
+        preAllocate(aof.getChannel(), Const.G * 42);
     }
 
     void preAllocate(FileChannel channel, long allocateSize) throws IOException {
