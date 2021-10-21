@@ -1,7 +1,10 @@
 package io.openmessaging.mq;
 
+import io.openmessaging.utils.BufferUtils;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.*;
@@ -64,6 +67,11 @@ public class Queue {
             reading = true;
         }
 
+        ctx.getMappedByteBuffers().removeIf(m ->{
+            BufferUtils.clean(m);
+            return true;
+        });
+
         nextReadOffset = (int) Math.min(offset + num, records.size());
         int size = (int) (nextReadOffset - offset);
         Map<Integer, ByteBuffer> results = ctx.getResults();
@@ -73,14 +81,18 @@ public class Queue {
             int index = (int) (i - offset);
             if (data.isPMem()){
                 PMem pMem = ((PMem) data);
-                results.put(index, pMem.getChannel().map(FileChannel.MapMode.READ_ONLY, pMem.getPosition(), pMem.getCapacity()));
+                MappedByteBuffer mappedByteBuffer = pMem.getChannel().map(FileChannel.MapMode.READ_ONLY, pMem.getPosition(), pMem.getCapacity());
+                ctx.getMappedByteBuffers().add(mappedByteBuffer);
+                results.put(index, mappedByteBuffer);
                 ctx.recyclePMem(data);
             }else if (data.isDram()){
                 results.put(index, data.get(ctx));
                 ctx.recycleReadBuffer(data);
             }else {
                 SSD ssd = ((SSD) data);
-                results.put(index, ssd.getChannel().map(FileChannel.MapMode.READ_ONLY, ssd.getPosition() + 9, ssd.getCapacity()));
+                MappedByteBuffer mappedByteBuffer = ssd.getChannel().map(FileChannel.MapMode.READ_ONLY, ssd.getPosition() + 9, ssd.getCapacity());
+                ctx.getMappedByteBuffers().add(mappedByteBuffer);
+                results.put(index, mappedByteBuffer);
             }
         }
         return results;
