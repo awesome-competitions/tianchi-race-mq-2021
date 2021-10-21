@@ -129,7 +129,7 @@ public class Mq extends MessageQueue{
 
     FileWrapper createAof(String name) throws IOException {
         FileWrapper aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + name, "rw"));
-        loadAof(aof);
+//        loadAof(aof);
         return aof;
     }
 
@@ -211,7 +211,12 @@ public class Mq extends MessageQueue{
 
     public Map<Integer, ByteBuffer> getRange(int topic, int queueId, long offset, int fetchNum) {
         Queue queue = getQueue(topic, queueId);
-        return queue.read(offset, fetchNum);
+        try {
+            return queue.read(offset, fetchNum);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public int getTopicId(String topic){

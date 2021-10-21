@@ -2,6 +2,7 @@ package io.openmessaging.mq;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,4 +45,8 @@ public class SSD extends Data{
 
     @Override
     public void clear() {}
+
+    public FileChannel getChannel(){
+        return fw.getChannel();
+    }
 }
