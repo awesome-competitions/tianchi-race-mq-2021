@@ -28,7 +28,7 @@ public class Test {
         byte[] bs = new byte[(int) batch];
         for (int i = 0; i < 1024 * 10; i ++){
             MappedByteBuffer mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_WRITE, pos, batch);
-//            mappedByteBuffer.get(bs);
+            mappedByteBuffer.get(bs);
             BufferUtils.clean(mappedByteBuffer);
             pos += batch;
         }
