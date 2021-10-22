@@ -76,7 +76,7 @@ public class Mq extends MessageQueue{
 //            }
 //            position += size;
 //        }
-        preAllocate(aof.getChannel(), Const.G * 33);
+//        preAllocate(aof.getChannel(), Const.G * 33);
     }
 
     void preAllocate(FileChannel channel, long allocateSize) throws IOException {
@@ -135,7 +135,7 @@ public class Mq extends MessageQueue{
 
 
     void initPools() {
-        int[] arr = new int[]{10,10,10,10};
+        int[] arr = new int[]{13,13,14};
         for (int i = 0; i < arr.length; i ++){
             try {
                 Barrier barrier = new Barrier(arr[i], createAof("aof" + i), block);
