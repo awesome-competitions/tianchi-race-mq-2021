@@ -1,5 +1,6 @@
 package io.openmessaging.mq;
 
+import io.openmessaging.consts.Const;
 import io.openmessaging.utils.BufferUtils;
 
 import java.io.IOException;
@@ -41,6 +42,15 @@ public class Queue {
             data = ctx.allocatePMem(buffer.limit());
             if (data == null){
                 data = Buffers.allocateReadBuffer(buffer.limit());
+            }else{
+                ByteBuffer byteBuffer = ctx.getAepBuffers().poll();
+                if (byteBuffer == null){
+                    byteBuffer = ByteBuffer.allocateDirect((int) (Const.K * 17));
+                }
+                byteBuffer.put(buffer);
+                byteBuffer.flip();
+                ctx.getAepTasks().add(new AepData(data, byteBuffer, offset, records));
+                data = null;
             }
         }
         if (data != null){
