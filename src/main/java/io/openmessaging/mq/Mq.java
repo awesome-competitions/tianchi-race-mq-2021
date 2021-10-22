@@ -48,34 +48,34 @@ public class Mq extends MessageQueue{
     }
 
     void loadAof(FileWrapper aof) throws IOException {
-//        long position = 0;
-//        ByteBuffer header = ByteBuffer.allocate(9);
-//
-//        while(true){
-//            aof.read(position, header);
-//            position += 9;
-//            header.flip();
-//            if (header.remaining() < 9){
-//                break;
-//            }
-//            int topic = header.get();
-//            int queueId = header.getShort();
-//            int offset = header.getInt();
-//            int size = header.getShort();
-//            header.clear();
-//            if (size == 0){
-//                break;
-//            }
-//            ByteBuffer data = ByteBuffer.allocate(size);
-//            aof.read(position, data);
-//            data.flip();
-//            if (topic < 101){
-//                Queue queue = getQueue(topic, queueId);
-//                queue.nextOffset();
-//                queue.getRecords().add(new SSD(aof, position - 9, size));
-//            }
-//            position += size;
-//        }
+        long position = 0;
+        ByteBuffer header = ByteBuffer.allocate(9);
+
+        while(true){
+            aof.read(position, header);
+            position += 9;
+            header.flip();
+            if (header.remaining() < 9){
+                break;
+            }
+            int topic = header.get();
+            int queueId = header.getShort();
+            int offset = header.getInt();
+            int size = header.getShort();
+            header.clear();
+            if (size == 0){
+                break;
+            }
+            ByteBuffer data = ByteBuffer.allocate(size);
+            aof.read(position, data);
+            data.flip();
+            if (topic < 101){
+                Queue queue = getQueue(topic, queueId);
+                queue.nextOffset();
+                queue.getRecords().add(new SSD(aof, position - 9, size));
+            }
+            position += size;
+        }
         preAllocate(aof.getChannel(), Const.G * 33);
     }
 
