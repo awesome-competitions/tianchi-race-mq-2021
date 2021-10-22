@@ -36,20 +36,20 @@ public class Threads {
 
         private final Semaphore semaphore = new Semaphore(0);
 
-        private final List<MappedByteBuffer> mappedByteBuffers = new ArrayList<>();
-        
-        private final LinkedList<ByteBuffer> buffers = new LinkedList<>();
+        private final MappedByteBuffer[] mappedByteBuffers = new MappedByteBuffer[50];
 
-        private final LinkedList<Data> readBuffers1 = new LinkedList<>();
-        private final LinkedList<Data> readBuffers2 = new LinkedList<>();
-        private final LinkedList<Data> readBuffers3 = new LinkedList<>();
-        private final LinkedList<Data> readBuffers4 = new LinkedList<>();
-        private final LinkedList<Data> readBuffers5 = new LinkedList<>();
+        private final LinkedBlockingQueue<ByteBuffer> buffers = new LinkedBlockingQueue<>();
 
-        private final LinkedList<Data> idles1 = new LinkedList<>();
-        private final LinkedList<Data> idles2 = new LinkedList<>();
-        private final LinkedList<Data> idles3 = new LinkedList<>();
-        private final LinkedList<Data> idles4 = new LinkedList<>();
+        private final LinkedBlockingQueue<Data> readBuffers1 = new LinkedBlockingQueue<>();
+        private final LinkedBlockingQueue<Data> readBuffers2 = new LinkedBlockingQueue<>();
+        private final LinkedBlockingQueue<Data> readBuffers3 = new LinkedBlockingQueue<>();
+        private final LinkedBlockingQueue<Data> readBuffers4 = new LinkedBlockingQueue<>();
+        private final LinkedBlockingQueue<Data> readBuffers5 = new LinkedBlockingQueue<>();
+
+        private final LinkedBlockingQueue<Data> idles1 = new LinkedBlockingQueue<>();
+        private final LinkedBlockingQueue<Data> idles2 = new LinkedBlockingQueue<>();
+        private final LinkedBlockingQueue<Data> idles3 = new LinkedBlockingQueue<>();
+        private final LinkedBlockingQueue<Data> idles4 = new LinkedBlockingQueue<>();
 
         public ByteBuffer allocateBuffer(){
             ByteBuffer buffer = buffers.poll();
@@ -74,7 +74,7 @@ public class Threads {
 
         public void recycleReadBuffer(Data data){
             data.clear();
-            LinkedList<Data> buffers = getReadBuffer(data.getCapacity());
+            LinkedBlockingQueue<Data> buffers = getReadBuffer(data.getCapacity());
             if (buffers != null){
                 buffers.add(data);
             }else {
@@ -94,19 +94,19 @@ public class Threads {
             getIdles(data.getCapacity()).add(data);
         }
 
-        public LinkedList<Data> getIdles(int cap){
+        public LinkedBlockingQueue<Data> getIdles(int cap){
             return cap < Const.K * 4.5 ? idles1 : cap < Const.K * 9 ? idles2 : cap < Const.K * 13.5 ? idles3 : idles4;
         }
 
-        public LinkedList<Data> getIdlesGreed(int cap){
+        public LinkedBlockingQueue<Data> getIdlesGreed(int cap){
             return cap < Const.K * 4.5 ? idles2 : cap < Const.K * 9 ? idles3 : idles4;
         }
 
-        public LinkedList<Data> getReadBuffer(int cap){
+        public LinkedBlockingQueue<Data> getReadBuffer(int cap){
             return cap < Const.K * 3.4 ? null : cap < Const.K * 6.8 ? readBuffers2 : cap < Const.K * 10.2 ? readBuffers3 : cap < Const.K * 13.6 ? readBuffers4: readBuffers5;
         }
 
-        public LinkedList<Data> getReadBufferGreed(int cap){
+        public LinkedBlockingQueue<Data> getReadBufferGreed(int cap){
             return cap < Const.K * 3.4 ? readBuffers2 : cap < Const.K * 6.8 ? readBuffers3 : cap < Const.K * 10.2 ? readBuffers4 : readBuffers5;
         }
 
@@ -156,7 +156,7 @@ public class Threads {
             return pools;
         }
 
-        public List<MappedByteBuffer> getMappedByteBuffers() {
+        public MappedByteBuffer[] getMappedByteBuffers() {
             return mappedByteBuffers;
         }
     }

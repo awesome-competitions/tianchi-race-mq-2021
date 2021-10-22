@@ -79,4 +79,8 @@ public class ArrayMap implements java.util.Map<Integer, ByteBuffer> {
     public void setMaxIndex(int maxIndex){
         this.maxIndex = maxIndex;
     }
+
+    public int getMaxIndex() {
+        return maxIndex;
+    }
 }

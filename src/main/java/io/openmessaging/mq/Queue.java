@@ -67,33 +67,49 @@ public class Queue {
             reading = true;
         }
 
-        ctx.getMappedByteBuffers().removeIf(m ->{
-            BufferUtils.clean(m);
-            return true;
-        });
-
         nextReadOffset = (int) Math.min(offset + num, records.size());
         int size = (int) (nextReadOffset - offset);
         Map<Integer, ByteBuffer> results = ctx.getResults();
+
+        MappedByteBuffer[] mappedByteBuffers = ctx.getMappedByteBuffers();
+        MappedByteBuffer tmp;
+        for (int i = 0; i <= ((ArrayMap) results).getMaxIndex(); i ++){
+            tmp = mappedByteBuffers[i];
+            if (tmp != null){
+                BufferUtils.clean(tmp);
+                mappedByteBuffers[i] = null;
+            }
+        }
         ((ArrayMap) results).setMaxIndex(size - 1);
+        Semaphore semaphore = ctx.getSemaphore();
         for (int i = (int) offset; i < nextReadOffset; i ++){
             Data data = records.get(i);
             int index = (int) (i - offset);
-            if (data.isPMem()){
-                PMem pMem = ((PMem) data);
-                MappedByteBuffer mappedByteBuffer = pMem.getChannel().map(FileChannel.MapMode.READ_ONLY, pMem.getPosition(), pMem.getCapacity());
-                ctx.getMappedByteBuffers().add(mappedByteBuffer);
-                results.put(index, mappedByteBuffer);
-                ctx.recyclePMem(data);
-            }else if (data.isDram()){
-                results.put(index, data.get(ctx));
-                ctx.recycleReadBuffer(data);
-            }else {
-                SSD ssd = ((SSD) data);
-                MappedByteBuffer mappedByteBuffer = ssd.getChannel().map(FileChannel.MapMode.READ_ONLY, ssd.getPosition() + 9, ssd.getCapacity());
-                ctx.getMappedByteBuffers().add(mappedByteBuffer);
-                results.put(index, mappedByteBuffer);
-            }
+            ctx.getPools().execute(()->{
+                try {
+                    if (data.isPMem()){
+                        results.put(index, data.get(ctx));
+                        ctx.recyclePMem(data);
+                    }else if (data.isDram()){
+                        results.put(index, data.get(ctx));
+                        ctx.recycleReadBuffer(data);
+                    }else {
+                        SSD ssd = ((SSD) data);
+                        MappedByteBuffer mappedByteBuffer = ssd.getChannel().map(FileChannel.MapMode.READ_ONLY, ssd.getPosition() + 9, ssd.getCapacity());
+                        mappedByteBuffers[index] = mappedByteBuffer;
+                        results.put(index, mappedByteBuffer);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    semaphore.release();
+                }
+            });
+        }
+        try {
+            semaphore.acquire(size);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         return results;
     }
