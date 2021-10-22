@@ -49,8 +49,10 @@ public class Queue {
                 }
                 byteBuffer.put(buffer);
                 byteBuffer.flip();
+                Monitor.readSSDCount ++;
+                records.add(new SSD(aof, position, buffer.limit()));
                 ctx.getAepTasks().add(new AepData(data, byteBuffer, offset, records));
-                data = null;
+                return;
             }
         }
         if (data != null){

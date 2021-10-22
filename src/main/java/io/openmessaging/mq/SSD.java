@@ -29,7 +29,6 @@ public class SSD extends Data{
         ByteBuffer buffer = ctx.allocateBuffer();
         buffer.limit(capacity);
         try {
-            Monitor.readSSDCount ++;
             fw.read(position + 9, buffer);
         } catch (IOException e) {
             e.printStackTrace();
