@@ -55,7 +55,7 @@ public class Queue {
         if (!reading){
             for (long i = 0; i < offset; i ++){
                 Data data = records.get((int) i);
-                if (data.isPMem()){
+                if (data.isDram()){
                     ctx.recycleReadBuffer(data);
                 }
             }
