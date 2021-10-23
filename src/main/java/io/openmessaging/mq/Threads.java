@@ -118,7 +118,7 @@ public class Threads {
             for (int i = 0; i < 50; i ++){
                 buffers.add(ByteBuffer.allocateDirect((int) (Const.K * 17)));
             }
-            startAepTask();
+//            startAepTask();
         }
 
         public Barrier getBarrier() {

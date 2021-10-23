@@ -39,21 +39,7 @@ public class Queue {
         Data data = ctx.allocateReadBuffer(buffer.limit());
         if (data == null){
             Monitor.missingDramSize ++;
-            data = ctx.allocatePMem(buffer.limit());
-            if (data == null){
-                data = Buffers.allocateReadBuffer(buffer.limit());
-            }else{
-                ByteBuffer byteBuffer = ctx.getAepBuffers().poll();
-                if (byteBuffer == null){
-                    byteBuffer = ByteBuffer.allocateDirect((int) (Const.K * 17));
-                }
-                byteBuffer.put(buffer);
-                byteBuffer.flip();
-                Monitor.readSSDCount ++;
-                records.add(new SSD(aof, position, buffer.limit()));
-                ctx.getAepTasks().add(new AepData(data, byteBuffer, offset, records));
-                return;
-            }
+            data = Buffers.allocateReadBuffer(buffer.limit());
         }
         if (data != null){
             data.set(buffer);
@@ -70,8 +56,6 @@ public class Queue {
             for (long i = 0; i < offset; i ++){
                 Data data = records.get((int) i);
                 if (data.isPMem()){
-                    ctx.recyclePMem(data);
-                }else if (data.isDram()){
                     ctx.recycleReadBuffer(data);
                 }
             }
