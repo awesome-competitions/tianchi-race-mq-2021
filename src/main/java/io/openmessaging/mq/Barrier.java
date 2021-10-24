@@ -57,7 +57,6 @@ public class Barrier {
 
                 if (Monitor.writeDramSize > Buffers.THRESHOLD_SIZE){
                     block.flip();
-                    block.limit(oldPos);
                     aepPosition = aep.allocate(block.limit());
                     writeAep = aepPosition != -1;
                     if (writeAep){
