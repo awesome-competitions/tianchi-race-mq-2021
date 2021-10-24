@@ -51,10 +51,6 @@ public class FutureMap implements java.util.Map<Integer, ByteBuffer> {
         if (index > maxIndex){
             return null;
         }
-        if (!complete){
-            runnable.run();
-            complete = true;
-        }
         return buffers[index];
     }
 

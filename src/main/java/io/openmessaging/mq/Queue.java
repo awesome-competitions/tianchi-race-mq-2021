@@ -64,61 +64,26 @@ public class Queue {
         FutureMap results = ctx.getResults();
         results.setMaxIndex(size - 1);
 
-        int batchSize = 0;
+        Semaphore semaphore = ctx.getSemaphore();
         for (int i = (int) offset; i < nextReadOffset; i ++){
             Data data = records.get(i);
             int index = (int) (i - offset);
-            if (data.isDram()){
-                results.put(index, data.get(ctx));
-                ctx.recycleReadBuffer(data);
-                continue;
-            }
-            batchSize ++;
-        }
-
-        int finalBatchSize = batchSize;
-        results.setRunnable(() -> {
-            MappedByteBuffer[] mappedByteBuffers = ctx.getMappedByteBuffers();
-            MappedByteBuffer tmp;
-            for (int i = 0; i <= results.getMmapIndex(); i ++){
-                tmp = mappedByteBuffers[i];
-                if (tmp != null){
-                    BufferUtils.clean(tmp);
-                    mappedByteBuffers[i] = null;
-                }
-            }
-            results.setMmapIndex(results.getMaxIndex());
-
-            Semaphore semaphore = ctx.getSemaphore();
-            for (int i = (int) offset; i < nextReadOffset; i ++){
-                Data data = records.get(i);
-                if (data.isDram()){
-                    continue;
-                }
-                int index = (int) (i - offset);
-                ctx.getPools().execute(()->{
-                    try {
-                        if (data.isPMem()){
-                            results.put(index, data.get(ctx));
-                        }else {
-                            SSD ssd = ((SSD) data);
-                            MappedByteBuffer mappedByteBuffer = ssd.getChannel().map(FileChannel.MapMode.READ_ONLY, ssd.getPosition() + 9, ssd.getCapacity());
-                            mappedByteBuffers[index] = mappedByteBuffer;
-                            results.put(index, mappedByteBuffer);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } finally {
-                        semaphore.release();
+            ctx.getPools().execute(()->{
+                try {
+                    results.put(index, data.get(ctx));
+                    if (data.isDram()){
+                        ctx.recycleReadBuffer(data);
                     }
-                });
-            }
-            try {
-                semaphore.acquire(finalBatchSize);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
+                } finally {
+                    semaphore.release();
+                }
+            });
+        }
+        try {
+            semaphore.acquire(size);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         return results;
     }
 
