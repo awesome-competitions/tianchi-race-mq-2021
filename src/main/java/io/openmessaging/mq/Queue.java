@@ -1,5 +1,6 @@
 package io.openmessaging.mq;
 
+import io.openmessaging.consts.Const;
 import io.openmessaging.utils.BufferUtils;
 
 import java.io.IOException;
@@ -36,7 +37,20 @@ public class Queue {
         Data data = ctx.allocateReadBuffer(buffer.limit());
         if (data == null){
             Monitor.missingDramSize ++;
-            data = Buffers.allocateReadBuffer(buffer.limit());
+            data = ctx.allocatePMem(buffer.limit());
+            if (data == null){
+                data = Buffers.allocateReadBuffer(buffer.limit());
+            }else{
+                ByteBuffer byteBuffer = ctx.getAepBuffers().poll();
+                if (byteBuffer == null){
+                    byteBuffer = ByteBuffer.allocateDirect((int) (Const.K * 17));
+                }
+                byteBuffer.put(buffer);
+                byteBuffer.flip();
+                records.add(new SSD(aof, position, buffer.limit()));
+                ctx.getAepTasks().add(new AepData(data, byteBuffer, offset, records));
+                return;
+            }
         }
         if (data != null){
             data.set(buffer);
@@ -72,6 +86,8 @@ public class Queue {
                     results.put(index, data.get(ctx));
                     if (data.isDram()){
                         ctx.recycleReadBuffer(data);
+                    }else if (data.isPMem()){
+                        ctx.recyclePMem(data);
                     }
                 } finally {
                     semaphore.release();
