@@ -25,8 +25,6 @@ public class Mq extends MessageQueue{
 
     private final LinkedBlockingQueue<Barrier> POOLS = new LinkedBlockingQueue<>();
 
-    public final static LinkedBlockingQueue<AepTask> AEP_TASKS = new LinkedBlockingQueue<>();
-
     public Mq(Config config) throws IOException {
         LOGGER.info("Mq init");
         this.config = config;
@@ -35,7 +33,6 @@ public class Mq extends MessageQueue{
         initQueues();
         initPools();
         startKiller();
-        startAepTask();
         LOGGER.info("Mq completed");
     }
 
@@ -111,25 +108,9 @@ public class Mq extends MessageQueue{
         }).start();
     }
 
-    void startAepTask(){
-        new Thread(()->{
-            try {
-                AepTask task;
-                while (true){
-                    task = AEP_TASKS.take();
-                    task.getBlock().write(task.getPosition(), task.getData());
-                    task.getData().clear();
-                    Buffers.AEP_BUFFERS.add(task.getData());
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }).start();
-    }
-
     FileWrapper createAof(String name) throws IOException {
         FileWrapper aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + name, "rw"));
-        loadAof(aof);
+//        loadAof(aof);
         return aof;
     }
 

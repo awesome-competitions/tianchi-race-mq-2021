@@ -18,15 +18,12 @@ public class Block {
 
     private final AtomicLong memPos;
 
-    private final Map<Long, Long> offsets;
-
     private boolean completed;
 
     public Block(FileWrapper fw, long capacity) {
         this.fw = fw;
         this.capacity = capacity;
         this.memPos = new AtomicLong();
-        this.offsets = new ConcurrentHashMap<>();
     }
 
     public long allocate(int cap){

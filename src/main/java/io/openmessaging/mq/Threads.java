@@ -38,13 +38,9 @@ public class Threads {
 
         private final MappedByteBuffer[] mappedByteBuffers = new MappedByteBuffer[50];
 
-        private final LinkedBlockingQueue<AepData> aepTasks = new LinkedBlockingQueue<>();
-        private final LinkedBlockingQueue<ByteBuffer> aepBuffers = new LinkedBlockingQueue<>();
-
 
         private final LinkedBlockingQueue<ByteBuffer> buffers = new LinkedBlockingQueue<>();
 
-        private final LinkedBlockingQueue<Data> readBuffers1 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> readBuffers2 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> readBuffers3 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> readBuffers4 = new LinkedBlockingQueue<>();
@@ -165,29 +161,6 @@ public class Threads {
             return mappedByteBuffers;
         }
 
-        public void startAepTask(){
-            pools.execute(()->{
-                AepData data;
-                while (true){
-                    try {
-                        data = aepTasks.take();
-                        data.getData().set(data.getByteBuffer());
-                        data.getByteBuffer().clear();
-                        data.getRecords().set((int) data.getOffset(), data.getData());
-                        aepBuffers.add(data.getByteBuffer());
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-        }
 
-        public LinkedBlockingQueue<AepData> getAepTasks() {
-            return aepTasks;
-        }
-
-        public LinkedBlockingQueue<ByteBuffer> getAepBuffers() {
-            return aepBuffers;
-        }
     }
 }

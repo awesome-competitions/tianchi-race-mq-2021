@@ -31,6 +31,10 @@ public class Barrier {
 
     private boolean writeAep;
 
+    public final LinkedBlockingQueue<ByteBuffer> aepBuffers = new LinkedBlockingQueue<>();
+
+    public final ThreadPoolExecutor pools = (ThreadPoolExecutor) Executors.newFixedThreadPool(30);
+
     public Barrier(int parties, FileWrapper aof, Block aep) {
         this.aof = aof;
         this.aep = aep;
@@ -57,14 +61,20 @@ public class Barrier {
                     aepPosition = aep.allocate(block.limit());
                     writeAep = aepPosition != -1;
                     if (writeAep){
-                        ByteBuffer blockBak = Buffers.AEP_BUFFERS.poll();
+                        ByteBuffer blockBak = aepBuffers.poll();
                         if (blockBak == null){
                             Monitor.writeExtraDramCount ++;
                             blockBak = ByteBuffer.allocateDirect((int) (Const.K * 210));
                         }
                         blockBak.put(block);
                         blockBak.flip();
-                        Mq.AEP_TASKS.add(new AepTask(aepPosition, aep, blockBak));
+                        long aepPos = aepPosition;
+                        ByteBuffer finalBlock = blockBak;
+                        pools.execute(()->{
+                            aep.write(aepPos, finalBlock);
+                            finalBlock.clear();
+                            aepBuffers.add(finalBlock);
+                        });
                     }
                 }
                 block.clear();

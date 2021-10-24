@@ -29,7 +29,6 @@ public class Monitor {
                 ", missingDramSize: " + missingDramSize +
                 ", writeExtraDramCount: " + writeExtraDramCount +
                 ", readSSDCount: " + readSSDCount +
-                ", aep tasks: " + Mq.AEP_TASKS.size() +
                 ", heap max: " + runtime.maxMemory() / Const.M +
                 ", heap used: " + (runtime.totalMemory() - runtime.freeMemory()) / Const.M +
                 ", extSize: " + extSize
