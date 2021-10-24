@@ -10,6 +10,8 @@ public class FutureMap implements java.util.Map<Integer, ByteBuffer> {
 
     private int maxIndex;
 
+    private int mmapIndex;
+
     private Runnable runnable;
 
     private boolean complete;
@@ -99,5 +101,13 @@ public class FutureMap implements java.util.Map<Integer, ByteBuffer> {
 
     public int getMaxIndex() {
         return maxIndex;
+    }
+
+    public int getMmapIndex() {
+        return mmapIndex;
+    }
+
+    public void setMmapIndex(int mmapIndex) {
+        this.mmapIndex = mmapIndex;
     }
 }

@@ -62,6 +62,7 @@ public class Queue {
         long nextReadOffset = (int) Math.min(offset + num, records.size());
         int size = (int) (nextReadOffset - offset);
         FutureMap results = ctx.getResults();
+        results.setMaxIndex(size - 1);
 
         int batchSize = 0;
         for (int i = (int) offset; i < nextReadOffset; i ++){
@@ -79,14 +80,14 @@ public class Queue {
         results.setRunnable(() -> {
             MappedByteBuffer[] mappedByteBuffers = ctx.getMappedByteBuffers();
             MappedByteBuffer tmp;
-            for (int i = 0; i <= results.getMaxIndex(); i ++){
+            for (int i = 0; i <= results.getMmapIndex(); i ++){
                 tmp = mappedByteBuffers[i];
                 if (tmp != null){
                     BufferUtils.clean(tmp);
                     mappedByteBuffers[i] = null;
                 }
             }
-            results.setMaxIndex(size - 1);
+            results.setMmapIndex(results.getMaxIndex());
 
             Semaphore semaphore = ctx.getSemaphore();
             for (int i = (int) offset; i < nextReadOffset; i ++){
