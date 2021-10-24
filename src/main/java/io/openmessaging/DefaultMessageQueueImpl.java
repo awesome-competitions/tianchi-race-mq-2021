@@ -35,7 +35,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
                     (long) (Const.G * 62),
                     40,
                     10,
-                    Const.SECOND * 414
+                    Const.SECOND * 475
             ));
         } catch (IOException e) {
             e.printStackTrace();
