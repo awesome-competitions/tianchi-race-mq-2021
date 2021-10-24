@@ -45,7 +45,6 @@ public class Barrier {
                 if (dif <= 9){
                     dif += Const.K * 4;
                 }
-                int oldPos = block.position();
                 block.put((byte) 110)
                         .putShort((short) 1)
                         .putInt((int) 1)

@@ -32,7 +32,7 @@ public class Threads {
 
         public final ThreadPoolExecutor pools = (ThreadPoolExecutor) Executors.newFixedThreadPool(30);
 
-        private final Map<Integer, ByteBuffer> results = new ArrayMap();
+        private final FutureMap results = new FutureMap();
 
         private final Semaphore semaphore = new Semaphore(0);
 
@@ -149,7 +149,7 @@ public class Threads {
             return semaphore;
         }
 
-        public Map<Integer, ByteBuffer> getResults() {
+        public FutureMap getResults() {
             return results;
         }
 

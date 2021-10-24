@@ -4,11 +4,15 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Set;
 
-public class ArrayMap implements java.util.Map<Integer, ByteBuffer> {
+public class FutureMap implements java.util.Map<Integer, ByteBuffer> {
 
     private final ByteBuffer[] buffers = new ByteBuffer[101];
 
     private int maxIndex;
+
+    private Runnable runnable;
+
+    private boolean complete;
 
     @Override
     public int size() {
@@ -30,11 +34,24 @@ public class ArrayMap implements java.util.Map<Integer, ByteBuffer> {
         return true;
     }
 
+    public Runnable getRunnable() {
+        return runnable;
+    }
+
+    public void setRunnable(Runnable runnable) {
+        this.runnable = runnable;
+        this.complete = false;
+    }
+
     @Override
     public ByteBuffer get(Object key) {
         int index = (int) key;
         if (index > maxIndex){
             return null;
+        }
+        if (!complete){
+            runnable.run();
+            complete = true;
         }
         return buffers[index];
     }

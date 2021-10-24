@@ -1,6 +1,5 @@
 package io.openmessaging.mq;
 
-import io.openmessaging.consts.Const;
 import io.openmessaging.utils.BufferUtils;
 
 import java.io.IOException;
@@ -17,8 +16,6 @@ public class Queue {
     private final List<Data> records;
 
     private boolean reading;
-
-    private long nextReadOffset;
 
     public Queue() {
         this.offset = -1;
@@ -62,50 +59,65 @@ public class Queue {
             reading = true;
         }
 
-        nextReadOffset = (int) Math.min(offset + num, records.size());
+        long nextReadOffset = (int) Math.min(offset + num, records.size());
         int size = (int) (nextReadOffset - offset);
-        Map<Integer, ByteBuffer> results = ctx.getResults();
+        FutureMap results = ctx.getResults();
 
-        MappedByteBuffer[] mappedByteBuffers = ctx.getMappedByteBuffers();
-        MappedByteBuffer tmp;
-        for (int i = 0; i <= ((ArrayMap) results).getMaxIndex(); i ++){
-            tmp = mappedByteBuffers[i];
-            if (tmp != null){
-                BufferUtils.clean(tmp);
-                mappedByteBuffers[i] = null;
-            }
-        }
-        ((ArrayMap) results).setMaxIndex(size - 1);
-        Semaphore semaphore = ctx.getSemaphore();
+        int batchSize = 0;
         for (int i = (int) offset; i < nextReadOffset; i ++){
             Data data = records.get(i);
             int index = (int) (i - offset);
-            ctx.getPools().execute(()->{
-                try {
-                    if (data.isPMem()){
-                        results.put(index, data.get(ctx));
-                        ctx.recyclePMem(data);
-                    }else if (data.isDram()){
-                        results.put(index, data.get(ctx));
-                        ctx.recycleReadBuffer(data);
-                    }else {
-                        SSD ssd = ((SSD) data);
-                        MappedByteBuffer mappedByteBuffer = ssd.getChannel().map(FileChannel.MapMode.READ_ONLY, ssd.getPosition() + 9, ssd.getCapacity());
-                        mappedByteBuffers[index] = mappedByteBuffer;
-                        results.put(index, mappedByteBuffer);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    semaphore.release();
+            if (data.isDram()){
+                results.put(index, data.get(ctx));
+                ctx.recycleReadBuffer(data);
+                continue;
+            }
+            batchSize ++;
+        }
+
+        int finalBatchSize = batchSize;
+        results.setRunnable(() -> {
+            MappedByteBuffer[] mappedByteBuffers = ctx.getMappedByteBuffers();
+            MappedByteBuffer tmp;
+            for (int i = 0; i <= results.getMaxIndex(); i ++){
+                tmp = mappedByteBuffers[i];
+                if (tmp != null){
+                    BufferUtils.clean(tmp);
+                    mappedByteBuffers[i] = null;
                 }
-            });
-        }
-        try {
-            semaphore.acquire(size);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+            }
+            results.setMaxIndex(size - 1);
+
+            Semaphore semaphore = ctx.getSemaphore();
+            for (int i = (int) offset; i < nextReadOffset; i ++){
+                Data data = records.get(i);
+                if (data.isDram()){
+                    continue;
+                }
+                int index = (int) (i - offset);
+                ctx.getPools().execute(()->{
+                    try {
+                        if (data.isPMem()){
+                            results.put(index, data.get(ctx));
+                        }else {
+                            SSD ssd = ((SSD) data);
+                            MappedByteBuffer mappedByteBuffer = ssd.getChannel().map(FileChannel.MapMode.READ_ONLY, ssd.getPosition() + 9, ssd.getCapacity());
+                            mappedByteBuffers[index] = mappedByteBuffer;
+                            results.put(index, mappedByteBuffer);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } finally {
+                        semaphore.release();
+                    }
+                });
+            }
+            try {
+                semaphore.acquire(finalBatchSize);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
         return results;
     }
 
