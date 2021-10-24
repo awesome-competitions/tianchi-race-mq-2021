@@ -9,7 +9,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class Buffers {
 
     public static final long DIRECT_SIZE = (long) (Const.G * 1.90);
-    public static final long HEAP_SIZE = (long) (Const.G * 2);
+    public static final long HEAP_SIZE = (long) (Const.G * 2.5);
     public static final long MAX_SIZE = DIRECT_SIZE + HEAP_SIZE;
     public static final long THRESHOLD_SIZE = MAX_SIZE - Const.M;
 
