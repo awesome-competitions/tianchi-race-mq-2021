@@ -43,7 +43,6 @@ public class Queue {
             records.add(data);
             return;
         }
-        Monitor.readSSDCount ++;
         records.add(new SSD(aof, position, buffer.limit()));
     }
 
