@@ -52,6 +52,8 @@ public class Threads {
         private final LinkedBlockingQueue<Data> idles3 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> idles4 = new LinkedBlockingQueue<>();
 
+        private long readBuffer1Size;
+
         public ByteBuffer allocateBuffer(){
             ByteBuffer buffer = buffers.poll();
             if (buffer == null){
@@ -66,6 +68,10 @@ public class Threads {
             Data data = getReadBufferGreed(cap).poll();
             if (data == null){
                 data = getReadBufferGreed((int) (cap + Const.K * 3.4)).poll();
+            }
+            if (data == null && readBuffer1Size > cap){
+                readBuffer1Size -= cap;
+                return new Dram(ByteBuffer.allocate(cap));
             }
             if (data != null){
                 Monitor.writeDramCount ++;
@@ -82,6 +88,8 @@ public class Threads {
                 ByteBuffer buffer = ((Dram) data).getData();
                 if (buffer instanceof DirectBuffer){
                     BufferUtils.clean(buffer);
+                }else{
+                    readBuffer1Size += data.getCapacity();
                 }
             }
         }
