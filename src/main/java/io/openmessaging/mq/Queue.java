@@ -5,8 +5,6 @@ import io.openmessaging.utils.BufferUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -26,27 +24,6 @@ public class Queue {
 
     public long nextOffset(){
         return ++ offset;
-    }
-
-    public Data allocateData(Threads.Context ctx, long offset, ByteBuffer buffer){
-        Data data = ctx.allocatePMem(buffer.limit());
-        if (data != null){
-            ByteBuffer byteBuffer = ctx.getAepBuffers().poll();
-            if (byteBuffer == null){
-                byteBuffer = ByteBuffer.allocateDirect((int) (Const.K * 17));
-            }
-            byteBuffer.put(buffer);
-            byteBuffer.flip();
-
-            ByteBuffer finalByteBuffer = byteBuffer;
-            ctx.getPools().execute(()->{
-                data.set(finalByteBuffer);
-                finalByteBuffer.clear();
-                records.set((int) offset, data);
-                ctx.getAepBuffers().add(finalByteBuffer);
-            });
-        }
-        return data;
     }
 
     public void write(FileWrapper aof, long position, ByteBuffer buffer, Data pMem){
@@ -108,7 +85,7 @@ public class Queue {
             });
         }
         // 预加载
-        long nextLoadSize = Math.min(this.offset - nextReadOffset + 1, 10);
+        long nextLoadSize = Math.min(this.offset - nextReadOffset + 1, 20);
         for (int i = (int) nextReadOffset; i < nextReadOffset + nextLoadSize; i ++){
             if (i >= records.size()){
                 break;
@@ -119,7 +96,7 @@ public class Queue {
                 Monitor.readPreSSDCount ++;
                 ctx.getPools().execute(()->{
                     ByteBuffer buffer = data.get(ctx);
-                    Data bufferData = allocateData(ctx, index, buffer);
+                    Data bufferData = ctx.allocatePMem(buffer.limit());
                     if (bufferData != null){
                         records.set(index, bufferData);
                     }
