@@ -158,6 +158,8 @@ public class Threads {
             return pools;
         }
 
-
+        public LinkedBlockingQueue<ByteBuffer> getAepBuffers() {
+            return aepBuffers;
+        }
     }
 }
