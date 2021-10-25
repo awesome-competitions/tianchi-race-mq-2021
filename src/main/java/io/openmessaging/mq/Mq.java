@@ -30,8 +30,15 @@ public class Mq extends MessageQueue{
         this.config = config;
         this.queues = new Queue[100][2000];
         this.block = new Block(new FileWrapper(new RandomAccessFile(config.getHeapDir(), "rw")), config.getHeapSize());
-        preAllocate(block.getFw().getChannel(), config.getHeapSize());
-        LOGGER.info("block pre allocated");
+        new Thread(()->{
+            LOGGER.info("block start preallocate");
+            try {
+                preAllocate(block.getFw().getChannel(), config.getHeapSize());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            LOGGER.info("block preallocate complete");
+        }).start();
         initQueues();
         initPools();
         startKiller();
@@ -89,8 +96,8 @@ public class Mq extends MessageQueue{
             for (int i = 0; i < size; i ++){
                 buffer.flip();
                 channel.write(buffer);
+                channel.force(true);
             }
-            channel.force(true);
             channel.position(0);
             BufferUtils.clean(buffer);
         }
