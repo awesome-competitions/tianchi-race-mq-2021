@@ -67,6 +67,8 @@ public class Queue {
                 Data data = records.get((int) i);
                 if (data.isDram()){
                     ctx.recycleReadBuffer(data);
+                }else if (data.isPMem()){
+                    ctx.recyclePMem(data);
                 }
             }
             reading = true;
