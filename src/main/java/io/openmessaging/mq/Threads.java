@@ -30,13 +30,12 @@ public class Threads {
 
         private long ssdPos;
 
-        public final ThreadPoolExecutor pools = (ThreadPoolExecutor) Executors.newFixedThreadPool(200);
+        public final ThreadPoolExecutor pools = (ThreadPoolExecutor) Executors.newFixedThreadPool(30);
 
         private final FutureMap results = new FutureMap();
 
         private final Semaphore semaphore = new Semaphore(0);
 
-        private final MappedByteBuffer[] mappedByteBuffers = new MappedByteBuffer[50];
         private final LinkedBlockingQueue<AepData> aepTasks = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<ByteBuffer> aepBuffers = new LinkedBlockingQueue<>();
 
@@ -114,10 +113,9 @@ public class Threads {
         }
 
         public Context() {
-            for (int i = 0; i < 100; i ++){
+            for (int i = 0; i < 30; i ++){
                 buffers.add(ByteBuffer.allocateDirect((int) (Const.K * 17)));
             }
-            startAepTask();
         }
 
         public Barrier getBarrier() {
@@ -159,36 +157,6 @@ public class Threads {
         public ThreadPoolExecutor getPools() {
             return pools;
         }
-
-        public MappedByteBuffer[] getMappedByteBuffers() {
-            return mappedByteBuffers;
-        }
-
-        public void startAepTask(){
-            pools.execute(()->{
-                AepData data;
-                while (true){
-                    try {
-                        data = aepTasks.take();
-                        data.getData().set(data.getByteBuffer());
-                        data.getByteBuffer().clear();
-                        data.getRecords().set((int) data.getOffset(), data.getData());
-                        aepBuffers.add(data.getByteBuffer());
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-        }
-
-        public LinkedBlockingQueue<AepData> getAepTasks() {
-            return aepTasks;
-        }
-
-        public LinkedBlockingQueue<ByteBuffer> getAepBuffers() {
-            return aepBuffers;
-        }
-
 
 
     }
