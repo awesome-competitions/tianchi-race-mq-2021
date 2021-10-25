@@ -123,9 +123,14 @@ public class Queue {
             nextLoadSize = Math.min(offset - nextReadOffset + 1, 20);
             for (int i = (int) nextReadOffset; i < nextReadOffset + nextLoadSize; i ++){
                 Data data = records.get(i);
-                int index = (int) (i - offset);
                 if (data.isSSD()){
                     ssdSize ++;
+                }
+            }
+            for (int i = (int) nextReadOffset; i < nextReadOffset + nextLoadSize; i ++){
+                Data data = records.get(i);
+                int index = (int) (i - offset);
+                if (data.isSSD()){
                     ctx.getPools().execute(()->{
                         try {
                             ByteBuffer buffer = data.get(ctx);
@@ -140,7 +145,6 @@ public class Queue {
                 }
             }
         }
-
         try {
             semaphore.acquire(size + ssdSize);
         } catch (InterruptedException e) {
