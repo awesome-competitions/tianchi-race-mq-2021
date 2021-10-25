@@ -30,6 +30,8 @@ public class Mq extends MessageQueue{
         this.config = config;
         this.queues = new Queue[100][2000];
         this.block = new Block(new FileWrapper(new RandomAccessFile(config.getHeapDir(), "rw")), config.getHeapSize());
+        preAllocate(block.getFw().getChannel(), config.getHeapSize());
+        LOGGER.info("block pre allocated");
         initQueues();
         initPools();
         startKiller();
