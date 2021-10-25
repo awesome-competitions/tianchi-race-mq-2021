@@ -30,21 +30,15 @@ public class Queue {
 
     public Data allocateData(ByteBuffer buffer){
         Threads.Context ctx = Threads.get();
-        Data data = ctx.allocateReadBuffer(buffer.limit());
-        if (data == null){
-            Monitor.missingDramSize ++;
-            data = ctx.allocatePMem(buffer.limit());
-            if (data == null){
-                data = Buffers.allocateReadBuffer(buffer.limit());
-            }else{
-                ByteBuffer byteBuffer = ctx.getAepBuffers().poll();
-                if (byteBuffer == null){
-                    byteBuffer = ByteBuffer.allocateDirect((int) (Const.K * 17));
-                }
-                byteBuffer.put(buffer);
-                byteBuffer.flip();
-                ctx.getAepTasks().add(new AepData(data, byteBuffer, offset, records));
+        Data data = ctx.allocatePMem(buffer.limit());
+        if (data != null){
+            ByteBuffer byteBuffer = ctx.getAepBuffers().poll();
+            if (byteBuffer == null){
+                byteBuffer = ByteBuffer.allocateDirect((int) (Const.K * 17));
             }
+            byteBuffer.put(buffer);
+            byteBuffer.flip();
+            ctx.getAepTasks().add(new AepData(data, byteBuffer, offset, records));
         }
         return data;
     }
@@ -117,38 +111,23 @@ public class Queue {
                 }
             });
         }
-        long nextLoadSize;
-        int ssdSize = 0;
-        if (offset > nextReadOffset){
-            nextLoadSize = Math.min(offset - nextReadOffset + 1, 20);
-            for (int i = (int) nextReadOffset; i < nextReadOffset + nextLoadSize; i ++){
-                Data data = records.get(i);
-                if (data.isSSD()){
-                    ssdSize ++;
-                }
-            }
-            if (ssdSize > 0){
-                for (int i = (int) nextReadOffset; i < nextReadOffset + nextLoadSize; i ++){
-                    Data data = records.get(i);
-                    int index = (int) (i - offset);
-                    if (data.isSSD()){
-                        ctx.getPools().execute(()->{
-                            try {
-                                ByteBuffer buffer = data.get(ctx);
-                                Data bufferData = allocateData(buffer);
-                                if (bufferData != null){
-                                    records.set(index, bufferData);
-                                }
-                            } finally {
-                                semaphore.release();
-                            }
-                        });
+        // 预加载
+        long nextLoadSize = Math.min(offset - nextReadOffset + 1, 10);
+        for (int i = (int) nextReadOffset; i < nextReadOffset + nextLoadSize; i ++){
+            Data data = records.get(i);
+            int index = (int) (i - offset);
+            if (data.isSSD()){
+                ctx.getPools().execute(()->{
+                    ByteBuffer buffer = data.get(ctx);
+                    Data bufferData = allocateData(buffer);
+                    if (bufferData != null){
+                        records.set(index, bufferData);
                     }
-                }
+                });
             }
         }
         try {
-            semaphore.acquire(size + ssdSize);
+            semaphore.acquire(size);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

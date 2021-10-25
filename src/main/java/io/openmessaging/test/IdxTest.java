@@ -8,9 +8,9 @@ import java.nio.channels.FileChannel;
 public class IdxTest {
 
     public static void main(String[] args) throws IOException {
-        RandomAccessFile idx = new RandomAccessFile("D:\\test\\nio\\test1_100.idx", "rw");
-        FileChannel channel = idx.getChannel();
-
-        System.out.println(channel.size());
+        long start = System.currentTimeMillis();
+       for (int i = 0; i < Integer.MAX_VALUE; i ++){}
+       long end = System.currentTimeMillis();
+        System.out.println(end - start);
     }
 }
