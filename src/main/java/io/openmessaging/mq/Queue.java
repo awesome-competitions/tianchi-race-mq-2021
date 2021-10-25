@@ -112,7 +112,7 @@ public class Queue {
             });
         }
         // 预加载
-        long nextLoadSize = Math.min(offset - nextReadOffset + 1, 10);
+        long nextLoadSize = Math.min(this.offset - nextReadOffset + 1, 10);
         for (int i = (int) nextReadOffset; i < nextReadOffset + nextLoadSize; i ++){
             if (i >= records.size()){
                 break;
