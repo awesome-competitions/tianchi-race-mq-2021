@@ -39,26 +39,27 @@ public class Queue {
             data = ctx.allocatePMem(buffer.limit());
             if (data == null){
                 data = Buffers.allocateReadBuffer(buffer.limit());
-            }else{
-                ByteBuffer byteBuffer = ctx.getAepBuffers().poll();
-                if (byteBuffer == null){
-                    byteBuffer = ByteBuffer.allocateDirect((int) (Const.K * 17));
-                }
-                byteBuffer.put(buffer);
-                byteBuffer.flip();
-                records.add(new SSD(aof, position, buffer.limit()));
-
-                ByteBuffer finalByteBuffer = byteBuffer;
-                Data finalData = data;
-                long finalOffset = offset;
-                ctx.getPools().execute(()->{
-                    finalData.set(finalByteBuffer);
-                    finalByteBuffer.clear();
-                    records.set((int) finalOffset, finalData);
-                    ctx.getAepBuffers().add(finalByteBuffer);
-                });
-                return;
             }
+//            else{
+//                ByteBuffer byteBuffer = ctx.getAepBuffers().poll();
+//                if (byteBuffer == null){
+//                    byteBuffer = ByteBuffer.allocateDirect((int) (Const.K * 17));
+//                }
+//                byteBuffer.put(buffer);
+//                byteBuffer.flip();
+//                records.add(new SSD(aof, position, buffer.limit()));
+//
+//                ByteBuffer finalByteBuffer = byteBuffer;
+//                Data finalData = data;
+//                long finalOffset = offset;
+//                ctx.getPools().execute(()->{
+//                    finalData.set(finalByteBuffer);
+//                    finalByteBuffer.clear();
+//                    records.set((int) finalOffset, finalData);
+//                    ctx.getAepBuffers().add(finalByteBuffer);
+//                });
+//                return;
+//            }
         }
         if (data != null){
             data.set(buffer);
@@ -107,26 +108,26 @@ public class Queue {
                 }
             });
         }
-        // 预加载
-        long nextLoadSize = Math.min(this.offset - nextReadOffset + 1, 6);
-        for (int i = (int) nextReadOffset; i < nextReadOffset + nextLoadSize; i ++){
-            if (i >= records.size()){
-                break;
-            }
-            int index = i;
-            Data data = records.get(index);
-            if (data.isSSD()){
-                Monitor.readPreSSDCount ++;
-                ctx.getPools().execute(()->{
-                    ByteBuffer buffer = data.get(ctx);
-                    Data bufferData = ctx.allocatePMem(buffer.limit());
-                    if (bufferData != null){
-                        bufferData.set(buffer);
-                        records.set(index, bufferData);
-                    }
-                });
-            }
-        }
+//        // 预加载
+//        long nextLoadSize = Math.min(this.offset - nextReadOffset + 1, 6);
+//        for (int i = (int) nextReadOffset; i < nextReadOffset + nextLoadSize; i ++){
+//            if (i >= records.size()){
+//                break;
+//            }
+//            int index = i;
+//            Data data = records.get(index);
+//            if (data.isSSD()){
+//                Monitor.readPreSSDCount ++;
+//                ctx.getPools().execute(()->{
+//                    ByteBuffer buffer = data.get(ctx);
+//                    Data bufferData = ctx.allocatePMem(buffer.limit());
+//                    if (bufferData != null){
+//                        bufferData.set(buffer);
+//                        records.set(index, bufferData);
+//                    }
+//                });
+//            }
+//        }
         try {
             semaphore.acquire(size);
         } catch (InterruptedException e) {
