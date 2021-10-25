@@ -114,11 +114,11 @@ public class Queue {
         // 预加载
         long nextLoadSize = Math.min(offset - nextReadOffset + 1, 10);
         for (int i = (int) nextReadOffset; i < nextReadOffset + nextLoadSize; i ++){
-            if (i > offset){
+            if (i >= records.size()){
                 break;
             }
-            Data data = records.get(i);
-            int index = (int) (i - offset);
+            int index = i;
+            Data data = records.get(index);
             if (data.isSSD()){
                 Monitor.readPreSSDCount ++;
                 ctx.getPools().execute(()->{
