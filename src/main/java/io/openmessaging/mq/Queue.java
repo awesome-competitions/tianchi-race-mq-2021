@@ -53,14 +53,16 @@ public class Queue {
     public Map<Integer, ByteBuffer> read(long offset, int num) throws IOException {
         Threads.Context ctx = Threads.get();
         if (!reading){
-            for (long i = 0; i < offset; i ++){
-                Data data = records.get((int) i);
-                if (data.isDram()){
-                    ctx.recycleReadBuffer(data);
-                }else if (data.isPMem()){
-                    ctx.recyclePMem(data);
+            ctx.getPools().execute(()->{
+                for (long i = 0; i < offset; i ++){
+                    Data data = records.get((int) i);
+                    if (data.isDram()){
+                        ctx.recycleReadBuffer(data);
+                    }else if (data.isPMem()){
+                        ctx.recyclePMem(data);
+                    }
                 }
-            }
+            });
             reading = true;
         }
 
