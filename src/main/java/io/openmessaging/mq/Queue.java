@@ -31,6 +31,7 @@ public class Queue {
             records.add(pMem);
             return;
         }
+
         Threads.Context ctx = Threads.get();
         Data data = ctx.allocateReadBuffer(buffer.limit());
         if (data == null){
@@ -38,6 +39,25 @@ public class Queue {
             data = ctx.allocatePMem(buffer.limit());
             if (data == null){
                 data = Buffers.allocateReadBuffer(buffer.limit());
+            }else{
+                ByteBuffer byteBuffer = ctx.getAepBuffers().poll();
+                if (byteBuffer == null){
+                    byteBuffer = ByteBuffer.allocateDirect((int) (Const.K * 17));
+                }
+                byteBuffer.put(buffer);
+                byteBuffer.flip();
+                records.add(new SSD(aof, position, buffer.limit()));
+
+                ByteBuffer finalByteBuffer = byteBuffer;
+                Data finalData = data;
+                long finalOffset = offset;
+                ctx.getPools().execute(()->{
+                    finalData.set(finalByteBuffer);
+                    finalByteBuffer.clear();
+                    records.set((int) finalOffset, finalData);
+                    ctx.getAepBuffers().add(finalByteBuffer);
+                });
+                return;
             }
         }
         if (data != null){
