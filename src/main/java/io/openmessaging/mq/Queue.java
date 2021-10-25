@@ -98,6 +98,7 @@ public class Queue {
                     ByteBuffer buffer = data.get(ctx);
                     Data bufferData = ctx.allocatePMem(buffer.limit());
                     if (bufferData != null){
+                        bufferData.set(buffer);
                         records.set(index, bufferData);
                     }
                 });
