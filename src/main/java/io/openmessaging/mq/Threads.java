@@ -30,7 +30,7 @@ public class Threads {
 
         private long ssdPos;
 
-        public final ThreadPoolExecutor pools = (ThreadPoolExecutor) Executors.newFixedThreadPool(30);
+        public final ThreadPoolExecutor pools = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
 
         private final FutureMap results = new FutureMap();
 
@@ -69,10 +69,6 @@ public class Threads {
             if (data == null){
                 data = getReadBufferGreed((int) (cap + Const.K * 3.4)).poll();
             }
-            if (data == null && readBuffer1Size > cap){
-                readBuffer1Size -= cap;
-                return new Dram(ByteBuffer.allocate(cap));
-            }
             if (data != null){
                 Monitor.writeDramCount ++;
             }
@@ -88,8 +84,6 @@ public class Threads {
                 ByteBuffer buffer = ((Dram) data).getData();
                 if (buffer instanceof DirectBuffer){
                     BufferUtils.clean(buffer);
-                }else{
-                    readBuffer1Size += data.getCapacity();
                 }
             }
         }
@@ -120,7 +114,7 @@ public class Threads {
         }
 
         public Context() {
-            for (int i = 0; i < 50; i ++){
+            for (int i = 0; i < 80; i ++){
                 buffers.add(ByteBuffer.allocateDirect((int) (Const.K * 17)));
             }
             startAepTask();

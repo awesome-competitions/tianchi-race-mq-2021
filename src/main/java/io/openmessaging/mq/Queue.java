@@ -28,6 +28,27 @@ public class Queue {
         return ++ offset;
     }
 
+    public Data allocateData(ByteBuffer buffer){
+        Threads.Context ctx = Threads.get();
+        Data data = ctx.allocateReadBuffer(buffer.limit());
+        if (data == null){
+            Monitor.missingDramSize ++;
+            data = ctx.allocatePMem(buffer.limit());
+            if (data == null){
+                data = Buffers.allocateReadBuffer(buffer.limit());
+            }else{
+                ByteBuffer byteBuffer = ctx.getAepBuffers().poll();
+                if (byteBuffer == null){
+                    byteBuffer = ByteBuffer.allocateDirect((int) (Const.K * 17));
+                }
+                byteBuffer.put(buffer);
+                byteBuffer.flip();
+                ctx.getAepTasks().add(new AepData(data, byteBuffer, offset, records));
+            }
+        }
+        return data;
+    }
+
     public void write(FileWrapper aof, long position, ByteBuffer buffer, Data pMem){
         if (pMem != null){
             records.add(pMem);
@@ -96,8 +117,32 @@ public class Queue {
                 }
             });
         }
+        long nextLoadSize;
+        int ssdSize = 0;
+        if (offset > nextReadOffset){
+            nextLoadSize = Math.min(offset - nextReadOffset + 1, 20);
+            for (int i = (int) nextReadOffset; i < nextReadOffset + nextLoadSize; i ++){
+                Data data = records.get(i);
+                int index = (int) (i - offset);
+                if (data.isSSD()){
+                    ssdSize ++;
+                    ctx.getPools().execute(()->{
+                        try {
+                            ByteBuffer buffer = data.get(ctx);
+                            Data bufferData = allocateData(buffer);
+                            if (bufferData != null){
+                                records.set(index, bufferData);
+                            }
+                        } finally {
+                            semaphore.release();
+                        }
+                    });
+                }
+            }
+        }
+
         try {
-            semaphore.acquire(size);
+            semaphore.acquire(size + ssdSize);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
