@@ -28,7 +28,7 @@ public class Queue {
         return ++ offset;
     }
 
-    public Data allocateData(ByteBuffer buffer){
+    public Data allocateData(long offset, ByteBuffer buffer){
         Threads.Context ctx = Threads.get();
         Data data = ctx.allocatePMem(buffer.limit());
         if (data != null){
@@ -38,7 +38,14 @@ public class Queue {
             }
             byteBuffer.put(buffer);
             byteBuffer.flip();
-            ctx.getAepTasks().add(new AepData(data, byteBuffer, offset, records));
+
+            ByteBuffer finalByteBuffer = byteBuffer;
+            ctx.getPools().execute(()->{
+                data.set(finalByteBuffer);
+                finalByteBuffer.clear();
+                records.set((int) offset, data);
+                ctx.getAepBuffers().add(finalByteBuffer);
+            });
         }
         return data;
     }
@@ -63,7 +70,16 @@ public class Queue {
                 byteBuffer.put(buffer);
                 byteBuffer.flip();
                 records.add(new SSD(aof, position, buffer.limit()));
-                ctx.getAepTasks().add(new AepData(data, byteBuffer, offset, records));
+
+                ByteBuffer finalByteBuffer = byteBuffer;
+                Data finalData = data;
+                long finalOffset = offset;
+                ctx.getPools().execute(()->{
+                    finalData.set(finalByteBuffer);
+                    finalByteBuffer.clear();
+                    records.set((int) finalOffset, finalData);
+                    ctx.getAepBuffers().add(finalByteBuffer);
+                });
                 return;
             }
         }
@@ -123,7 +139,7 @@ public class Queue {
                 Monitor.readPreSSDCount ++;
                 ctx.getPools().execute(()->{
                     ByteBuffer buffer = data.get(ctx);
-                    Data bufferData = allocateData(buffer);
+                    Data bufferData = allocateData(index, buffer);
                     if (bufferData != null){
                         records.set(index, bufferData);
                     }
