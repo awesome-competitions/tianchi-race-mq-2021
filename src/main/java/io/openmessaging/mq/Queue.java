@@ -28,8 +28,7 @@ public class Queue {
         return ++ offset;
     }
 
-    public Data allocateData(long offset, ByteBuffer buffer){
-        Threads.Context ctx = Threads.get();
+    public Data allocateData(Threads.Context ctx, long offset, ByteBuffer buffer){
         Data data = ctx.allocatePMem(buffer.limit());
         if (data != null){
             ByteBuffer byteBuffer = ctx.getAepBuffers().poll();
@@ -139,7 +138,7 @@ public class Queue {
                 Monitor.readPreSSDCount ++;
                 ctx.getPools().execute(()->{
                     ByteBuffer buffer = data.get(ctx);
-                    Data bufferData = allocateData(index, buffer);
+                    Data bufferData = allocateData(ctx, index, buffer);
                     if (bufferData != null){
                         records.set(index, bufferData);
                     }
