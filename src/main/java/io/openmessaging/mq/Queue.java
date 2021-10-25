@@ -127,21 +127,23 @@ public class Queue {
                     ssdSize ++;
                 }
             }
-            for (int i = (int) nextReadOffset; i < nextReadOffset + nextLoadSize; i ++){
-                Data data = records.get(i);
-                int index = (int) (i - offset);
-                if (data.isSSD()){
-                    ctx.getPools().execute(()->{
-                        try {
-                            ByteBuffer buffer = data.get(ctx);
-                            Data bufferData = allocateData(buffer);
-                            if (bufferData != null){
-                                records.set(index, bufferData);
+            if (ssdSize > 0){
+                for (int i = (int) nextReadOffset; i < nextReadOffset + nextLoadSize; i ++){
+                    Data data = records.get(i);
+                    int index = (int) (i - offset);
+                    if (data.isSSD()){
+                        ctx.getPools().execute(()->{
+                            try {
+                                ByteBuffer buffer = data.get(ctx);
+                                Data bufferData = allocateData(buffer);
+                                if (bufferData != null){
+                                    records.set(index, bufferData);
+                                }
+                            } finally {
+                                semaphore.release();
                             }
-                        } finally {
-                            semaphore.release();
-                        }
-                    });
+                        });
+                    }
                 }
             }
         }
