@@ -35,7 +35,11 @@ public class Mq extends MessageQueue{
             try {
                 preAllocate(block.getFw().getChannel(), config.getHeapSize());
             } catch (IOException e) {
-                e.printStackTrace();
+                try {
+                    block.getFw().getChannel().position(0);
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
             }
             LOGGER.info("block preallocate complete");
         }).start();
@@ -96,8 +100,8 @@ public class Mq extends MessageQueue{
             for (int i = 0; i < size; i ++){
                 buffer.flip();
                 channel.write(buffer);
-                channel.force(true);
             }
+            channel.force(true);
             channel.position(0);
             BufferUtils.clean(buffer);
         }
