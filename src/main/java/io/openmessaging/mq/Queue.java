@@ -45,6 +45,7 @@ public class Queue {
             records.add(data);
             return;
         }
+        Monitor.writeSSDCount ++;
         records.add(new SSD(aof, position, buffer.limit()));
     }
 
@@ -78,6 +79,8 @@ public class Queue {
                         ctx.recycleReadBuffer(data);
                     }else if (data.isPMem()){
                         ctx.recyclePMem(data);
+                    }else{
+                        Monitor.readSSDCount ++;
                     }
                 } finally {
                     semaphore.release();
@@ -85,7 +88,7 @@ public class Queue {
             });
         }
         // 预加载
-        long nextLoadSize = Math.min(this.offset - nextReadOffset + 1, 20);
+        long nextLoadSize = Math.min(this.offset - nextReadOffset + 1, 12);
         for (int i = (int) nextReadOffset; i < nextReadOffset + nextLoadSize; i ++){
             if (i >= records.size()){
                 break;
