@@ -16,6 +16,7 @@ public class Monitor {
     public static long missingDramSize = 0;
     public static long writeExtraDramCount = 0;
     public static long readSSDCount = 0;
+    public static long readPreSSDCount = 0;
     public static long extSize = 0;
 
 
@@ -29,7 +30,7 @@ public class Monitor {
                 ", missingDramSize: " + missingDramSize +
                 ", writeExtraDramCount: " + writeExtraDramCount +
                 ", readSSDCount: " + readSSDCount +
-                ", heap max: " + runtime.maxMemory() / Const.M +
+                ", readPreSSDCount: " + readPreSSDCount +
                 ", heap used: " + (runtime.totalMemory() - runtime.freeMemory()) / Const.M +
                 ", extSize: " + extSize
                 ;
