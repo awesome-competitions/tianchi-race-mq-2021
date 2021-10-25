@@ -30,7 +30,7 @@ public class Threads {
 
         private long ssdPos;
 
-        public final ThreadPoolExecutor pools = (ThreadPoolExecutor) Executors.newFixedThreadPool(100);
+        public final ThreadPoolExecutor pools = (ThreadPoolExecutor) Executors.newFixedThreadPool(200);
 
         private final FutureMap results = new FutureMap();
 
