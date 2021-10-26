@@ -160,13 +160,13 @@ public class Mq extends MessageQueue{
                             barriers.add(barrier);
                         }
                     }
-                    initializedBarriers = true;
                 }else{
                     Barrier barrier = new Barrier(Threads.size(), aofs[0], aep, buffers);
                     for (int j = 0; j < Threads.size(); j ++){
                         barriers.add(barrier);
                     }
                 }
+                initializedBarriers = true;
             }
         }
     }
