@@ -25,7 +25,7 @@ public class Mq extends MessageQueue{
 
     private final LinkedBlockingQueue<Barrier> barriers = new LinkedBlockingQueue<>();
 
-    private boolean initializedBarriers;
+    private volatile boolean initializedBarriers;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
 
