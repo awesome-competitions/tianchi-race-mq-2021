@@ -12,7 +12,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
 
     private final MessageQueue mq = new Mq(new Config(
             "/essd/",
-            Const.G * 130,
+            Const.G * 132,
             "/pmem/",
             Const.G * 62,
             4,

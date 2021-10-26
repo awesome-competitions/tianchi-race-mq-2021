@@ -209,7 +209,7 @@ public class Mq extends MessageQueue{
         long aos = barrier.write(topic, queueId, offset, buffer);
         long pos;
         try {
-            barrier.await(100, TimeUnit.SECONDS);
+            barrier.await(30, TimeUnit.SECONDS);
             pos = barrier.getSsdPosition() + aos;
         } catch (BrokenBarrierException e) {
             buffer.flip();
