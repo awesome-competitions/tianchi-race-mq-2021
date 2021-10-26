@@ -6,7 +6,7 @@ public class Buffers {
 
     private final long directSize;
     private final long dramSize;
-    private boolean completed;
+    private boolean unusable;
     private long writeSize;
 
     public Buffers(long directSize, long heapSize) {
@@ -15,7 +15,7 @@ public class Buffers {
     }
 
     public Data allocateBuffer(int cap){
-        if (completed){
+        if (unusable){
             return null;
         }
         if (writeSize < directSize){
@@ -25,11 +25,11 @@ public class Buffers {
             writeSize += cap;
             return new Dram(ByteBuffer.allocate(cap));
         }
-        completed = true;
+        unusable = true;
         return null;
     }
 
-    public boolean completed(){
-        return completed;
+    public boolean unusable(){
+        return unusable;
     }
 }

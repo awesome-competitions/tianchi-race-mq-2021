@@ -42,7 +42,7 @@ public class Barrier {
                 ssdPosition = aof.writeWithoutSync(buffer);
                 aof.force();
 
-                if (! buffers.completed()){
+                if (buffers.unusable()){
                     buffer.flip();
                     buffer.limit(oldPos);
                     aepPosition = aep.allocatePos(buffer.limit());
