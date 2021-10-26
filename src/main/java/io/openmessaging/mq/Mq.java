@@ -159,10 +159,6 @@ public class Mq extends MessageQueue{
         return queue;
     }
 
-    public Config getConfig() {
-        return config;
-    }
-
     public long append(String topic, int queueId, ByteBuffer buffer)  {
         return append(getTopicId(topic), queueId, buffer);
     }
