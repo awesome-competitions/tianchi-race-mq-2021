@@ -171,6 +171,11 @@ public class Mq extends MessageQueue{
         Monitor.appendCount ++;
         Monitor.appendSize += buffer.limit();
         if (Monitor.appendCount % 100000 == 0){
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             LOGGER.info(Monitor.information());
         }
 
