@@ -1,4 +1,4 @@
-package io.openmessaging.mq;
+package io.openmessaging.impl;
 
 import io.openmessaging.MessageQueue;
 import org.slf4j.Logger;
@@ -13,57 +13,41 @@ import java.util.concurrent.*;
 
 public class Mq extends MessageQueue{
 
+    private final Aep aep;
+
+    private final Buffers buffers;
+
     private final Config config;
 
     private final Queue[][] queues;
 
-    private final Block block;
+    private final Aof[] aofs;
+
+    private final LinkedBlockingQueue<Barrier> barriers = new LinkedBlockingQueue<>();
+
+    private boolean initializedBarriers;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Mq.class);
 
-    private final LinkedBlockingQueue<Barrier> POOLS = new LinkedBlockingQueue<>();
-
     public Mq(Config config) throws IOException {
-        LOGGER.info("Mq init");
         this.config = config;
-        this.queues = new Queue[100][2000];
-        this.block = new Block(new FileWrapper(new RandomAccessFile(config.getHeapDir(), "rw")), config.getHeapSize());
-        new Thread(()->{
-            LOGGER.info("block start preallocate");
-            try {
-                preAllocate(block.getFw().getChannel(), config.getHeapSize());
-            } catch (IOException e) {
-                try {
-                    block.getFw().getChannel().position(0);
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
-                }
-            }
-            LOGGER.info("block preallocate complete");
-        }).start();
-        initQueues();
-        initPools();
+        this.queues = new Queue[config.getMaxTopicSize()][config.getMaxQueueSize()];
+        this.buffers = new Buffers(config.getDirectSize(), config.getHeapSize());
+        this.aep = createAep();
+        startAepPreallocate();
+        this.aofs = initAof();
         startKiller();
-        LOGGER.info("Mq completed");
     }
 
-    void initQueues(){
-        for (int i = 0; i < 100; i ++){
-            for (int j = 0; j < 1900; j ++){
-                this.queues[i][j] = new Queue();
-            }
-        }
-    }
-
-    void loadAof(FileWrapper aof) throws IOException {
+    void loadAof(Aof aof) throws IOException {
         long position = 0;
-        ByteBuffer header = ByteBuffer.allocate(9);
+        ByteBuffer header = ByteBuffer.allocate(Const.PROTOCOL_HEADER_SIZE);
 
         while(true){
             aof.read(position, header);
-            position += 9;
+            position += Const.PROTOCOL_HEADER_SIZE;
             header.flip();
-            if (header.remaining() < 9){
+            if (header.remaining() < Const.PROTOCOL_HEADER_SIZE){
                 break;
             }
             int topic = header.get();
@@ -77,14 +61,14 @@ public class Mq extends MessageQueue{
             ByteBuffer data = ByteBuffer.allocate(size);
             aof.read(position, data);
             data.flip();
-            if (topic < 101){
+            if (topic < config.getMaxTopicSize()){
                 Queue queue = getQueue(topic, queueId);
                 queue.nextOffset();
-                queue.getRecords().add(new SSD(aof, position - 9, size));
+                queue.getRecords().add(new SSD(aof, position - Const.PROTOCOL_HEADER_SIZE, size));
             }
             position += size;
         }
-        preAllocate(aof.getChannel(), Const.G * 33);
+        preAllocate(aof.getChannel(), config.getAofSize() / config.getBatch());
     }
 
     void preAllocate(FileChannel channel, long allocateSize) throws IOException {
@@ -101,8 +85,24 @@ public class Mq extends MessageQueue{
             }
             channel.force(true);
             channel.position(0);
-            BufferUtils.clean(buffer);
+            Utils.recycleByteBuffer(buffer);
         }
+    }
+
+    void startAepPreallocate(){
+        new Thread(()->{
+            try {
+                LOGGER.info("block start preallocate");
+                preAllocate(aep.getChannel(), config.getAepSize());
+            } catch (IOException e) {
+                try {
+                    aep.getChannel().position(0);
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
+            }
+            LOGGER.info("block preallocate complete");
+        }).start();
     }
 
     void startKiller(){
@@ -110,7 +110,6 @@ public class Mq extends MessageQueue{
             try {
                 if (config.getLiveTime() > 0) {
                     Thread.sleep(config.getLiveTime());
-                    LOGGER.info("killed: " + Monitor.information());
                     System.exit(-1);
                 }
             } catch (InterruptedException e) {
@@ -119,32 +118,67 @@ public class Mq extends MessageQueue{
         }).start();
     }
 
-    FileWrapper createAof(String name) throws IOException {
-        FileWrapper aof = new FileWrapper(new RandomAccessFile(config.getDataDir() + name, "rw"));
+    Aof createAof(String name) throws IOException {
+        Aof aof = new Aof(new RandomAccessFile(config.getAofDir() + name, "rw"));
         loadAof(aof);
         return aof;
     }
 
+    Aep createAep() throws IOException {
+        return new Aep(new RandomAccessFile(config.getAepDir() + "aep1", "rw"), config.getAepSize());
+    }
 
-    void initPools() {
-        int[] arr = new int[]{10,10,10,10};
-        for (int i = 0; i < arr.length; i ++){
+    Aof[] initAof(){
+        Aof[] aofs = new Aof[config.getBatch()];
+        for (int i = 0; i < config.getBatch(); i ++){
             try {
-                Barrier barrier = new Barrier(arr[i], createAof("aof" + i), block);
-                for (int j = 0; j < arr[i]; j ++){
-                    POOLS.add(barrier);
-                }
+                aofs[i] = createAof("aof" + i);
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+        return aofs;
+    }
+
+    void initBarriers() {
+        synchronized (barriers){
+            if (! initializedBarriers){
+                try {
+                    Thread.sleep(Const.SECOND * 20);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (Threads.size() >= config.getBatch()){
+                    int count = Threads.size() / config.getBatch();
+                    int surplus = Threads.size() % config.getBatch();
+                    for (int i = 0; i < config.getBatch(); i ++){
+                        if (i == config.getBatch() - 1){
+                            count += surplus;
+                        }
+                        Barrier barrier = new Barrier(count, aofs[i], aep, buffers);
+                        for (int j = 0; j < count; j ++){
+                            barriers.add(barrier);
+                        }
+                    }
+                    initializedBarriers = true;
+                }else{
+                    Barrier barrier = new Barrier(Threads.size(), aofs[0], aep, buffers);
+                    for (int j = 0; j < Threads.size(); j ++){
+                        barriers.add(barrier);
+                    }
+                }
             }
         }
     }
 
     public Barrier getBarrier(){
         Threads.Context ctx = Threads.get();
+        if (! initializedBarriers){
+            initBarriers();
+        }
         Barrier barrier = ctx.getBarrier();
         if (barrier == null){
-            barrier = POOLS.poll();
+            barrier = barriers.poll();
             ctx.setBarrier(barrier);
         }
         return barrier;
@@ -168,17 +202,6 @@ public class Mq extends MessageQueue{
     }
 
     public long append(int topic, int queueId, ByteBuffer buffer)  {
-        Monitor.appendCount ++;
-        Monitor.appendSize += buffer.limit();
-        if (Monitor.appendCount % 100000 == 0){
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            LOGGER.info(Monitor.information());
-        }
-
         Queue queue = getQueue(topic, queueId);
         long offset = queue.nextOffset();
 
@@ -186,30 +209,37 @@ public class Mq extends MessageQueue{
         long aos = barrier.write(topic, queueId, offset, buffer);
         long pos;
         try {
-            barrier.await(10, TimeUnit.SECONDS);
-            pos = barrier.getPosition() + aos;
+            barrier.await(100, TimeUnit.SECONDS);
+            pos = barrier.getSsdPosition() + aos;
         } catch (BrokenBarrierException e) {
             buffer.flip();
             pos = barrier.writeAndFsync(topic, queueId, offset, buffer);
         }
-        Data pMem = null;
-        if (barrier.isWriteAep()){
-            pMem = new PMem(barrier.getAep(), barrier.getAepPosition() + aos + 9, buffer.limit());
-        }
         buffer.flip();
-        queue.write(barrier.getAof(), pos, buffer, pMem);
-        return queue.getOffset();
+
+        Data data = null;
+        if (barrier.aepEnable()){
+            data = new PMem(barrier.getAep(), barrier.getAepPosition() + aos + Const.PROTOCOL_HEADER_SIZE, buffer.limit());
+        }
+        if (data != null){
+            queue.getRecords().add(data);
+            return offset;
+        }
+
+        data = buffers.allocateBuffer(buffer.limit());
+        if (data != null){
+            data.set(buffer);
+            queue.getRecords().add(data);
+            return offset;
+        }
+        queue.write(barrier.getAof(), pos, buffer);
+        return offset;
     }
 
 
     public Map<Integer, ByteBuffer> getRange(int topic, int queueId, long offset, int fetchNum) {
         Queue queue = getQueue(topic, queueId);
-        try {
-            return queue.read(offset, fetchNum);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return queue.read(offset, fetchNum);
     }
 
     public int getTopicId(String topic){

@@ -1,31 +1,45 @@
-package io.openmessaging.mq;
+package io.openmessaging.impl;
 
 import sun.nio.ch.DirectBuffer;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Threads {
 
     private static final ThreadLocal<Context> CTX = new ThreadLocal<>();
 
+    private static final AtomicInteger size = new AtomicInteger();
+
+    public static int size(){
+        return size.get();
+    }
+
     public static Context get(){
         Context ctx = CTX.get();
         if (ctx == null){
             ctx = new Context();
+            size.incrementAndGet();
             CTX.set(ctx);
+        }
+        if (! ctx.isPrepare()){
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            ctx.setPrepare(true);
         }
         return ctx;
     }
 
     public static class Context{
         private Barrier barrier;
-        private int blockPos;
-        private long ssdPos;
+        private boolean prepare;
         public final ThreadPoolExecutor pools = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
         private final ResultMap results = new ResultMap();
         private final Semaphore semaphore = new Semaphore(0);
-        private final LinkedBlockingQueue<ByteBuffer> aepBuffers = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<ByteBuffer> buffers = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> readBuffers2 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> readBuffers3 = new LinkedBlockingQueue<>();
@@ -36,10 +50,16 @@ public class Threads {
         private final LinkedBlockingQueue<Data> idles3 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> idles4 = new LinkedBlockingQueue<>();
 
+        public Context() {
+            for (int i = 0; i < 30; i ++){
+                buffers.add(ByteBuffer.allocateDirect((int) (Const.K * 17)));
+            }
+        }
+
         public ByteBuffer allocateBuffer(){
             ByteBuffer buffer = buffers.poll();
             if (buffer == null){
-                buffer = Buffers.allocateExtraBuffer();
+                buffer = ByteBuffer.allocate(Const.PROTOCOL_DATA_MAX_SIZE);
             }
             buffer.clear();
             buffers.add(buffer);
@@ -52,7 +72,6 @@ public class Threads {
                 data = getReadBufferGreed((int) (cap + Const.K * 3.4)).poll();
             }
             if (data != null){
-                Monitor.writeDramCount ++;
             }
             return data;
         }
@@ -65,7 +84,7 @@ public class Threads {
             }else {
                 ByteBuffer buffer = ((Dram) data).getData();
                 if (buffer instanceof DirectBuffer){
-                    BufferUtils.clean(buffer);
+                    Utils.recycleByteBuffer(buffer);
                 }
             }
         }
@@ -95,38 +114,12 @@ public class Threads {
             return cap < Const.K * 3.4 ? readBuffers2 : cap < Const.K * 6.8 ? readBuffers3 : cap < Const.K * 10.2 ? readBuffers4 : readBuffers5;
         }
 
-        public Context() {
-            for (int i = 0; i < 30; i ++){
-                buffers.add(ByteBuffer.allocateDirect((int) (Const.K * 17)));
-            }
-        }
-
         public Barrier getBarrier() {
             return barrier;
         }
 
         public void setBarrier(Barrier barrier) {
             this.barrier = barrier;
-        }
-
-        public int getBlockPos() {
-            return blockPos;
-        }
-
-        public void blockPosIncrement(){
-            ++blockPos;
-        }
-
-        public void setBlockPos(int blockPos) {
-            this.blockPos = blockPos;
-        }
-
-        public long getSsdPos() {
-            return ssdPos;
-        }
-
-        public void setSsdPos(long ssdPos) {
-            this.ssdPos = ssdPos;
         }
 
         public Semaphore getSemaphore() {
@@ -141,8 +134,12 @@ public class Threads {
             return pools;
         }
 
-        public LinkedBlockingQueue<ByteBuffer> getAepBuffers() {
-            return aepBuffers;
+        public boolean isPrepare() {
+            return prepare;
+        }
+
+        public void setPrepare(boolean prepare) {
+            this.prepare = prepare;
         }
     }
 }

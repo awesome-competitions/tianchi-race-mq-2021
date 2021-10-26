@@ -1,33 +1,35 @@
-package io.openmessaging.mq;
+package io.openmessaging.impl;
 
 
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Block {
-
-    private final FileWrapper fw;
-
-    private final long capacity;
-
-    private final AtomicLong memPos;
+public class Aep {
 
     private boolean completed;
 
-    public Block(FileWrapper fw, long capacity) {
-        this.fw = fw;
+    private final long capacity;
+
+    private final AtomicLong pos;
+
+    private final FileChannel channel;
+
+    public Aep(RandomAccessFile file, long capacity) {
+        this.pos = new AtomicLong();
+        this.channel = file.getChannel();
         this.capacity = capacity;
-        this.memPos = new AtomicLong();
     }
 
-    public long allocate(int cap){
+    public long allocatePos(int cap){
         if (completed){
             return -1;
         }
-        long newPos = memPos.addAndGet(cap);
+        long newPos = pos.addAndGet(cap);
         if (newPos > this.capacity){
-            memPos.addAndGet(-cap);
+            pos.addAndGet(-cap);
             completed = true;
             return -1;
         }
@@ -36,7 +38,7 @@ public class Block {
 
     public void read(long position, ByteBuffer buffer){
         try {
-            fw.read(position, buffer);
+            channel.read(buffer, position);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -44,13 +46,13 @@ public class Block {
 
     public void write(long position, ByteBuffer buffer){
         try {
-            fw.write(position, buffer);
+            channel.write(buffer, position);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public FileWrapper getFw() {
-        return fw;
+    public FileChannel getChannel() {
+        return channel;
     }
 }

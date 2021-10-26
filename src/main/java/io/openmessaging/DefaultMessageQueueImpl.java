@@ -1,8 +1,8 @@
 package io.openmessaging;
 
-import io.openmessaging.mq.Const;
-import io.openmessaging.mq.Config;
-import io.openmessaging.mq.Mq;
+import io.openmessaging.impl.Const;
+import io.openmessaging.impl.Config;
+import io.openmessaging.impl.Mq;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -10,12 +10,16 @@ import java.util.Map;
 
 public class DefaultMessageQueueImpl extends MessageQueue{
 
-    private final MessageQueue queue = new Mq(new Config(
+    private final MessageQueue mq = new Mq(new Config(
             "/essd/",
-            "/pmem/nico",
-            (long) (Const.G * 62),
-            40,
-            10,
+            Const.G * 130,
+            "/pmem/",
+            Const.G * 62,
+            4,
+            100,
+            5000,
+            (long) (Const.G * 1.9),
+            (long) (Const.G * 3.3),
             Const.SECOND * 500
     ));
 
@@ -24,12 +28,12 @@ public class DefaultMessageQueueImpl extends MessageQueue{
 
     @Override
     public long append(String topic, int queueId, ByteBuffer data) {
-        return queue.append(topic, queueId, data);
+        return mq.append(topic, queueId, data);
     }
 
     @Override
     public Map<Integer, ByteBuffer> getRange(String topic, int queueId, long offset, int fetchNum) {
-        return queue.getRange(topic, queueId, offset, fetchNum);
+        return mq.getRange(topic, queueId, offset, fetchNum);
     }
 
 }

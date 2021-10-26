@@ -1,4 +1,4 @@
-package io.openmessaging.mq;
+package io.openmessaging.impl;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;

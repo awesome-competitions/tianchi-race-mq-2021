@@ -1,15 +1,15 @@
-package io.openmessaging.mq;
+package io.openmessaging.impl;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
-public class FileWrapper {
+public class Aof {
 
     private final FileChannel channel;
 
-    public FileWrapper(RandomAccessFile file) {
+    public Aof(RandomAccessFile file) {
         this.channel = file.getChannel();
     }
 

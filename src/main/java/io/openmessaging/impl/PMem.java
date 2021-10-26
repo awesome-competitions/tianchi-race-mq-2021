@@ -1,20 +1,21 @@
-package io.openmessaging.mq;
-
+package io.openmessaging.impl;
 
 import java.nio.ByteBuffer;
 
-public class Dram extends Data {
+public class PMem extends Data {
 
-    private ByteBuffer data;
-
-    private int size;
+    private final Aep aep;
 
     private ByteBuffer ext;
 
-    public Dram(ByteBuffer data) {
-        super(data.capacity());
-        this.data = data;
-        this.isDram = true;
+    private int size;
+
+    public PMem(Aep aep, long position, int capacity) {
+        super(capacity);
+        this.position = position;
+        this.aep = aep;
+        this.size = capacity;
+        this.isPMem = true;
     }
 
     @Override
@@ -24,9 +25,13 @@ public class Dram extends Data {
 
     @Override
     public ByteBuffer get(Threads.Context ctx) {
+        int extSize = ext == null ? 0 : ext.limit();
+
         ByteBuffer buffer = ctx.allocateBuffer();
-        buffer.put(data);
-        if (ext != null){
+        buffer.limit(size - extSize);
+        aep.read(position, buffer);
+        if (extSize > 0){
+            buffer.limit(size);
             buffer.put(ext);
         }
         buffer.flip();
@@ -36,13 +41,13 @@ public class Dram extends Data {
     @Override
     public void set(ByteBuffer buffer) {
         this.size = buffer.limit();
+
         buffer.limit(Math.min(size, capacity));
-        this.data.put(buffer);
-        this.data.flip();
+        aep.write(position, buffer);
+
         if (size > capacity){
             buffer.limit(size);
             ext = ByteBuffer.allocateDirect(buffer.remaining());
-            Monitor.extSize += ext.capacity();
             ext.put(buffer);
             ext.flip();
         }
@@ -51,14 +56,9 @@ public class Dram extends Data {
     @Override
     public void clear() {
         if (this.ext != null){
-            Monitor.extSize -= ext.capacity();
-            BufferUtils.clean(ext);
+            Utils.recycleByteBuffer(ext);
         }
-        ext = null;
-        data.clear();
+        this.ext = null;
     }
 
-    public ByteBuffer getData() {
-        return data;
-    }
 }

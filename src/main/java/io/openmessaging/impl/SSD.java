@@ -1,4 +1,4 @@
-package io.openmessaging.mq;
+package io.openmessaging.impl;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -6,9 +6,9 @@ import java.nio.channels.FileChannel;
 
 public class SSD extends Data{
 
-    private final FileWrapper fw;
+    private final Aof fw;
 
-    public SSD(FileWrapper fw, long position, int capacity) {
+    public SSD(Aof fw, long position, int capacity) {
         super(capacity);
         this.fw = fw;
         this.position = position;
@@ -25,7 +25,6 @@ public class SSD extends Data{
         ByteBuffer buffer = ctx.allocateBuffer();
         buffer.limit(capacity);
         try {
-            Monitor.readSSDCount ++;
             fw.read(position + 9, buffer);
         } catch (IOException e) {
             e.printStackTrace();
