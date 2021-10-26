@@ -217,11 +217,9 @@ public class Mq extends MessageQueue{
         }
         buffer.flip();
 
-        Data data = null;
+        Data data;
         if (barrier.aepEnable()){
             data = new PMem(barrier.getAep(), barrier.getAepPosition() + aos + Const.PROTOCOL_HEADER_SIZE, buffer.limit());
-        }
-        if (data != null){
             queue.getRecords().add(data);
             return offset;
         }
