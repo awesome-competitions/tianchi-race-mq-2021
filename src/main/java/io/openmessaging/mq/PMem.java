@@ -1,7 +1,5 @@
 package io.openmessaging.mq;
 
-import io.openmessaging.utils.BufferUtils;
-
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 

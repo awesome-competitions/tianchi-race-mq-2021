@@ -1,14 +1,9 @@
 package io.openmessaging.mq;
 
-import com.intel.pmem.llpl.AnyMemoryBlock;
-import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Block {
 

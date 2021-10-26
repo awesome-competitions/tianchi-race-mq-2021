@@ -1,10 +1,6 @@
 package io.openmessaging.mq;
 
-import io.openmessaging.consts.Const;
-
 import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class Buffers {
 

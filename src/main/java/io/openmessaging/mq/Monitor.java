@@ -1,7 +1,5 @@
 package io.openmessaging.mq;
 
-import io.openmessaging.consts.Const;
-
 public class Monitor {
 
     public static Runtime runtime = Runtime.getRuntime();

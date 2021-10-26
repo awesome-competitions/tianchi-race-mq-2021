@@ -1,12 +1,8 @@
 package io.openmessaging.mq;
 
-import io.openmessaging.consts.Const;
-import io.openmessaging.utils.BufferUtils;
 import sun.nio.ch.DirectBuffer;
 
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.util.*;
 import java.util.concurrent.*;
 
 public class Threads {
@@ -23,35 +19,22 @@ public class Threads {
     }
 
     public static class Context{
-
         private Barrier barrier;
-
         private int blockPos;
-
         private long ssdPos;
-
         public final ThreadPoolExecutor pools = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
-
-        private final FutureMap results = new FutureMap();
-
+        private final ResultMap results = new ResultMap();
         private final Semaphore semaphore = new Semaphore(0);
-
-        private final LinkedBlockingQueue<AepData> aepTasks = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<ByteBuffer> aepBuffers = new LinkedBlockingQueue<>();
-
         private final LinkedBlockingQueue<ByteBuffer> buffers = new LinkedBlockingQueue<>();
-
         private final LinkedBlockingQueue<Data> readBuffers2 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> readBuffers3 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> readBuffers4 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> readBuffers5 = new LinkedBlockingQueue<>();
-
         private final LinkedBlockingQueue<Data> idles1 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> idles2 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> idles3 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> idles4 = new LinkedBlockingQueue<>();
-
-        private long readBuffer1Size;
 
         public ByteBuffer allocateBuffer(){
             ByteBuffer buffer = buffers.poll();
@@ -150,7 +133,7 @@ public class Threads {
             return semaphore;
         }
 
-        public FutureMap getResults() {
+        public ResultMap getResults() {
             return results;
         }
 

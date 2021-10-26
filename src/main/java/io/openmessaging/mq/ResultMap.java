@@ -4,17 +4,11 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Set;
 
-public class FutureMap implements java.util.Map<Integer, ByteBuffer> {
+public class ResultMap implements java.util.Map<Integer, ByteBuffer> {
 
     private final ByteBuffer[] buffers = new ByteBuffer[101];
 
     private int maxIndex;
-
-    private int mmapIndex;
-
-    private Runnable runnable;
-
-    private boolean complete;
 
     @Override
     public int size() {
@@ -34,15 +28,6 @@ public class FutureMap implements java.util.Map<Integer, ByteBuffer> {
     @Override
     public boolean containsValue(Object value) {
         return true;
-    }
-
-    public Runnable getRunnable() {
-        return runnable;
-    }
-
-    public void setRunnable(Runnable runnable) {
-        this.runnable = runnable;
-        this.complete = false;
     }
 
     @Override
@@ -95,15 +80,4 @@ public class FutureMap implements java.util.Map<Integer, ByteBuffer> {
         this.maxIndex = maxIndex;
     }
 
-    public int getMaxIndex() {
-        return maxIndex;
-    }
-
-    public int getMmapIndex() {
-        return mmapIndex;
-    }
-
-    public void setMmapIndex(int mmapIndex) {
-        this.mmapIndex = mmapIndex;
-    }
 }

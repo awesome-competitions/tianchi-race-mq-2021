@@ -1,8 +1,5 @@
 package io.openmessaging.mq;
 
-import io.openmessaging.consts.Const;
-import io.openmessaging.utils.BufferUtils;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -68,7 +65,7 @@ public class Queue {
 
         long nextReadOffset = (int) Math.min(offset + num, records.size());
         int size = (int) (nextReadOffset - offset);
-        FutureMap results = ctx.getResults();
+        ResultMap results = ctx.getResults();
         results.setMaxIndex(size - 1);
 
         Semaphore semaphore = ctx.getSemaphore();

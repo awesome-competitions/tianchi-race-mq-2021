@@ -1,4 +1,4 @@
-package io.openmessaging.utils;
+package io.openmessaging.mq;
 
 import sun.misc.Cleaner;
 import sun.nio.ch.DirectBuffer;

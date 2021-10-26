@@ -1,8 +1,6 @@
 package io.openmessaging.mq;
 
 import io.openmessaging.MessageQueue;
-import io.openmessaging.consts.Const;
-import io.openmessaging.utils.BufferUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

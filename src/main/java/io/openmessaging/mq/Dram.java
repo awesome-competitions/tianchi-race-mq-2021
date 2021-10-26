@@ -1,9 +1,6 @@
 package io.openmessaging.mq;
 
 
-import io.openmessaging.utils.BufferUtils;
-
-import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 
 public class Dram extends Data {

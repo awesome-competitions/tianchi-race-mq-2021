@@ -1,7 +1,5 @@
 package io.openmessaging.mq;
 
-import io.openmessaging.consts.Const;
-
 public class Config {
 
     private final String dataDir;
