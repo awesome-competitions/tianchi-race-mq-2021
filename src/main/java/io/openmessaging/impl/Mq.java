@@ -73,7 +73,7 @@ public class Mq extends MessageQueue{
 
     void preAllocate(FileChannel channel, long allocateSize) throws IOException {
         if (channel.size() == 0){
-            int batch = (int) (Const.M * 4);
+            int batch = (int) (Const.K * 4);
             int size = (int) (allocateSize / batch);
             ByteBuffer buffer = ByteBuffer.allocateDirect(batch);
             for (int i = 0; i < batch; i ++){
