@@ -51,6 +51,10 @@ public class Queue {
         ResultMap results = ctx.getResults();
         results.setMaxIndex(size - 1);
 
+        // 预加载
+        preloading(ctx, nextReadOffset);
+
+        // 读当前
         Semaphore semaphore = ctx.getSemaphore();
         for (int i = (int) offset; i < nextReadOffset; i ++){
             Data data = records.get(i);
@@ -67,6 +71,27 @@ public class Queue {
             e.printStackTrace();
         }
         return results;
+    }
+
+    private void preloading(Threads.Context ctx, long nextReadOffset){
+        long nextLoadSize = Math.min(this.offset - nextReadOffset + 1, 6);
+        for (int i = (int) nextReadOffset; i < nextReadOffset + nextLoadSize; i ++){
+            if (i >= records.size()){
+                break;
+            }
+            int index = i;
+            Data data = records.get(index);
+            if (data.isSSD()){
+                ctx.getPools().execute(()->{
+                    ByteBuffer buffer = data.get(ctx);
+                    Data bufferData = ctx.allocatePMem(buffer.limit());
+                    if (bufferData != null){
+                        bufferData.set(buffer);
+                        records.set(index, bufferData);
+                    }
+                });
+            }
+        }
     }
 
     private void recycleData(Threads.Context ctx, Data data){

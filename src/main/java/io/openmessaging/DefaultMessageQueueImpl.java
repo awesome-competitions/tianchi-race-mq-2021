@@ -18,7 +18,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
             4,
             100,
             2000,
-            (long) (Const.G * 1.95),
+            (long) (Const.G * 1.94),
             (long) (Const.G * 3.3),
             Const.SECOND * 450
     ));
