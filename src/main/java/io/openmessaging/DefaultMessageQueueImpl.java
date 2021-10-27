@@ -20,7 +20,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
             2000,
             (long) (Const.G * 1.95),
             (long) (Const.G * 3.3),
-            Const.SECOND * 443
+            Const.SECOND * 450
     ));
 
     public DefaultMessageQueueImpl() throws IOException {
