@@ -144,7 +144,7 @@ public class Mq extends MessageQueue{
         synchronized (barriers){
             if (! initializedBarriers){
                 try {
-                    Thread.sleep(Const.SECOND * 20);
+                    Thread.sleep(Const.SECOND * 10);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -209,7 +209,7 @@ public class Mq extends MessageQueue{
         long aos = barrier.write(topic, queueId, offset, buffer);
         long pos;
         try {
-            barrier.await(30, TimeUnit.SECONDS);
+            barrier.await(20, TimeUnit.SECONDS);
             pos = barrier.getSsdPosition() + aos;
         } catch (BrokenBarrierException e) {
             buffer.flip();
