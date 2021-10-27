@@ -74,7 +74,7 @@ public class Queue {
     }
 
     private void preloading(Threads.Context ctx, long nextReadOffset){
-        long nextLoadSize = Math.min(this.offset - nextReadOffset + 1, 6);
+        long nextLoadSize = Math.min(this.offset - nextReadOffset + 1, 8);
         for (int i = (int) nextReadOffset; i < nextReadOffset + nextLoadSize; i ++){
             if (i >= records.size()){
                 break;
