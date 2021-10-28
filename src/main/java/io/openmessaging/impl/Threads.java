@@ -52,7 +52,7 @@ public class Threads {
         private final LinkedBlockingQueue<Data> idles4 = new LinkedBlockingQueue<>();
 
         public Context() {
-            for (int i = 0; i < 30; i ++){
+            for (int i = 0; i < Const.MAX_FETCH_NUM; i ++){
                 buffers[i] = ByteBuffer.allocateDirect(Const.PROTOCOL_DATA_MAX_SIZE);
             }
         }

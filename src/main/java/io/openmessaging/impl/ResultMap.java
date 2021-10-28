@@ -6,7 +6,7 @@ import java.util.Set;
 
 public class ResultMap implements java.util.Map<Integer, ByteBuffer> {
 
-    private final ByteBuffer[] buffers = new ByteBuffer[101];
+    private final ByteBuffer[] buffers = new ByteBuffer[Const.MAX_FETCH_NUM];
 
     private int maxIndex;
 

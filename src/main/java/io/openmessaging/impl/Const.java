@@ -14,4 +14,6 @@ public interface Const {
     int PROTOCOL_MAX_SIZE = PROTOCOL_HEADER_SIZE + PROTOCOL_DATA_MAX_SIZE;
 
     int AOF_FLUSHED_BUFFER_SIZE = (int) (Const.K * 176);
+
+    int MAX_FETCH_NUM = 101;
 }
