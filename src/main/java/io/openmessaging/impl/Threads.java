@@ -40,7 +40,8 @@ public class Threads {
         public final ThreadPoolExecutor pools = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
         private final ResultMap results = new ResultMap();
         private final Semaphore semaphore = new Semaphore(0);
-        private final LinkedBlockingQueue<ByteBuffer> buffers = new LinkedBlockingQueue<>();
+        private final ByteBuffer[] buffers = new ByteBuffer[30];
+        private final LinkedBlockingQueue<ByteBuffer> aepBuffers = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> readBuffers2 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> readBuffers3 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> readBuffers4 = new LinkedBlockingQueue<>();
@@ -52,17 +53,13 @@ public class Threads {
 
         public Context() {
             for (int i = 0; i < 30; i ++){
-                buffers.add(ByteBuffer.allocateDirect((int) (Const.K * 17)));
+                buffers[i] = ByteBuffer.allocateDirect(Const.PROTOCOL_DATA_MAX_SIZE);
             }
         }
 
-        public ByteBuffer allocateBuffer(){
-            ByteBuffer buffer = buffers.poll();
-            if (buffer == null){
-                buffer = ByteBuffer.allocate(Const.PROTOCOL_DATA_MAX_SIZE);
-            }
+        public ByteBuffer allocateBuffer(int index){
+            ByteBuffer buffer = buffers[index];
             buffer.clear();
-            buffers.add(buffer);
             return buffer;
         }
 
@@ -140,6 +137,10 @@ public class Threads {
 
         public void setPrepare(boolean prepare) {
             this.prepare = prepare;
+        }
+
+        public LinkedBlockingQueue<ByteBuffer> getAepBuffers() {
+            return aepBuffers;
         }
     }
 }

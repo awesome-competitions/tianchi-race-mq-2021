@@ -18,16 +18,11 @@ public class PMem extends Data {
         this.isPMem = true;
     }
 
-    @Override
-    public ByteBuffer get() {
-        return get(Threads.get());
-    }
 
     @Override
-    public ByteBuffer get(Threads.Context ctx) {
+    public ByteBuffer get(ByteBuffer buffer) {
         int extSize = ext == null ? 0 : ext.limit();
 
-        ByteBuffer buffer = ctx.allocateBuffer();
         buffer.limit(size - extSize);
         aep.read(position, buffer);
         if (extSize > 0){

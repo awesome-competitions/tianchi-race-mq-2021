@@ -18,9 +18,7 @@ public abstract class Data {
         this.capacity = capacity;
     }
 
-    public abstract ByteBuffer get();
-
-    public abstract ByteBuffer get(Threads.Context ctx);
+    public abstract ByteBuffer get(ByteBuffer buffer);
 
     public abstract void set(ByteBuffer buffer);
 

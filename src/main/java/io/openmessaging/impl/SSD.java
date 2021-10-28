@@ -16,13 +16,7 @@ public class SSD extends Data{
     }
 
     @Override
-    public ByteBuffer get() {
-        return get(Threads.get());
-    }
-
-    @Override
-    public ByteBuffer get(Threads.Context ctx) {
-        ByteBuffer buffer = ctx.allocateBuffer();
+    public ByteBuffer get(ByteBuffer buffer) {
         buffer.limit(capacity);
         try {
             fw.read(position + 9, buffer);

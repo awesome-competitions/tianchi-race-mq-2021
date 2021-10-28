@@ -18,13 +18,7 @@ public class Dram extends Data {
     }
 
     @Override
-    public ByteBuffer get() {
-        return get(Threads.get());
-    }
-
-    @Override
-    public ByteBuffer get(Threads.Context ctx) {
-        ByteBuffer buffer = ctx.allocateBuffer();
+    public ByteBuffer get(ByteBuffer buffer) {
         buffer.put(data);
         if (ext != null){
             buffer.put(ext);
