@@ -20,7 +20,7 @@ public class DefaultMessageQueueImpl extends MessageQueue{
             2000,              // queue总数
             (long) (Const.G * 1.90),        // 堆外内存分配
             (long) (Const.G * 3.3),         // 堆内内存分配
-            (long) (Const.SECOND * 440)      // killer
+            (long) (Const.SECOND * 435)      // killer
     ));
 
     public DefaultMessageQueueImpl() throws IOException {

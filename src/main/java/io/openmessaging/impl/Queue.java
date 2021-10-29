@@ -58,7 +58,7 @@ public class Queue {
         for (int i = (int) offset; i < nextReadOffset; i ++){
             Data data = records.get(i);
             int index = (int) (i - offset);
-            results.put(index, data.get(ctx.allocateBuffer()));
+            results.put(index, data.get(ctx.allocateBuffer(index)));
             recycleData(ctx, data);
         }
         return results;
@@ -74,12 +74,17 @@ public class Queue {
             Data data = records.get(index);
             if (data.isSSD()){
                 ctx.getPools().execute(()->{
-                    ByteBuffer buffer = data.get(ctx.allocateBuffer());
+                    ByteBuffer aepBuffer = ctx.getAepBuffers().poll();
+                    if (aepBuffer == null){
+                        aepBuffer = ByteBuffer.allocateDirect(Const.PROTOCOL_DATA_MAX_SIZE);
+                    }
+                    ByteBuffer buffer = data.get(aepBuffer);
                     Data bufferData = ctx.allocatePMem(buffer.limit());
                     if (bufferData != null){
                         bufferData.set(buffer);
                         records.set(index, bufferData);
                     }
+                    ctx.getAepBuffers().add(aepBuffer);
                 });
             }
         }
