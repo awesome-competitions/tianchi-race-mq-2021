@@ -1,4 +1,4 @@
-package io.openmessaging;
+package io.openmessaging.test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -8,8 +8,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class Test {
 
     public static void main(String[] args) throws InterruptedException {
-        int count = 50 * 10000;
-        int batch = 1;
+        int count = 120 * 10000;
+        int batch = 10;
 
         ThreadPoolExecutor pools = (ThreadPoolExecutor) Executors.newFixedThreadPool(batch);
         Semaphore semaphore = new Semaphore(0);
