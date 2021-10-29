@@ -143,11 +143,6 @@ public class Mq extends MessageQueue{
     void initBarriers() {
         synchronized (barriers){
             if (! initializedBarriers){
-                try {
-                    Thread.sleep(Const.SECOND * 10);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
                 if (Threads.size() >= config.getBatch()){
                     int count = Threads.size() / config.getBatch();
                     int surplus = Threads.size() % config.getBatch();
