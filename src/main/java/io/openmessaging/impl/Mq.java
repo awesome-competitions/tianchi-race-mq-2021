@@ -15,13 +15,13 @@ public class Mq extends MessageQueue{
 
     private final Aep aep;
 
+    private final Aof[] aof;
+
     private final Buffers buffers;
 
     private final Config config;
 
     private final Queue[][] queues;
-
-    private final Aof[] aofs;
 
     private final LinkedBlockingQueue<Barrier> barriers = new LinkedBlockingQueue<>();
 
@@ -35,7 +35,7 @@ public class Mq extends MessageQueue{
         this.buffers = new Buffers(config.getDirectSize(), config.getHeapSize());
         this.aep = createAep();
         startAepPreallocate();
-        this.aofs = initAof();
+        this.aof = initAof();
         startKiller();
     }
 
@@ -155,13 +155,13 @@ public class Mq extends MessageQueue{
                         if (i == config.getBatch() - 1){
                             count += surplus;
                         }
-                        Barrier barrier = new Barrier(count, aofs[i], aep, buffers);
+                        Barrier barrier = new Barrier(count, aof[i], aep, buffers);
                         for (int j = 0; j < count; j ++){
                             barriers.add(barrier);
                         }
                     }
                 }else{
-                    Barrier barrier = new Barrier(Threads.size(), aofs[0], aep, buffers);
+                    Barrier barrier = new Barrier(Threads.size(), aof[0], aep, buffers);
                     for (int j = 0; j < Threads.size(); j ++){
                         barriers.add(barrier);
                     }

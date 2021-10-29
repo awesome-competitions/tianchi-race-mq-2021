@@ -40,7 +40,7 @@ public class Threads {
         public final ThreadPoolExecutor pools = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
         private final ResultMap results = new ResultMap();
         private final Semaphore semaphore = new Semaphore(0);
-        private final ByteBuffer[] buffers = new ByteBuffer[30];
+        private final ByteBuffer[] buffers = new ByteBuffer[Const.MAX_FETCH_NUM];
         private final LinkedBlockingQueue<ByteBuffer> aepBuffers = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> readBuffers2 = new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Data> readBuffers3 = new LinkedBlockingQueue<>();
@@ -52,13 +52,17 @@ public class Threads {
         private final LinkedBlockingQueue<Data> idles4 = new LinkedBlockingQueue<>();
 
         public Context() {
-            for (int i = 0; i < Const.MAX_FETCH_NUM; i ++){
+            for (int i = 0; i < 20; i ++){
                 buffers[i] = ByteBuffer.allocateDirect(Const.PROTOCOL_DATA_MAX_SIZE);
             }
         }
 
         public ByteBuffer allocateBuffer(int index){
             ByteBuffer buffer = buffers[index];
+            if (buffer == null){
+                buffer = ByteBuffer.allocateDirect(Const.PROTOCOL_DATA_MAX_SIZE);
+                buffers[index] = buffer;
+            }
             buffer.clear();
             return buffer;
         }
