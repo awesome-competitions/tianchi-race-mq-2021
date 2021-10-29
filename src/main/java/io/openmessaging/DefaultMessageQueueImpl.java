@@ -18,9 +18,9 @@ public class DefaultMessageQueueImpl extends MessageQueue{
             4,                        // 4核分4组刷盘
             100,                // topic总数
             2000,              // queue总数
-            (long) (Const.G * 1.92),        // 堆外内存分配
+            (long) (Const.G * 1.94),        // 堆外内存分配
             (long) (Const.G * 3.3),         // 堆内内存分配
-            (long) (Const.SECOND * 450)      // killer
+            (long) (Const.SECOND * 431)      // killer
     ));
 
     public DefaultMessageQueueImpl() throws IOException {
