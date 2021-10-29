@@ -106,6 +106,12 @@ public class Mq extends MessageQueue{
     }
 
     void startKiller(){
+        try {
+            // 让程序冷静一下
+            Thread.sleep(10 * Const.SECOND);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         new Thread(()->{
             try {
                 if (config.getLiveTime() > 0) {
