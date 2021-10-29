@@ -51,13 +51,38 @@ public class Queue {
         ResultMap results = ctx.getResults();
         results.setMaxIndex(size - 1);
 
+        // 异步预加载
+        preloading(ctx, nextReadOffset);
+
+        // 同步读当前
         for (int i = (int) offset; i < nextReadOffset; i ++){
             Data data = records.get(i);
             int index = (int) (i - offset);
-            results.put(index, data.get(ctx.allocateBuffer(index)));
+            results.put(index, data.get(ctx.allocateBuffer()));
             recycleData(ctx, data);
         }
         return results;
+    }
+
+    private void preloading(Threads.Context ctx, long nextReadOffset){
+        long nextLoadSize = Math.min(this.offset - nextReadOffset + 1, 16);
+        for (int i = (int) nextReadOffset; i < nextReadOffset + nextLoadSize; i ++){
+            if (i >= records.size()){
+                break;
+            }
+            int index = i;
+            Data data = records.get(index);
+            if (data.isSSD()){
+                ctx.getPools().execute(()->{
+                    ByteBuffer buffer = data.get(ctx.allocateBuffer());
+                    Data bufferData = ctx.allocatePMem(buffer.limit());
+                    if (bufferData != null){
+                        bufferData.set(buffer);
+                        records.set(index, bufferData);
+                    }
+                });
+            }
+        }
     }
 
     private void recycleData(Threads.Context ctx, Data data){
