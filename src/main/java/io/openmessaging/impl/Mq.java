@@ -143,6 +143,7 @@ public class Mq extends MessageQueue{
     void initBarriers() {
         synchronized (barriers){
             if (! initializedBarriers){
+                // 通过线程总数 / 批次数 = 每批聚合线程数
                 if (Threads.size() >= config.getBatch()){
                     int count = Threads.size() / config.getBatch();
                     int surplus = Threads.size() % config.getBatch();

@@ -9,11 +9,14 @@ public interface Const {
     long SECOND = 1000;
     long MINUTE = SECOND * 60;
 
+    // 协议头9B
     int PROTOCOL_HEADER_SIZE = 9;
+    // 协议体17KB
     int PROTOCOL_DATA_MAX_SIZE = (int) (Const.K * 17);
+    // 协议17KB + 9B
     int PROTOCOL_MAX_SIZE = PROTOCOL_HEADER_SIZE + PROTOCOL_DATA_MAX_SIZE;
-
-    int AOF_FLUSHED_BUFFER_SIZE = (int) (Const.K * 176);
-
-    int MAX_FETCH_NUM = 101;
+    // 刷盘缓冲区256KB
+    int AOF_FLUSHED_BUFFER_SIZE = (int) (Const.K * 256);
+    // getRange最大fetchNum 100
+    int MAX_FETCH_NUM = 100;
 }

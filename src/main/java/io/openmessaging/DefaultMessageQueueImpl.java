@@ -15,12 +15,12 @@ public class DefaultMessageQueueImpl extends MessageQueue{
             Const.G * 132,
             "/pmem/",
             Const.G * 62,
-            4,
-            100,
-            2000,
-            (long) (Const.G * 1.95),
-            (long) (Const.G * 3.3),
-            Const.SECOND * 440
+            4,                        // 4核分4组刷盘
+            100,                // topic总数
+            5000,              // queue总数
+            (long) (Const.G * 1.95),        // 堆外内存分配
+            (long) (Const.G * 3.3),         // 堆内内存分配
+            Const.SECOND * 440      // killer
     ));
 
     public DefaultMessageQueueImpl() throws IOException {

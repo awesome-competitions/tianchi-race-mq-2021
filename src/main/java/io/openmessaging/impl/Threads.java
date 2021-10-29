@@ -16,6 +16,11 @@ public class Threads {
         return size.get();
     }
 
+    /**
+     * 获取当前线程上下文
+     *
+     * @return {@link Context}
+     */
     public static Context get(){
         Context ctx = CTX.get();
         if (ctx == null){
@@ -25,6 +30,7 @@ public class Threads {
         }
         if (! ctx.isPrepare()){
             try {
+                // 第一次阻塞50ms用来收集准确的线程总数
                 Thread.sleep(50);
             } catch (InterruptedException e) {
                 e.printStackTrace();

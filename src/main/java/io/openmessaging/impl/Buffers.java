@@ -2,6 +2,9 @@ package io.openmessaging.impl;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Dram缓存块
+ */
 public class Buffers {
 
     private final long directSize;
