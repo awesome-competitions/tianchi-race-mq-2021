@@ -74,19 +74,33 @@ public class Queue {
 
         // 读当前
         Semaphore semaphore = ctx.getSemaphore();
+        int memCount = 0;
         for (int i = (int) offset; i < nextReadOffset; i ++){
             Data data = records.get(i);
-            int index = (int) (i - offset);
-            ctx.getPools().execute(()->{
+            if (! data.isSSD()){
+                memCount ++;
+                int index = (int) (i - offset);
                 results.put(index, data.get(ctx.allocateBuffer(index)));
                 recycleData(ctx, data);
-                semaphore.release();
-            });
+            }
         }
-        try {
-            semaphore.acquire(size);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+
+        if (memCount < size){
+            for (int i = (int) offset; i < nextReadOffset; i ++){
+                Data data = records.get(i);
+                if (data.isSSD()){
+                    int index = (int) (i - offset);
+                    ctx.getPools().execute(()->{
+                        results.put(index, data.get(ctx.allocateBuffer(index)));
+                        semaphore.release();
+                    });
+                }
+            }
+            try {
+                semaphore.acquire(size - memCount);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
         return results;
     }
