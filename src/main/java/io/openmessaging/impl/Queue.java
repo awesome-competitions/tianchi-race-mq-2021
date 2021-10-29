@@ -26,26 +26,27 @@ public class Queue {
         Data data = ctx.allocateReadBuffer(buffer.limit());
         if (data == null){
             data = ctx.allocatePMem(buffer.limit());
-//            if (data != null){
-//                ByteBuffer aepBuffer = ctx.getAepBuffers().poll();
-//                if (aepBuffer == null){
-//                    aepBuffer = ByteBuffer.allocateDirect(Const.PROTOCOL_DATA_MAX_SIZE);
-//                }
-//                aepBuffer.put(buffer);
-//                aepBuffer.flip();
-//                records.add(new SSD(aof, position, buffer.limit()));
-//
-//                ByteBuffer finalByteBuffer = aepBuffer;
-//                Data finalData = data;
-//                long finalOffset = offset;
-//                ctx.getPools().execute(()->{
-//                    finalData.set(finalByteBuffer);
-//                    finalByteBuffer.clear();
-//                    records.set((int) finalOffset, finalData);
-//                    ctx.getAepBuffers().add(finalByteBuffer);
-//                });
-//                return;
-//            }
+            // 异步写aep
+            if (data != null){
+                ByteBuffer aepBuffer = ctx.getAepBuffers().poll();
+                if (aepBuffer == null){
+                    aepBuffer = ByteBuffer.allocateDirect(Const.PROTOCOL_DATA_MAX_SIZE);
+                }
+                aepBuffer.put(buffer);
+                aepBuffer.flip();
+                records.add(new SSD(aof, position, buffer.limit()));
+
+                ByteBuffer finalByteBuffer = aepBuffer;
+                Data finalData = data;
+                long finalOffset = offset;
+                ctx.getPools().execute(()->{
+                    finalData.set(finalByteBuffer);
+                    finalByteBuffer.clear();
+                    records.set((int) finalOffset, finalData);
+                    ctx.getAepBuffers().add(finalByteBuffer);
+                });
+                return;
+            }
         }
         if (data != null){
             data.set(buffer);

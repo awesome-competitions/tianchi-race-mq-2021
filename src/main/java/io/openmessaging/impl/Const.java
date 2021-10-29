@@ -15,8 +15,8 @@ public interface Const {
     int PROTOCOL_DATA_MAX_SIZE = (int) (Const.K * 17);
     // 协议17KB + 9B
     int PROTOCOL_MAX_SIZE = PROTOCOL_HEADER_SIZE + PROTOCOL_DATA_MAX_SIZE;
-    // 刷盘缓冲区256KB
-    int AOF_FLUSHED_BUFFER_SIZE = (int) (Const.K * 256);
+    // 刷盘缓冲区220KB
+    int AOF_FLUSHED_BUFFER_SIZE = (int) (Const.K * 220);
     // getRange最大fetchNum 100
     int MAX_FETCH_NUM = 100;
 }
