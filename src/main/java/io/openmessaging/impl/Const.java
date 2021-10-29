@@ -18,5 +18,5 @@ public interface Const {
     // 刷盘缓冲区220KB
     int AOF_FLUSHED_BUFFER_SIZE = (int) (Const.K * 220);
     // getRange最大fetchNum 100
-    int MAX_FETCH_NUM = 100;
+    int MAX_FETCH_NUM = 30;
 }
