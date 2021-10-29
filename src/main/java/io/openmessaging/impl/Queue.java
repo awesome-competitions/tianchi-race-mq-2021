@@ -26,27 +26,6 @@ public class Queue {
         Data data = ctx.allocateReadBuffer(buffer.limit());
         if (data == null){
             data = ctx.allocatePMem(buffer.limit());
-            // 异步写aep
-            if (data != null){
-                ByteBuffer aepBuffer = ctx.getAepBuffers().poll();
-                if (aepBuffer == null){
-                    aepBuffer = ByteBuffer.allocateDirect(Const.PROTOCOL_DATA_MAX_SIZE);
-                }
-                aepBuffer.put(buffer);
-                aepBuffer.flip();
-                records.add(new SSD(aof, position, buffer.limit()));
-
-                ByteBuffer finalByteBuffer = aepBuffer;
-                Data finalData = data;
-                long finalOffset = offset;
-                ctx.getPools().execute(()->{
-                    finalData.set(finalByteBuffer);
-                    finalByteBuffer.clear();
-                    records.set((int) finalOffset, finalData);
-                    ctx.getAepBuffers().add(finalByteBuffer);
-                });
-                return;
-            }
         }
         if (data != null){
             data.set(buffer);
@@ -72,35 +51,11 @@ public class Queue {
         ResultMap results = ctx.getResults();
         results.setMaxIndex(size - 1);
 
-        // 读当前
-        Semaphore semaphore = ctx.getSemaphore();
-        int memCount = 0;
         for (int i = (int) offset; i < nextReadOffset; i ++){
             Data data = records.get(i);
-            if (! data.isSSD()){
-                memCount ++;
-                int index = (int) (i - offset);
-                results.put(index, data.get(ctx.allocateBuffer(index)));
-                recycleData(ctx, data);
-            }
-        }
-
-        if (memCount < size){
-            for (int i = (int) offset; i < nextReadOffset; i ++){
-                Data data = records.get(i);
-                if (data.isSSD()){
-                    int index = (int) (i - offset);
-                    ctx.getPools().execute(()->{
-                        results.put(index, data.get(ctx.allocateBuffer(index)));
-                        semaphore.release();
-                    });
-                }
-            }
-            try {
-                semaphore.acquire(size - memCount);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            int index = (int) (i - offset);
+            results.put(index, data.get(ctx.allocateBuffer(index)));
+            recycleData(ctx, data);
         }
         return results;
     }
