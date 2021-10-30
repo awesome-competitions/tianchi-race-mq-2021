@@ -63,6 +63,7 @@ public class Threads {
             }
         }
 
+        // result buffer 复用
         public ByteBuffer allocateBuffer(int index){
             ByteBuffer buffer = buffers[index];
             if (buffer == null){
@@ -105,6 +106,7 @@ public class Threads {
             getIdles(data.getCapacity()).add(data);
         }
 
+        // 17K / 4 4组aep回收池
         public LinkedBlockingQueue<Data> getIdles(int cap){
             return cap < Const.K * 4.5 ? idles1 : cap < Const.K * 9 ? idles2 : cap < Const.K * 13.5 ? idles3 : idles4;
         }
@@ -113,6 +115,7 @@ public class Threads {
             return cap < Const.K * 4.5 ? idles2 : cap < Const.K * 9 ? idles3 : idles4;
         }
 
+        // 17K / 5 五组内存回收池
         public LinkedBlockingQueue<Data> getReadBuffer(int cap){
             return cap < Const.K * 3.4 ? null : cap < Const.K * 6.8 ? readBuffers2 : cap < Const.K * 10.2 ? readBuffers3 : cap < Const.K * 13.6 ? readBuffers4: readBuffers5;
         }
