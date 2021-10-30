@@ -7,7 +7,7 @@ import java.util.concurrent.*;
 public class BarrierTest {
 
     public static void main(String[] args) throws InterruptedException, BrokenBarrierException {
-        int count = 10 * 10000;
+        int count = 153 * 10000;
         int batch = 10;
 
         ThreadPoolExecutor pools = (ThreadPoolExecutor) Executors.newFixedThreadPool(batch);
