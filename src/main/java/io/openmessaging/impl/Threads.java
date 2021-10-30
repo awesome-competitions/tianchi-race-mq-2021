@@ -79,8 +79,6 @@ public class Threads {
             if (data == null){
                 data = getReadBufferGreed((int) (cap + Const.K * 3.4)).poll();
             }
-            if (data != null){
-            }
             return data;
         }
 
